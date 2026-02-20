@@ -270,7 +270,6 @@ th, td {
     
 
 
-
     margin-top: 30px;
    
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -353,13 +352,21 @@ th, td {
     border-radius: 12px;
     min-width: 350px;
     border: 1px solid #eee;
+     /* AÑADE ESTAS LÍNEAS */
+    max-height: 450px; /* Ajusta este valor según prefieras */
+    overflow-y: auto;  /* Habilita el scroll vertical cuando sea necesario */
 }
+
+
+
+
 
 /* Tabla del carrito */
 #lista-carrito {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
+    
 }
 
 #lista-carrito th {
@@ -372,6 +379,7 @@ th, td {
 }
 
 #lista-carrito td {
+    color: #000000; /* Cambia el color de todas las celdas a negro */
     padding: 15px 0;
     border-bottom: 1px solid #f9f9f9;
     vertical-align: middle;
@@ -627,8 +635,11 @@ th, td {
         display: absolute;
     }
 
-    .submenu:hover #carrito {
-        min-width: 100%;
+ .submenu:hover #carrito {
+        position: fixed; /* Lo mantiene fijo en la pantalla del celular */
+        top: 60px;
+        left: 5%;
+        width: 90%;
     }
     
     .header {
@@ -1052,5 +1063,56 @@ th, td {
     font-weight: bold;
 }
 
+
+
+/* Estilos para el botón de música personalizado */
+.float-music {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    bottom: 20px;
+    left: 20px; /* Aparecerá en la esquina inferior izquierda */
+    background-color: #000;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    box-shadow: 2px 2px 3px #999;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.float-music:hover {
+    transform: scale(1.1);
+    background-color: #333;
+}
+
+/* Animación de pulso */
+.pulse-music {
+    animation: pulse-black 2s infinite;
+}
+
+@keyframes pulse-black {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+
+
+
+#totales-carrito p {
+    color: #000000; /* Color de la letra */
+}
+
+/* Nombre del producto en el carrito */
+.carrito-info-prod strong {
+    color: #000000; /* Color negro */
+    display: block;
+}
 
 

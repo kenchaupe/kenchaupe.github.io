@@ -30,6 +30,38 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'checkout.html';
         });
     }
+    // --- LÓGICA DE MÚSICA ---
+    const audio = document.getElementById('musica-fondo');
+    const btnMusica = document.getElementById('btn-musica');
+    const iconoMusica = document.getElementById('icono-musica');
+
+    function toggleMusica() {
+        if (audio.paused) {
+            audio.play();
+            iconoMusica.classList.remove('fa-play');
+            iconoMusica.classList.add('fa-pause');
+        } else {
+            audio.pause();
+            iconoMusica.classList.remove('fa-pause');
+            iconoMusica.classList.add('fa-play');
+        }
+    }
+
+    if (btnMusica) {
+        btnMusica.addEventListener('click', toggleMusica);
+    }
+    
+
+    // Truco: Intentar reproducir automáticamente cuando el usuario haga su PRIMER clic en la web
+    document.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play().then(() => {
+                iconoMusica.classList.remove('fa-play');
+                iconoMusica.classList.add('fa-pause');
+            }).catch(err => console.log("El navegador aún bloquea el audio"));
+        }
+    }, { once: true }); // El { once: true } asegura que esto solo pase en el primer clic
+
 
     // NUEVO: Manejar clics en Swatches, Chips y Botones de Cantidad
     document.addEventListener('click', (e) => {
@@ -103,19 +135,22 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion(infoProducto.titulo);
     }
 
-    function eliminarProducto(e) {
-        if(e.target.classList.contains('borrar-producto')) {
-            const id = e.target.getAttribute('data-id');
-            const talla = e.target.getAttribute('data-talla');
-            const color = e.target.getAttribute('data-color');
+     function eliminarProducto(e) {
+    // ESTA LÍNEA ES LA CLAVE:
+    e.preventDefault(); 
 
-            articulosCarrito = articulosCarrito.filter(p => 
-                !(p.id === id && p.talla === talla && p.color === color)
-            );
-            
-            carritoHTML();
-        }
+    if(e.target.classList.contains('borrar-producto')) {
+        const id = e.target.getAttribute('data-id');
+        const talla = e.target.getAttribute('data-talla');
+        const color = e.target.getAttribute('data-color');
+
+        articulosCarrito = articulosCarrito.filter(p => 
+            !(p.id === id && p.talla === talla && p.color === color)
+        );
+        
+        carritoHTML();
     }
+}
 
     function carritoHTML() {
         limpiarHTML();
