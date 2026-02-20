@@ -132,19 +132,24 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('carrito_gruken', JSON.stringify(articulosCarrito));
     }
 
-    function mostrarNotificacion(nombre) {
-        let alerta = document.querySelector('.notificacion');
-        if(!alerta) {
-            alerta = document.createElement('div');
-            alerta.classList.add('notificacion');
-            document.body.appendChild(alerta);
-        }
-
-        alerta.innerHTML = `<span class="notificacion-icono">✓</span> <strong>${nombre}</strong> añadido`;
-        alerta.classList.add('mostrar');
-
-        setTimeout(() => {
-            alerta.classList.remove('mostrar');
-        }, 2500);
+   // Función para mostrar el mensaje de éxito
+function mostrarNotificacion(nombre) {
+    // Crear el elemento si no existe
+    let alerta = document.querySelector('.notificacion');
+    if(!alerta) {
+        alerta = document.createElement('div');
+        alerta.classList.add('notificacion');
+        document.body.appendChild(alerta);
     }
+
+    alerta.innerHTML = `<span class="notificacion-icono">✓</span> ${nombre} agregado al carrito`;
+    
+    // Mostrarla
+    alerta.classList.add('mostrar');
+
+    // Ocultarla después de 3 segundos
+    setTimeout(() => {
+        alerta.classList.remove('mostrar');
+    }, 3000);
+}
 });
