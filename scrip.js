@@ -31,29 +31,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // NUEVO: Manejar clics en Swatches, Chips y Botones de Cantidad
+    document.addEventListener('click', (e) => {
+        // Para talles (chips) y colores (swatches)
+        if (e.target.classList.contains('swatch') || e.target.classList.contains('chip')) {
+            const parent = e.target.parentElement;
+            // Quita la clase 'selected' de los hermanos y se la pone al clicado
+            parent.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            e.target.classList.add('selected');
+        }
+
+        // Para botones de cantidad (+/-)
+        if (e.target.classList.contains('btn-cantidad')) {
+            const input = e.target.parentElement.querySelector('.input-cantidad');
+            let valor = parseInt(input.value);
+            if (e.target.classList.contains('plus')) valor++;
+            if (e.target.classList.contains('minus') && valor > 1) valor--;
+            input.value = valor;
+        }
+    });
+
     // --- FUNCIONES ---
 
     function agregarProducto(e) {
         e.preventDefault();
         if (e.target.classList.contains('agregar-carrito')) {
+            // Buscamos el contenedor principal del producto (item o product-txt)
             const productoSeleccionado = e.target.parentElement.parentElement;
             leerDatosProducto(productoSeleccionado);
         }
     }
 
+    // FUNCIÓN ACTUALIZADA: Ahora lee Swatches, Chips e Input de cantidad
     function leerDatosProducto(producto) {
-        // Creamos el objeto con los datos actuales
         const infoProducto = {
             imagen: producto.querySelector('img')?.src || '', 
             titulo: producto.querySelector('h3').textContent,
             precio: producto.querySelector('.precio').textContent.replace(/[$.]/g, ''),
             id: producto.querySelector('.agregar-carrito').getAttribute('data-id'),
-            color: producto.querySelector('input[name^="color"]:checked')?.value || 'N/A',
-            talla: producto.querySelector('input[name^="talla"]:checked')?.value || 'N/A',
-            cantidad: parseInt(producto.querySelector('select[name="Cantidad"]')?.value) || 1
+            // Capturamos el valor del elemento que tiene la clase 'selected'
+            color: producto.querySelector('.swatch.selected')?.getAttribute('data-valor') || 'No seleccionado',
+            talla: producto.querySelector('.chip.selected')?.getAttribute('data-valor') || 'No seleccionado',
+            cantidad: parseInt(producto.querySelector('.input-cantidad')?.value) || 1
         };
 
-        // Revisar si ya existe la combinación exacta
+        // Validación: Si no seleccionó talle o color, detenemos la ejecución
+        if(infoProducto.color === 'No seleccionado' || infoProducto.talla === 'No seleccionado') {
+            alert("Por favor selecciona talle y color antes de agregar al carrito");
+            return;
+        }
+
+        // Lógica para agregar o actualizar cantidad en el carrito
         const existe = articulosCarrito.some(p => 
             p.id === infoProducto.id && 
             p.color === infoProducto.color && 
@@ -77,12 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function eliminarProducto(e) {
         if(e.target.classList.contains('borrar-producto')) {
-            // Capturamos los 3 datos para identificar el producto único
             const id = e.target.getAttribute('data-id');
             const talla = e.target.getAttribute('data-talla');
             const color = e.target.getAttribute('data-color');
 
-            // Filtramos: "Mantén todo lo que NO coincida exactamente con lo que quiero borrar"
             articulosCarrito = articulosCarrito.filter(p => 
                 !(p.id === id && p.talla === talla && p.color === color)
             );
@@ -93,25 +119,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function carritoHTML() {
         limpiarHTML();
-
         let total = 0;
         let count = 0;
 
         articulosCarrito.forEach(p => {
             const row = document.createElement('tr');
-            // IMPORTANTE: Agregamos data-talla y data-color al botón de borrar
-            row.innerHTML = `
-                <td><img src="${p.imagen}" width="50"></td>
-                <td>${p.titulo} <br> <small>${p.talla} / ${p.color}</small></td>
-                <td>$${p.precio}</td>
-                <td>${p.cantidad}</td>
-                <td>
-                    <a href="#" class="borrar-producto" 
-                        data-id="${p.id}" 
-                        data-talla="${p.talla}" 
-                        data-color="${p.color}">X</a>
-                </td>
-            `;
+              // Dentro de la función carritoHTML, cambia el row.innerHTML por este:
+row.innerHTML = `
+    <td><img src="${p.imagen}" width="60"></td>
+    <td>
+        <div class="carrito-info-prod">
+            <strong>${p.titulo}</strong>
+            <small>Talle: ${p.talla} | Color: ${p.color}</small>
+        </div>
+    </td>
+    <td style="font-weight: 600;">$${parseInt(p.precio).toLocaleString('es-AR')}</td>
+    <td>x${p.cantidad}</td>
+    <td>
+        <a href="#" class="borrar-producto" 
+            data-id="${p.id}" 
+            data-talla="${p.talla}" 
+            data-color="${p.color}">✕</a>
+    </td>
+`;
             carrito.appendChild(row);
             
             total += parseInt(p.precio) * p.cantidad;
@@ -132,24 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('carrito_gruken', JSON.stringify(articulosCarrito));
     }
 
-   // Función para mostrar el mensaje de éxito
-function mostrarNotificacion(nombre) {
-    // Crear el elemento si no existe
-    let alerta = document.querySelector('.notificacion');
-    if(!alerta) {
-        alerta = document.createElement('div');
-        alerta.classList.add('notificacion');
-        document.body.appendChild(alerta);
+    function mostrarNotificacion(nombre) {
+        let alerta = document.querySelector('.notificacion');
+        if(!alerta) {
+            alerta = document.createElement('div');
+            alerta.classList.add('notificacion');
+            document.body.appendChild(alerta);
+        }
+
+        alerta.innerHTML = `<span class="notificacion-icono">✓</span> ${nombre} agregado al carrito`;
+        alerta.classList.add('mostrar');
+
+        setTimeout(() => {
+            alerta.classList.remove('mostrar');
+        }, 3000);
     }
-
-    alerta.innerHTML = `<span class="notificacion-icono">✓</span> ${nombre} agregado al carrito`;
-    
-    // Mostrarla
-    alerta.classList.add('mostrar');
-
-    // Ocultarla después de 3 segundos
-    setTimeout(() => {
-        alerta.classList.remove('mostrar');
-    }, 3000);
-}
 });
