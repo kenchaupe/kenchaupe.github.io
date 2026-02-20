@@ -8,8 +8,6 @@
     <title>Gruken</title>
     <link rel="stylesheet" href="style.css">
     
-</head>
-<head>
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
   <!-- Link Swiper's CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -45,15 +43,6 @@
     }
   </style>
 </head>
-<body>
-
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-<a href="https://api.whatsapp.com/send?phone=+5491130103905&text=Hola, me gustaria obtener más información" class="float pulse" target="_blank">
-<i class="fa fa-whatsapp my-float "></i>
-</a>
-
-<body>
-
 
     <header class="float4 pulse4 header">
 
@@ -75,22 +64,28 @@
             </nav>
             <div>
                 <ul>
+                
                     <li class="submenu">
                         <img src="images/car.svg" id="img-carrito" alt="carrito" width="36px">
                         <div id="carrito">
                          <table id="lista-carrito">
                            <thead>
                             <tr>
-                                <th>Producto</th>
-                                <th>Nombre</th>
-                                <th>Precio</th>
-                                <th></th>
+                                <th> Producto </th>
+                                <th> Nombre </th>
+                                <th> Precio </th>
+                                <th>  Cant  </th>
                             </tr>
                            </thead>
                            <tbody></tbody>
                          </table>
-
+                         
+                             <div id="totales-carrito">
+                             <p>Productos en el carrito: <span id="contador-productos">0</span></p>
+                            <p><strong>Total: $<span id="total-pagar">0</span></strong></p>
+                            </div>
                          <a href="#" id="Comprar" class="btn-pagar">Comprar</a>
+                         
                         </div>
                     </li>
                 </ul>
@@ -100,7 +95,12 @@
         <div class="header-content container">
           
     </header>
-    
+<body>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<a href="https://api.whatsapp.com/send?phone=+5491130103905&text=Hola, me gustaria obtener más información" class="float pulse" target="_blank">
+<i class="fa fa-whatsapp my-float "></i>
+</a>
+
       <section class="ofert container">
         <div class="ofert-1">
             <div class="ofert-img"> 
@@ -143,7 +143,6 @@
                 	<img>
                   <img>
                 	<img>
-</body>
 
 
                  <a href="#" class=""></a>
@@ -179,26 +178,27 @@
         el: ".swiper-pagination",
       },
     });
-  </script>
-
+     </script>
             <div class="product-txt">
                 <h3>Vestido de lino </h3>
                 <p>Calidad Premium</p> 
-        <label for="color">Color:</label>
+                <label for="color">Color:</label>
         <select id="color" name="color">
-        <option value="negro">Rosa</option>
-        <option value="blanco">Beige</option>
-        <option value="topo">Denim</option>
+        <option value="negro">Negro</option>
+        <option value="blanco">Blanco</option>
+        <option value="topo">Topo</option>
+        <option value="melange">Melange</option>
+        <option value="gris">Gris</option>
         </select>
         <label for="talla">Talla:</label>
         <select id="talla" name="talla">
-        <option value="4">4</option>
-        <option value="6">6</option>
-        <option value="8">8</option>
-        <option value="10">10</option>
-        <option value="12">12</option>
-        <option value="14">14</option>
-        <option value="16">16</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+        <option value="XXL">XXL</option>
+        <option value="3XL">3XL</option>
+        <option value="4XL">4XL</option>
         </select>
         <label for="Cantidad">Cantidad:</label>
         <select id="Cantidad" name="Cantidad">
@@ -214,7 +214,6 @@
         <option value="10">10</option>
         </select>
          <p class="precio">$14.999</p>
-                <a href="https://www.whatsapp.com/product/25820886967543165/5491130103905/?app_absent=0" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="1">Agregar al carrito</a>
             </div>
@@ -278,7 +277,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$24.900</p>
-                <a href="https://www.whatsapp.com/product/25820886967543165/5491130103905/?app_absent=0" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="2">Agregar al carrito</a>
             </div>
@@ -343,7 +341,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$22.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="3">Agregar al carrito</a>
             </div>
@@ -406,7 +403,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$34.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="4">Agregar al carrito</a>
             </div>
@@ -471,7 +467,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$25.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="5">Agregar al carrito</a>
             </div>
@@ -534,7 +529,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$26.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="6">Agregar al carrito</a>
             </div>
@@ -597,7 +591,6 @@
         <option value="10">10</option>
         </select>
          <p class="precio">$34.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="1">Agregar al carrito</a>
             </div>
@@ -660,7 +653,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$37.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="2">Agregar al carrito</a>
             </div>
@@ -726,7 +718,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$35.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="3">Agregar al carrito</a>
             </div>
@@ -792,7 +783,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$38.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="4">Agregar al carrito</a>
             </div>
@@ -854,7 +844,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$39.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="5">Agregar al carrito</a>
             </div>
@@ -915,7 +904,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$34.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="6">Agregar al carrito</a>
             </div>
@@ -980,7 +968,6 @@
         <option value="10">10</option>
         </select>
          <p class="precio">$39.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="1">Agregar al carrito</a>
             </div>
@@ -1042,7 +1029,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$34.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="2">Agregar al carrito</a>
             </div>
@@ -1107,7 +1093,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$44.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="3">Agregar al carrito</a>
             </div>
@@ -1171,7 +1156,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$44.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="4">Agregar al carrito</a>
             </div>
@@ -1237,7 +1221,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$44.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="5">Agregar al carrito</a>
             </div>
@@ -1303,7 +1286,6 @@
         <option value="10">10</option>
         </select>
                 <p class="precio">$29.900</p>
-                <a href="https://www.google.com/" class="float1 pulse1 btn-pagar">Comprar ahora</a>
                 <p></p>
                 <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="6">Agregar al carrito</a>
             </div>
@@ -1322,9 +1304,7 @@
                 <p><img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> </p>
                 </div>
                 </marquee>
-                <body>
                  <audio controls autoplay loop src="images/Gruken.mp3" width="50px"></audio>
-                 </body>
                 </center>
                     <img>
                 	  <img>

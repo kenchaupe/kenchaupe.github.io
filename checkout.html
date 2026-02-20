@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - Gruken</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .checkout-container { max-width: 800px; margin: 50px auto; padding: 20px; font-family: Arial, sans-serif; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .resumen-pedido { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .btn-confirmar { background-color: #25d366; color: white; padding: 15px 20px; border: none; width: 100%; cursor: pointer; font-size: 1.1em; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <h1>Datos de Envío</h1>
+        <div class="resumen-pedido" id="resumen-final">
+            </div>
+        
+        <form id="formulario-pedido">
+            <div class="form-group">
+                <label>Nombre Completo:</label>
+                <input type="text" id="nombre" required placeholder="Ej: Maria Perez">
+            </div>
+            <div class="form-group">
+                <label>Dirección de Entrega:</label>
+                <input type="text" id="direccion" required placeholder="Calle, Número, Localidad">
+            </div>
+            <div class="form-group">
+                <label>Método de Pago:</label>
+                <select id="pago">
+                    <option value="Transferencia">Transferencia Bancaria / Debito</option>
+                    <option value="Efectivo">Efectivo / Retiro en local</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-confirmar">Enviar Pedido por WhatsApp</button>
+        </form>
+    </div>
+
+    <script>
+        // Cargar datos del carrito desde el almacenamiento local (localStorage)
+        document.addEventListener('DOMContentLoaded', () => {
+            const resumenDiv = document.querySelector('#resumen-final');
+            const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
+            
+            if(carrito.length === 0) {
+                resumenDiv.innerHTML = "<p>El carrito está vacío</p>";
+                return;
+            }
+
+            let html = "<h3>Tu Pedido:</h3><ul>";
+            let total = 0;
+            carrito.forEach(p => {
+                html += `<li>*${p.titulo}    Talle: ${p.talla}    Color: ${p.color}    cant: ${p.cantidad}    $${(p.precio * p.cantidad).toLocaleString('es-AR')}\n</li>`;
+                total += p.precio * p.cantidad;
+            });
+            html += `</ul><p><strong>Total a pagar: $${total.toLocaleString('es-AR')}</strong></p>`;
+            resumenDiv.innerHTML = html;
+
+            // Manejar el envío del formulario
+            document.querySelector('#formulario-pedido').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const nombre = document.querySelector('#nombre').value;
+                const direccion = document.querySelector('#direccion').value;
+                const pago = document.querySelector('#pago').value;
+                
+                let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
+
+                mensaje += `*Nombre:* ${nombre}\n`;
+                mensaje += `*Dirección:* ${direccion}\n`;
+                mensaje += `*Pago:* ${pago}\n\n`;
+                mensaje += `*Productos:*\n`;
+            
+                carrito.forEach(p => {
+                    mensaje += `- ${p.titulo}  |  Talle: ${p.talla}  |  Color: ${p.color}  |  cant: ${p.cantidad}  |  $${(p.precio * p.cantidad).toLocaleString('es-AR')}\n`;
+                });
+                mensaje += `\n*TOTAL: $${total.toLocaleString('es-AR')}*`;
+
+                const url = `https://api.whatsapp.com/send?phone=5491130103905&text=${encodeURIComponent(mensaje)}`;
+                window.open(url, '_blank');
+                
+                // Opcional: limpiar carrito después de comprar
+                localStorage.removeItem('carrito_gruken');
+            });
+        });
+    </script>
+</body>
+</html>
