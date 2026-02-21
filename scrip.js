@@ -212,26 +212,28 @@ row.innerHTML = `
             alerta.classList.remove('mostrar');
         }, 3000);
     }
+    
     // --- LÓGICA DE INSTALACIÓN PWA ---
 let deferredPrompt;
 const installBanner = document.getElementById('pwa-install-banner');
 const btnInstalar = document.getElementById('btn-instalar');
 const btnCerrarPwa = document.getElementById('btn-cerrar-pwa');
 
-// Registrar el Service Worker (necesario para PWA)
+// Registrar Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW no registrado', err));
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW registrado', reg))
+            .catch(err => console.log('Error SW', err));
     });
 }
 
-// Escuchar el evento de instalación
+// Capturar el evento de instalación
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Evitar que el navegador muestre el prompt automático
     e.preventDefault();
     deferredPrompt = e;
     
-    // Solo mostrar si el usuario no la ha cerrado antes en esta sesión
+    // Solo mostrar si no se cerró en esta sesión
     if (!sessionStorage.getItem('pwa_dismissed')) {
         installBanner.style.display = 'flex';
     }
@@ -242,7 +244,7 @@ btnInstalar.addEventListener('click', async () => {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-            console.log('Usuario aceptó la instalación');
+            console.log('Usuario instaló la app');
         }
         deferredPrompt = null;
         installBanner.style.display = 'none';
@@ -253,6 +255,5 @@ btnCerrarPwa.addEventListener('click', () => {
     installBanner.style.display = 'none';
     sessionStorage.setItem('pwa_dismissed', 'true');
 });
-
 });
 
