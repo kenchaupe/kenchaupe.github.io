@@ -212,9 +212,7 @@ row.innerHTML = `
             alerta.classList.remove('mostrar');
         }, 3000);
     }
-});
-
-// --- LÓGICA DE INSTALACIÓN PWA ---
+    // --- LÓGICA DE INSTALACIÓN PWA ---
 let deferredPrompt;
 const installBanner = document.getElementById('pwa-install-banner');
 const btnInstalar = document.getElementById('btn-instalar');
@@ -255,3 +253,6 @@ btnCerrarPwa.addEventListener('click', () => {
     installBanner.style.display = 'none';
     sessionStorage.setItem('pwa_dismissed', 'true');
 });
+
+});
+
