@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="images/gruicon.png">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -1234,7 +1235,6 @@
                 <p><img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> 3 y 6 cuotas sin interés con tus tarjetas bancarias <img src="images/Gruken.png" alt="x" width="70px"> </p>
                 </div>
                 </marquee>
-                 <audio controls autoplay loop src="images/Gruken.mp3" width="50px"></audio>
                 </center>
                     <img>
                 	  <img>
@@ -1351,5 +1351,22 @@
         </div>
     </footer>
     <script src="scrip.js"></script>
+    <audio id="musica-fondo" loop src="images/Gruken.mp3"></audio>
+
+<div id="btn-musica" class="float-music pulse-music">
+    <i id="icono-musica" class="fa fa-play"></i>
+</div>
+
+<div id="pwa-install-banner" style="display: none; position: fixed; bottom: 20px; left: 20px; right: 20px; background: #000; color: #fff; padding: 15px; border-radius: 10px; z-index: 9999; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <div>
+        <strong style="display: block;">¡Instala nuestra App!</strong>
+        <small>Accede más rápido a Gruken</small>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <button id="btn-instalar" style="background: #fff; color: #000; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Instalar</button>
+        <button id="btn-cerrar-pwa" style="background: transparent; color: #fff; border: 1px solid #fff; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Cerrar</button>
+    </div>
+</div>
+
 </body>
 </html>

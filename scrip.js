@@ -212,4 +212,47 @@ row.innerHTML = `
             alerta.classList.remove('mostrar');
         }, 3000);
     }
+
+    // --- LÓGICA DE INSTALACIÓN PWA ---
+let deferredPrompt;
+const installBanner = document.getElementById('pwa-install-banner');
+const btnInstalar = document.getElementById('btn-instalar');
+const btnCerrarPwa = document.getElementById('btn-cerrar-pwa');
+
+// Registrar el Service Worker (necesario para PWA)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW no registrado', err));
+    });
+}
+
+// Escuchar el evento de instalación
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evitar que el navegador muestre el prompt automático
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Solo mostrar si el usuario no la ha cerrado antes en esta sesión
+    if (!sessionStorage.getItem('pwa_dismissed')) {
+        installBanner.style.display = 'flex';
+    }
+});
+
+btnInstalar.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            console.log('Usuario aceptó la instalación');
+        }
+        deferredPrompt = null;
+        installBanner.style.display = 'none';
+    }
+});
+
+btnCerrarPwa.addEventListener('click', () => {
+    installBanner.style.display = 'none';
+    sessionStorage.setItem('pwa_dismissed', 'true');
+});
+
 });
