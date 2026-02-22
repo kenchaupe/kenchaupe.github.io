@@ -94,47 +94,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // FUNCIÓN ACTUALIZADA: Ahora lee Swatches, Chips e Input de cantidad
     function leerDatosProducto(producto) {
-        const infoProducto = {
-            imagen: producto.querySelector('img')?.src || '', 
-            titulo: producto.querySelector('h3').textContent,
-            precio: producto.querySelector('.precio').textContent.replace(/[$.]/g, ''),
-            id: producto.querySelector('.agregar-carrito').getAttribute('data-id'),
-            // Capturamos el valor del elemento que tiene la clase 'selected'
-            color: producto.querySelector('.swatch.selected')?.getAttribute('data-valor') || 'No seleccionado',
-            talla: producto.querySelector('.chip.selected')?.getAttribute('data-valor') || 'No seleccionado',
-            cantidad: parseInt(producto.querySelector('.input-cantidad')?.value) || 1
-        };
+    // Obtenemos el botón para leer el stock configurado
+    const botonAgregar = producto.querySelector('.agregar-carrito');
+    const stockDisponible = parseInt(botonAgregar.getAttribute('data-stock')) || 0;
+    
+    const infoProducto = {
+        imagen: producto.querySelector('img')?.src || '', 
+        titulo: producto.querySelector('h3').textContent,
+        precio: producto.querySelector('.precio').textContent.replace(/[$.]/g, ''),
+        id: botonAgregar.getAttribute('data-id'),
+        color: producto.querySelector('.swatch.selected')?.getAttribute('data-valor') || 'No seleccionado',
+        talla: producto.querySelector('.chip.selected')?.getAttribute('data-valor') || 'No seleccionado',
+        cantidad: parseInt(producto.querySelector('.input-cantidad')?.value) || 1
+    };
 
-        // Validación: Si no seleccionó talle o color, detenemos la ejecución
-        if(infoProducto.color === 'No seleccionado' || infoProducto.talla === 'No seleccionado') {
-            alert("Por favor selecciona talle y color antes de agregar al carrito");
-            return;
-        }
-
-        // Lógica para agregar o actualizar cantidad en el carrito
-        const existe = articulosCarrito.some(p => 
-            p.id === infoProducto.id && 
-            p.color === infoProducto.color && 
-            p.talla === infoProducto.talla
-        );
-        
-        if(existe) {
-            articulosCarrito = articulosCarrito.map(p => {
-                if(p.id === infoProducto.id && p.color === infoProducto.color && p.talla === infoProducto.talla) {
-                    p.cantidad += infoProducto.cantidad;
-                }
-                return p;
-            });
-        } else {
-            articulosCarrito = [...articulosCarrito, infoProducto];
-        }
-
-        carritoHTML();
-        mostrarNotificacion(infoProducto.titulo);
+    // Validación 1: Talle y Color
+    if(infoProducto.color === 'No seleccionado' || infoProducto.talla === 'No seleccionado') {
+        alert("Por favor selecciona talle y color antes de agregar al carrito");
+        return;
     }
 
+    // NUEVA VALIDACIÓN: Stock
+    if (infoProducto.cantidad > stockDisponible) {
+        alert(`Lo sentimos, solo quedan ${stockDisponible} unidades disponibles de este producto.`);
+        return;
+    }
+
+    // Lógica para agregar al carrito
+    const existe = articulosCarrito.some(p => p.id === infoProducto.id && p.color === infoProducto.color && p.talla === infoProducto.talla);
+    
+    if(existe) {
+        articulosCarrito = articulosCarrito.map(p => {
+            if(p.id === infoProducto.id && p.color === infoProducto.color && p.talla === infoProducto.talla) {
+                // Verificar si al sumar la nueva cantidad superamos el stock
+                if ((p.cantidad + infoProducto.cantidad) > stockDisponible) {
+                    alert("No puedes agregar más unidades, excederías el stock disponible.");
+                } else {
+                    p.cantidad += infoProducto.cantidad;
+                    mostrarNotificacion(infoProducto.titulo);
+                }
+            }
+            return p;
+        });
+    } else {
+        articulosCarrito = [...articulosCarrito, infoProducto];
+        mostrarNotificacion(infoProducto.titulo);
+    }
+    
+    carritoHTML();
+}
      function eliminarProducto(e) {
     // ESTA LÍNEA ES LA CLAVE:
     e.preventDefault(); 

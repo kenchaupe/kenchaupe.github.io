@@ -1116,3 +1116,14 @@ th, td {
 }
 
 
+.stock-texto {
+    font-size: 13px;
+    color: #666;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.stock-numero {
+    color: #000;
+    font-weight: bold;
+}
