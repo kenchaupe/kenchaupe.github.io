@@ -12,7 +12,6 @@
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         .resumen-pedido { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         
-        /* Estilo para el botón de confirmación */
         .btn-confirmar { 
             background-color: #25d366; 
             color: white; 
@@ -26,8 +25,8 @@
             transition: background 0.3s;
         }
         .btn-confirmar:hover { opacity: 0.9; }
+        .btn-confirmar:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        /* Estilo dinámico para Mercado Pago */
         .btn-mp { background-color: #009ee3; } /* Azul Mercado Pago */
 
         #walletPoint { margin-top: 15px; }
@@ -65,8 +64,7 @@
     </div>
 
     <script>
-        // 1. INICIALIZAR MERCADO PAGO
-        // REEMPLAZA ESTO CON TU PUBLIC KEY REAL
+        // 1. INICIALIZAR MERCADO PAGO CON TU KEY
         const mp = new MercadoPago('APP_USR-696c698f-28b1-499f-ba33-44de578b9147', {
             locale: 'es-AR'
         });
@@ -91,7 +89,6 @@
             resumenDiv.innerHTML = html;
         });
 
-        // Cambiar la apariencia del botón según lo que elijan
         function actualizarBoton() {
             const metodo = document.querySelector('#pago').value;
             const btn = document.querySelector('#boton-accion');
@@ -105,27 +102,22 @@
             }
         }
 
-        // MANEJAR EL ENVÍO
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const nombre = document.querySelector('#nombre').value;
-            const direccion = document.querySelector('#direccion').value;
             const metodo = document.querySelector('#pago').value;
 
             if (metodo === "WhatsApp") {
-                // FLUJO WHATSAPP
+                const nombre = document.querySelector('#nombre').value;
+                const direccion = document.querySelector('#direccion').value;
                 enviarPorWhatsApp(nombre, direccion);
             } else {
-                // FLUJO MERCADO PAGO
-                ejecutarMercadoPago(nombre, direccion);
+                ejecutarMercadoPago();
             }
         });
 
         function enviarPorWhatsApp(nombre, direccion) {
             let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
             mensaje += `*Nombre:* ${nombre}\n*Dirección:* ${direccion}\n\n*Productos:*\n`;
-            
             carrito.forEach(p => {
                 mensaje += `- ${p.titulo} (${p.talla}) x${p.cantidad}\n`;
             });
@@ -136,24 +128,34 @@
             localStorage.removeItem('carrito_gruken');
         }
 
-        async function ejecutarMercadoPago(nombre, direccion) {
+        async function ejecutarMercadoPago() {
             const btn = document.querySelector('#boton-accion');
-            btn.innerHTML = "Procesando...";
+            btn.innerHTML = "Iniciando Pago...";
             btn.disabled = true;
 
             try {
-                // AQUÍ ES DONDE LLAMAS A TU BACKEND
-                // Como no tenemos backend aún, te explico el siguiente paso abajo.
-                alert("¡Casi listo! Para que el cobro funcione, necesitamos conectar tu Access Token en un servidor seguro.");
-                
-                // Ejemplo de lo que haría tu servidor:
-                // const response = await fetch('/tu-servidor/crear-preferencia', { ... });
-                // const data = await response.json();
-                // mp.checkout({ preference: { id: data.id }, autoOpen: true });
+                // LLAMADA A TU API EN VERCEL
+                const response = await fetch('/api/crear-preferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: carrito })
+                });
+
+                const data = await response.json();
+
+                if (data.id) {
+                    // ABRE EL CHECKOUT DE MERCADO PAGO
+                    mp.checkout({
+                        preference: { id: data.id },
+                        autoOpen: true
+                    });
+                } else {
+                    throw new Error("No se pudo obtener el ID de pago");
+                }
                 
             } catch (error) {
                 console.error(error);
-                alert("Hubo un error al conectar con Mercado Pago.");
+                alert("Error al conectar con Mercado Pago. Revisa que el servidor esté activo.");
             } finally {
                 btn.disabled = false;
                 actualizarBoton();
