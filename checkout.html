@@ -63,8 +63,8 @@
         </form>
     </div>
 
-    <script>
-        // 1. INICIALIZAR MERCADO PAGO CON TU KEY
+ <script>
+        // 1. INICIALIZAR MERCADO PAGO CON TU KEY (CORRECTA)
         const mp = new MercadoPago('APP_USR-696c698f-28b1-499f-ba33-44de578b9147', {
             locale: 'es-AR'
         });
@@ -105,12 +105,13 @@
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             const metodo = document.querySelector('#pago').value;
+            const nombre = document.querySelector('#nombre').value;
+            const direccion = document.querySelector('#direccion').value;
 
             if (metodo === "WhatsApp") {
-                const nombre = document.querySelector('#nombre').value;
-                const direccion = document.querySelector('#direccion').value;
                 enviarPorWhatsApp(nombre, direccion);
             } else {
+                // Pasamos los datos por si quieres guardarlos luego
                 ejecutarMercadoPago();
             }
         });
@@ -130,16 +131,21 @@
 
         async function ejecutarMercadoPago() {
             const btn = document.querySelector('#boton-accion');
-            btn.innerHTML = "Iniciando Pago...";
+            btn.innerHTML = "Conectando...";
             btn.disabled = true;
 
             try {
-                // LLAMADA A TU API EN VERCEL
+                // LLAMADA A TU API EN VERCEL (Ruta relativa)
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items: carrito })
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Error en el servidor");
+                }
 
                 const data = await response.json();
 
@@ -154,8 +160,8 @@
                 }
                 
             } catch (error) {
-                console.error(error);
-                alert("Error al conectar con Mercado Pago. Revisa que el servidor esté activo.");
+                console.error("Error detallado:", error);
+                alert("Hubo un problema: " + error.message);
             } finally {
                 btn.disabled = false;
                 actualizarBoton();
