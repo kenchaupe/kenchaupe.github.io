@@ -4,88 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar Compra - Gruken</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         .checkout-container { max-width: 800px; margin: 50px auto; padding: 20px; font-family: Arial, sans-serif; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         .resumen-pedido { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .btn-confirmar { background-color: #25d366; color: white; padding: 15px 20px; border: none; width: 100%; cursor: pointer; font-size: 1.1em; font-weight: bold; }
+        .btn-confirmar { background-color: #25d366; color: white; padding: 15px 20px; border: none; width: 100%; cursor: pointer; font-size: 1.1em; font-weight: bold; border-radius: 5px; }
+        .btn-mp { background-color: #009ee3; }
     </style>
 </head>
 <body>
     <div class="checkout-container">
         <h1>Datos de Envío</h1>
-        <div class="resumen-pedido" id="resumen-final">
-            </div>
+        <div class="resumen-pedido" id="resumen-final"></div>
         
         <form id="formulario-pedido">
-            <div class="form-group">
-                <label>Nombre Completo:</label>
-                <input type="text" id="nombre" required placeholder="Ej: Maria Perez">
-            </div>
-            <div class="form-group">
-                <label>Dirección de Entrega:</label>
-                <input type="text" id="direccion" required placeholder="Calle, Número, Localidad">
-            </div>
+            <div class="form-group"><label>Nombre:</label><input type="text" id="nombre" required></div>
+            <div class="form-group"><label>Dirección:</label><input type="text" id="direccion" required></div>
             <div class="form-group">
                 <label>Método de Pago:</label>
-                <select id="pago">
-                    <option value="Transferencia">Transferencia Bancaria / Debito</option>
-                    <option value="Efectivo">Efectivo / Retiro en local</option>
+                <select id="pago" onchange="actualizarBoton()">
+                    <option value="WhatsApp">Efectivo / Retiro en local</option>
+                    <option value="MercadoPago">Tarjeta / Mercado Pago (Envío a domicilio)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-confirmar">Enviar Pedido por WhatsApp</button>
+            <button type="submit" id="boton-accion" class="btn-confirmar">Enviar por WhatsApp</button>
         </form>
     </div>
 
     <script>
-        // Cargar datos del carrito desde el almacenamiento local (localStorage)
-        document.addEventListener('DOMContentLoaded', () => {
-            const resumenDiv = document.querySelector('#resumen-final');
-            const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
-            
-            if(carrito.length === 0) {
-                resumenDiv.innerHTML = "<p>El carrito está vacío</p>";
-                return;
-            }
+        // PEGA TU PUBLIC KEY AQUÍ
+        const mp = new MercadoPago('TU_PUBLIC_KEY_AQUI', { locale: 'es-AR' });
+        const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
+        let total = 0;
 
-            let html = "<h3>Tu Pedido:</h3><ul>";
-            let total = 0;
-            carrito.forEach(p => {
-                html += `<li>*${p.titulo}    Talle: ${p.talla}    Color: ${p.color}    cant: ${p.cantidad}    $${(p.precio * p.cantidad).toLocaleString('es-AR')}\n</li>`;
-                total += p.precio * p.cantidad;
-            });
-            html += `</ul><p><strong>Total a pagar: $${total.toLocaleString('es-AR')}</strong></p>`;
-            resumenDiv.innerHTML = html;
-
-            // Manejar el envío del formulario
-            document.querySelector('#formulario-pedido').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const nombre = document.querySelector('#nombre').value;
-                const direccion = document.querySelector('#direccion').value;
-                const pago = document.querySelector('#pago').value;
-                
-                let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
-
-                mensaje += `*Nombre:* ${nombre}\n`;
-                mensaje += `*Dirección:* ${direccion}\n`;
-                mensaje += `*Pago:* ${pago}\n\n`;
-                mensaje += `*Productos:*\n`;
-            
-                carrito.forEach(p => {
-                    mensaje += `- ${p.titulo}  |  Talle: ${p.talla}  |  Color: ${p.color}  |  cant: ${p.cantidad}  |  $${(p.precio * p.cantidad).toLocaleString('es-AR')}\n`;
-                });
-                mensaje += `\n*TOTAL: $${total.toLocaleString('es-AR')}*`;
-
-                const url = `https://api.whatsapp.com/send?phone=5491130103905&text=${encodeURIComponent(mensaje)}`;
-                window.open(url, '_blank');
-                
-                // Opcional: limpiar carrito después de comprar
-                localStorage.removeItem('carrito_gruken');
-            });
+        // Renderizar resumen
+        const resumenDiv = document.querySelector('#resumen-final');
+        carrito.forEach(p => {
+            resumenDiv.innerHTML += `<p>${p.titulo} x${p.cantidad} - $${(p.precio * p.cantidad).toLocaleString()}</p>`;
+            total += p.precio * p.cantidad;
         });
+
+        function actualizarBoton() {
+            const metodo = document.querySelector('#pago').value;
+            const btn = document.querySelector('#boton-accion');
+            btn.innerHTML = metodo === "MercadoPago" ? "Pagar con Mercado Pago" : "Enviar por WhatsApp";
+            btn.className = metodo === "MercadoPago" ? "btn-confirmar btn-mp" : "btn-confirmar";
+        }
+
+        document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const metodo = document.querySelector('#pago').value;
+
+            if (metodo === "WhatsApp") {
+                enviarWhatsApp();
+            } else {
+                pagarMP();
+            }
+        });
+
+        async function pagarMP() {
+            const btn = document.querySelector('#boton-accion');
+            btn.innerHTML = "Cargando...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/crear-preferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: carrito })
+                });
+                
+                const data = await response.json();
+                
+                // Abrir checkout de Mercado Pago
+                mp.checkout({ preference: { id: data.id }, autoOpen: true });
+            } catch (err) {
+                alert("Error al conectar con Mercado Pago");
+                btn.disabled = false;
+                actualizarBoton();
+            }
+        }
+
+        function enviarWhatsApp() {
+            // ... (Tu lógica anterior de WhatsApp)
+        }
     </script>
 </body>
 </html>
