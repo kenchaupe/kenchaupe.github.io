@@ -20,8 +20,15 @@ export default async function handler(req, res) {
                     quantity: Number(p.cantidad),
                     unit_price: Number(p.precio),
                     currency_id: 'ARS'
+                    
                 })),
-                
+                // ... dentro de preference.create({ body: { ... } })
+                   notification_url: "https://www.gruken.com/api/webhooks/mercadopago",
+                   items: items.map(p => ({
+                      // ... tu código actual de mapeo de items
+                   })),
+                  // ...
+
                 // CAMBIO CLAVE: Quitamos "me2" para evitar el error de "collector active"
                 shipments: {
                     mode: "not_specified" 
@@ -31,7 +38,9 @@ export default async function handler(req, res) {
                     success: "https://www.gruken.com/success.html", // Página de éxito
                     failure: "https://www.gruken.com/checkout.html", // Si falla, vuelve al checkout
                     pending: "https://www.gruken.com/pending.html"   // Pago pendiente (ej: Rapipago)
+                    
                 },
+                
                 auto_return: "approved",
             }
         });
