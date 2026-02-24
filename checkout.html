@@ -152,21 +152,14 @@
             const btn = document.querySelector('#boton-accion');
             btn.innerHTML = "Conectando...";
             btn.disabled = true;
-            // En checkout.html, dentro de ejecutarMercadoPago()
-const productosParaMP = carrito.map(p => ({
-    ...p,
-    // Combinamos el título con color y talle para que MP lo muestre
-    titulo: `${p.titulo} (Color: ${p.color}, Talle: ${p.talla})` 
-}));
 
             try {
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productosParaMP })
+                    body: JSON.stringify({ items: carrito })
                 });
 
-                
                 if (!response.ok) throw new Error("Error en el servidor");
 
                 const data = await response.json();
