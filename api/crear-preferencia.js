@@ -27,9 +27,9 @@ export default async function handler(req, res) {
                 },
                 back_urls: {
                     // Volvemos a tu página principal al terminar
-                    success: "https://kenchaupe-github-io.vercel.app/",
-                    failure: "https://kenchaupe-github-io.vercel.app/",
-                    pending: "https://kenchaupe-github-io.vercel.app/"
+                    success: "https://www.gruken.com/success.html", // Página de éxito
+                    failure: "https://www.gruken.com/checkout.html", // Si falla, vuelve al checkout
+                    pending: "https://www.gruken.com/pending.html"   // Pago pendiente (ej: Rapipago)
                 },
                 auto_return: "approved",
             }
