@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Pago Exitoso! - Gruken</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .card { max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .icon { font-size: 50px; color: #25d366; }
+        h1 { color: #333; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✔</div>
+        <h1>¡Pago Exitoso!</h1>
+        <p>Gracias por tu compra. En breve serás redireccionado a la tienda.</p>
+        <p>Si no eres redireccionado, <a href="https://www.gruken.com">haz clic aquí</a>.</p>
+    </div>
+
+    <script>
+        // 1. Limpiamos el carrito del LocalStorage para que no aparezca el pedido viejo
+        localStorage.removeItem('carrito_gruken');
+
+        // 2. Redireccionamos a la web principal después de 3 segundos
+        setTimeout(() => {
+            window.location.href = "https://www.gruken.com";
+        }, 3500);
+    </script>
+</body>
+</html>
