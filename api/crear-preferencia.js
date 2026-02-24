@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         const result = await preference.create({
             body: {
                 items: items.map(p => ({
-                    title: `${p.titulo} (Talle: ${p.talla || 'Único'})`,
+                    title: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad}`,
                     quantity: Number(p.cantidad),
                     unit_price: Number(p.precio),
                     currency_id: 'ARS'
