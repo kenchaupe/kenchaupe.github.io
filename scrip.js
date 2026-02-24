@@ -257,3 +257,77 @@ btnCerrarPwa.addEventListener('click', () => {
 });
 });
 
+function abrirModalRecomendaciones() {
+    const modal = document.getElementById("modal-recomendaciones");
+    modal.style.display = "block";
+}
+
+// Cerrar el modal al hacer clic en la (X)
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById("modal-recomendaciones");
+    if (e.target.classList.contains('cerrar-modal') || e.target === modal) {
+        modal.style.display = "none";
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById("modal-recomendaciones");
+    const btnCerrar = document.querySelector(".cerrar-modal");
+
+    // Función para cerrar el modal
+    if (btnCerrar) {
+        btnCerrar.onclick = function() {
+            modal.style.display = "none";
+        }
+    }
+
+    // Cerrar si hacen clic fuera del cuadro blanco
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+});
+
+// Función por si también quieren abrirlo manualmente desde el botón de estrellas
+function abrirModalRecomendaciones() {
+    document.getElementById("modal-recomendaciones").style.display = "block";
+}
+
+
+
+// --- LÓGICA DE RECOMENDACIONES FLOTANTES ---
+
+// 1. Función para abrir/cerrar manualmente al hacer clic en las estrellas
+function toggleRecomendaciones(boton) {
+    const ventana = boton.parentElement.querySelector('.ventana-flotante-resenas');
+    
+    // Cerramos otras ventanas para que no se amontonen
+    document.querySelectorAll('.ventana-flotante-resenas').forEach(v => {
+        if(v !== ventana) v.classList.remove('mostrar-ventana');
+    });
+
+    ventana.classList.toggle('mostrar-ventana');
+}
+
+// 2. Aparición automática después de 4 segundos
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        // Abrimos la primera ventana de recomendaciones que encuentre en la página
+        const primeraVentana = document.querySelector('.ventana-flotante-resenas');
+        if (primeraVentana) {
+            primeraVentana.classList.add('mostrar-ventana');
+        }
+    }, 4000); 
+});
+
+// 3. Cerrar si el usuario hace clic en cualquier otra parte de la pantalla
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.reputacion')) {
+        document.querySelectorAll('.ventana-flotante-resenas').forEach(v => {
+            v.classList.remove('mostrar-ventana');
+        });
+    }
+});
+
+

@@ -10,7 +10,10 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        .resumen-pedido { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .resumen-pedido { background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #eee; }
+        .resumen-pedido h3 { margin-top: 0; color: #333; }
+        .resumen-pedido ul { list-style: none; padding: 0; }
+        .resumen-pedido li { margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         
         .btn-confirmar { 
             background-color: #25d366; 
@@ -26,31 +29,30 @@
         }
         .btn-confirmar:hover { opacity: 0.9; }
         .btn-confirmar:disabled { background-color: #ccc; cursor: not-allowed; }
-        
-        .btn-mp { background-color: #009ee3; } /* Azul Mercado Pago */
-
+        .btn-mp { background-color: #009ee3; } 
         #walletPoint { margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="checkout-container">
-        <h1>Datos de Envío</h1>
+        <h1>Finalizar Pedido</h1>
+        
         <div class="resumen-pedido" id="resumen-final">
             </div>
         
         <form id="formulario-pedido">
             <div class="form-group">
                 <label>Nombre Completo:</label>
-                <input type="text" id="nombre" required placeholder="Ej: Maria Perez">
+                <input type="text" id="nombre" required placeholder="Ej: Ruben">
             </div>
             <div class="form-group">
                 <label>Dirección de Entrega:</label>
-                <input type="text" id="direccion" required placeholder="Calle, Número, Localidad">
+                <input type="text" id="direccion" required placeholder="Ej: Bacacay 4170">
             </div>
             <div class="form-group">
                 <label>Método de Pago:</label>
                 <select id="pago" onchange="actualizarBoton()">
-                    <option value="WhatsApp">Efectivo / Retiro en local</option>
+                    <option value="WhatsApp">Pago en efectivo / Retiro en persona</option>
                     <option value="MercadoPago">Tarjeta de Crédito / Débito (Mercado Pago)</option>
                 </select>
             </div>
@@ -63,31 +65,37 @@
         </form>
     </div>
 
- <script>
-        // 1. INICIALIZAR MERCADO PAGO CON TU KEY (CORRECTA)
+    <script>
         const mp = new MercadoPago('APP_USR-2af2c397-2458-4b3e-92ca-d2a9982fdbd7', {
             locale: 'es-AR'
         });
 
         const resumenDiv = document.querySelector('#resumen-final');
-        const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
+        // Importante: No borrar el carrito aquí, solo leerlo
+        let carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
         let total = 0;
 
-        // Cargar resumen al iniciar
         document.addEventListener('DOMContentLoaded', () => {
+            renderizarResumen();
+        });
+
+        function renderizarResumen() {
             if(carrito.length === 0) {
-                resumenDiv.innerHTML = "<p>El carrito está vacío</p>";
+                resumenDiv.innerHTML = "<p>Tu carrito está vacío. <a href='index.html'>Volver a la tienda</a></p>";
+                document.querySelector('#boton-accion').disabled = true;
                 return;
             }
 
-            let html = "<h3>Tu Pedido:</h3><ul>";
+            total = 0;
+            let html = `<h3>Detalle de tu compra:</h3><ul>`;
             carrito.forEach(p => {
-                html += `<li>${p.titulo} - Talle: ${p.talla} (x${p.cantidad}) - $${(p.precio * p.cantidad).toLocaleString('es-AR')}</li>`;
-                total += p.precio * p.cantidad;
+                const subtotal = parseInt(p.precio) * p.cantidad;
+                html += `<li>- ${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${subtotal.toLocaleString('es-AR')}</li>`;
+                total += subtotal;
             });
-            html += `</ul><p><strong>Total a pagar: $${total.toLocaleString('es-AR')}</strong></p>`;
+            html += `</ul><p style="font-size: 1.2em;"><strong>TOTAL: $${total.toLocaleString('es-AR')}</strong></p>`;
             resumenDiv.innerHTML = html;
-        });
+        }
 
         function actualizarBoton() {
             const metodo = document.querySelector('#pago').value;
@@ -104,29 +112,40 @@
 
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const metodo = document.querySelector('#pago').value;
+            const metodoSelect = document.querySelector('#pago');
+            const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
             const nombre = document.querySelector('#nombre').value;
             const direccion = document.querySelector('#direccion').value;
 
-            if (metodo === "WhatsApp") {
-                enviarPorWhatsApp(nombre, direccion);
+            if (metodoSelect.value === "WhatsApp") {
+                enviarPorWhatsApp(nombre, direccion, metodoTexto);
             } else {
-                // Pasamos los datos por si quieres guardarlos luego
                 ejecutarMercadoPago();
             }
         });
 
-        function enviarPorWhatsApp(nombre, direccion) {
+        function enviarPorWhatsApp(nombre, direccion, metodo) {
             let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
-            mensaje += `*Nombre:* ${nombre}\n*Dirección:* ${direccion}\n\n*Productos:*\n`;
+            mensaje += `*Nombre:* ${nombre}\n`;
+            mensaje += `*Dirección:* ${direccion}\n`;
+            mensaje += `*Metodo de pago:* ${metodo}\n\n`;
+            mensaje += `*Productos:*\n`;
+            
             carrito.forEach(p => {
-                mensaje += `- ${p.titulo} (${p.talla}) x${p.cantidad}\n`;
+                mensaje += `- ${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${(parseInt(p.precio) * p.cantidad).toLocaleString('es-AR')}\n`;
             });
+            
             mensaje += `\n*TOTAL: $${total.toLocaleString('es-AR')}*`;
 
             const url = `https://api.whatsapp.com/send?phone=5491130103905&text=${encodeURIComponent(mensaje)}`;
+            
+            // Abrir WhatsApp
             window.open(url, '_blank');
+            
+            // Opcional: Solo limpiar el carrito DESPUÉS de enviar con éxito
             localStorage.removeItem('carrito_gruken');
+            alert("¡Pedido enviado! Muchas gracias.");
+            window.location.href = "index.html"; 
         }
 
         async function ejecutarMercadoPago() {
@@ -135,32 +154,22 @@
             btn.disabled = true;
 
             try {
-                // LLAMADA A TU API EN VERCEL (Ruta relativa)
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items: carrito })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Error en el servidor");
-                }
+                if (!response.ok) throw new Error("Error en el servidor");
 
                 const data = await response.json();
-
                 if (data.id) {
-                    // ABRE EL CHECKOUT DE MERCADO PAGO
                     mp.checkout({
                         preference: { id: data.id },
                         autoOpen: true
                     });
-                } else {
-                    throw new Error("No se pudo obtener el ID de pago");
                 }
-                
             } catch (error) {
-                console.error("Error detallado:", error);
                 alert("Hubo un problema: " + error.message);
             } finally {
                 btn.disabled = false;
