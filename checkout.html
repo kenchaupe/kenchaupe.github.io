@@ -163,7 +163,7 @@ const productosParaMP = carrito.map(p => ({
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productosParaMP })
+                    body: JSON.stringify({ items: carrito })
                 });
 
                 
