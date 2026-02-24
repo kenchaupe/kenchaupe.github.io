@@ -310,17 +310,6 @@ function toggleRecomendaciones(boton) {
     ventana.classList.toggle('mostrar-ventana');
 }
 
-// 2. Aparición automática después de 4 segundos
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        // Abrimos la primera ventana de recomendaciones que encuentre en la página
-        const primeraVentana = document.querySelector('.ventana-flotante-resenas');
-        if (primeraVentana) {
-            primeraVentana.classList.add('mostrar-ventana');
-        }
-    }, 4000); 
-});
-
 // 3. Cerrar si el usuario hace clic en cualquier otra parte de la pantalla
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.reputacion')) {

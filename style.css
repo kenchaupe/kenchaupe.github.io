@@ -1301,7 +1301,7 @@ th, td {
     bottom: 110%; /* Aparece arriba del botón */
     left: 50%;
     transform: translateX(-50%);
-    width: 400px;
+    width: 320px;
     background: white;
     border: 1px solid #ddd;
     border-radius: 12px;
