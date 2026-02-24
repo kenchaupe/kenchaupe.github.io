@@ -21,6 +21,7 @@ export default async function handler(req, res) {
                     unit_price: Number(p.precio),
                     currency_id: 'ARS'
                 })),
+                
                 // CAMBIO CLAVE: Quitamos "me2" para evitar el error de "collector active"
                 shipments: {
                     mode: "not_specified" 
