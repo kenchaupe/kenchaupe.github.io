@@ -1,5 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Variables de UI
+    const supabaseUrl = 'TU_URL_DE_SUPABASE';
+const supabaseKey = 'TU_ANON_KEY_DE_SUPABASE';
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function verificarStockReal(productoContenedor) {
+    const btnAgregar = productoContenedor.querySelector('.agregar-carrito');
+    const id = btnAgregar.getAttribute('data-id');
+    const talla = productoContenedor.querySelector('.chip.selected')?.getAttribute('data-valor');
+    const color = productoContenedor.querySelector('.swatch.selected')?.getAttribute('data-valor');
+
+    // Si aún no seleccionó ambos, no hacemos la consulta todavía
+    if (!talla || !color) return;
+
+    // Consultamos a Supabase
+    const { data, error } = await _supabase
+        .from('productos')
+        .select('stock')
+        .eq('id', id)
+        .eq('talla', talla)
+        .eq('color', color)
+        .single();
+
+    if (error) {
+        console.error("Error consultando stock:", error);
+        return;
+    }
+
+    if (data && data.stock <= 0) {
+        btnAgregar.disabled = true;
+        btnAgregar.textContent = "Agotado";
+        btnAgregar.style.backgroundColor = "#ccc";
+        btnAgregar.style.cursor = "not-allowed";
+    } else {
+        btnAgregar.disabled = false;
+        btnAgregar.textContent = "Agregar Al Carrito";
+        btnAgregar.style.backgroundColor = ""; // Vuelve al color original de tu CSS
+        btnAgregar.style.cursor = "pointer";
+    }
+}
+
     const carrito = document.querySelector('#lista-carrito tbody');
     const listaProductos = document.querySelector('#lista-1');
     const contenedorCarrito = document.querySelector('#carrito');
@@ -73,6 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.add('selected');
         }
 
+        // --- ESTO ES LO NUEVO ---
+        // Buscamos el contenedor del producto para saber qué ID y qué opciones tiene
+        const productoContenedor = e.target.closest('.item') || e.target.closest('.product-txt');
+        if (productoContenedor) {
+            verificarStockReal(productoContenedor);
+        }
+    
         // Para botones de cantidad (+/-)
         if (e.target.classList.contains('btn-cantidad')) {
             const input = e.target.parentElement.querySelector('.input-cantidad');
@@ -81,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.classList.contains('minus') && valor > 1) valor--;
             input.value = valor;
         }
+        
     });
 
     // --- FUNCIONES ---
@@ -149,8 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         
         carritoHTML();
+        // --- LLAMADA NUEVA ---
+    inicializarStockTienda(); 
+    
     }
 }
+
+
 
     function carritoHTML() {
         limpiarHTML();
@@ -319,4 +372,40 @@ document.addEventListener('click', (e) => {
     }
 });
 
+async function inicializarStockTienda() {
+    // 1. Traemos todos los productos y sus stocks de Supabase
+    const { data: productosBase, error } = await _supabase
+        .from('productos')
+        .select('id, stock');
 
+    if (error) {
+        console.error("Error al cargar stock inicial:", error);
+        return;
+    }
+
+    // 2. Agrupamos por ID para ver si queda ALGO de stock en alguna variante
+    const stockPorId = productosBase.reduce((acc, item) => {
+        acc[item.id] = (acc[item.id] || 0) + item.stock;
+        return acc;
+    }, {});
+
+    // 3. Buscamos todos los botones en el HTML
+    const botones = document.querySelectorAll('.agregar-carrito');
+
+    botones.forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        const totalStock = stockPorId[id] || 0;
+
+        // Si no hay stock en NINGUNA variante de este ID
+        if (totalStock <= 0) {
+            btn.disabled = true;
+            btn.textContent = "Sin Stock";
+            btn.style.backgroundColor = "#888"; // Un gris más oscuro
+            btn.style.cursor = "not-allowed";
+            
+            // Opcional: ponerle una opacidad a la imagen del producto
+            const card = btn.closest('.item') || btn.closest('.product-txt');
+            if (card) card.style.opacity = "0.6";
+        }
+    });
+}

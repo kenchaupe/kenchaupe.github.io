@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar Compra - Gruken</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+    
     <style>
         .checkout-container { max-width: 800px; margin: 50px auto; padding: 20px; font-family: Arial, sans-serif; }
         .form-group { margin-bottom: 15px; }
@@ -66,6 +68,10 @@
     </div>
 
     <script>
+        const supabaseUrl = 'TU_URL_DE_SUPABASE';
+const supabaseKey = 'TU_ANON_KEY_DE_SUPABASE';
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
         const mp = new MercadoPago('APP_USR-2af2c397-2458-4b3e-92ca-d2a9982fdbd7', {
             locale: 'es-AR'
         });
@@ -109,14 +115,35 @@
                 btn.classList.remove('btn-mp');
             }
         }
+async function actualizarStockEnBaseDeDatos() {
+    for (const p of carrito) {
+        const { error } = await _supabase.rpc('descontar_stock', {
+            producto_id: p.id,
+            talle_val: p.talla,
+            color_val: p.color,
+            cantidad_comprada: p.cantidad
+        });
 
+        if (error) {
+            console.error("Error actualizando stock de:", p.titulo, error);
+        }
+    }
+}
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const metodoSelect = document.querySelector('#pago');
             const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
             const nombre = document.querySelector('#nombre').value;
             const direccion = document.querySelector('#direccion').value;
 
+               // Bloquear botón para evitar clics dobles
+            const btn = document.querySelector('#boton-accion');
+            btn.disabled = true;
+            btn.innerHTML = "Procesando pedido...";
+
+               // 1. ACTUALIZAMOS EL STOCK EN SUPABASE
+            await actualizarStockEnBaseDeDatos();
             if (metodoSelect.value === "WhatsApp") {
                 enviarPorWhatsApp(nombre, direccion, metodoTexto);
             } else {
