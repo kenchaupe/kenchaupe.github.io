@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Gruken</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #333;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --light: #f4f4f4;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: var(--light); color: #333; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .header-admin { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--light); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        
+        .export-buttons { display: flex; gap: 10px; }
+        .btn-export { border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; display: flex; align-items: center; gap: 5px; }
+        .btn-excel { background: #1d6f42; }
+        .btn-pdf { background: #b30b00; }
+        .btn-export:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card.low-stock { border-left-color: var(--danger); }
+
+        .search-bar { margin-bottom: 20px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: var(--primary); color: white; }
+        
+        .stock-input { width: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .precio-input { width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .badge-danger { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; background: #ffebee; color: var(--danger); font-weight: bold; }
+        
+        .btn-update { background: var(--success); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-admin">
+            <div>
+                <h1><i class="fas fa-boxes"></i> Inventario Gruken</h1>
+            </div>
+            <div class="export-buttons">
+                <button onclick="exportarExcel()" class="btn-export btn-excel">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button onclick="exportarPDF()" class="btn-export btn-pdf">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-cards">
+            <div class="card" id="stat-total-prods">Cargando...</div>
+            <div class="card low-stock" id="stat-low-stock">Cargando...</div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="busqueda" placeholder="Buscar por nombre, talle o color..." onkeyup="filtrarProductos()">
+        </div>
+
+        <div id="tabla-inventario" style="max-height: 600px; overflow-y: auto;">
+            Cargando productos...
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Supabase extraída de archivos originales
+        const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
+        const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let productosLocal = []; // Para manejar exportaciones sin re-consultar
+
+        const pass = prompt("Introduce la clave de administrador:");
+        if (pass !== "k987654321y") { 
+            document.body.innerHTML = "<h1 style='text-align:center'>Acceso denegado</h1>";
+        } else {
+            cargarInventario();
+        }
+
+        async function cargarInventario() {
+            const { data, error } = await _supabase
+                .from('productos')
+                .select('*')
+                .order('titulo', { ascending: true });
+
+            if (error) return;
+            productosLocal = data;
+            renderizarTabla(data);
+            actualizarEstadisticas(data);
+        }
+
+        function renderizarTabla(productos) {
+            let html = `<table><thead><tr>
+                <th>Producto</th><th>Variante</th><th>Stock</th><th>Precio</th><th>Acción</th>
+            </tr></thead><tbody>`;
+
+            productos.forEach(p => {
+                html += `
+                    <tr class="fila-producto" data-search="${p.titulo} ${p.talla} ${p.color}">
+                        <td><strong>${p.titulo}</strong></td>
+                        <td>${p.talla} / ${p.color}</td>
+                        <td>
+                            <input type="number" id="stock-${p.id}-${p.talla}-${p.color}" class="stock-input" value="${p.stock}">
+                            ${p.stock < 5 ? '<br><span class="badge-danger">Crítico</span>' : ''}
+                        </td>
+                        <td><input type="number" id="precio-${p.id}-${p.talla}-${p.color}" class="precio-input" value="${p.precio}"></td>
+                        <td>
+                            <button class="btn-update" onclick="actualizarStock(event, '${p.id}', '${p.talla}', '${p.color}')">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('tabla-inventario').innerHTML = html + '</tbody></table>';
+        }
+
+        async function actualizarStock(event, id, talla, color) {
+            const nuevoStock = document.getElementById(`stock-${id}-${talla}-${color}`).value;
+            const nuevoPrecio = document.getElementById(`precio-${id}-${talla}-${color}`).value;
+
+            const { error } = await _supabase
+                .from('productos')
+                .update({ stock: parseInt(nuevoStock), precio: parseInt(nuevoPrecio) })
+                .eq('id', id).eq('talla', talla).eq('color', color);
+
+            if (!error) {
+                const btn = event.target.closest('button');
+                btn.style.background = "#2ecc71";
+                setTimeout(() => btn.style.background = "#28a745", 2000);
+                cargarInventario(); // Refrescar datos locales
+            }
+        }
+
+        function filtrarProductos() {
+            const term = document.getElementById('busqueda').value.toLowerCase();
+            document.querySelectorAll('.fila-producto').forEach(fila => {
+                fila.style.display = fila.dataset.search.toLowerCase().includes(term) ? "" : "none";
+            });
+        }
+
+        function actualizarEstadisticas(prods) {
+            document.getElementById('stat-total-prods').innerHTML = `<strong>Total Variantes:</strong> ${prods.length}`;
+            document.getElementById('stat-low-stock').innerHTML = `<strong>⚠️ Bajo Stock:</strong> ${prods.filter(p => p.stock < 5).length}`;
+        }
+
+        // --- FUNCIONES DE EXPORTACIÓN ---
+
+        function exportarExcel() {
+            const dataExcel = productosLocal.map(p => ({
+                Producto: p.titulo,
+                Talla: p.talla,
+                Color: p.color,
+                Stock: p.stock,
+                Precio: p.precio
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+            XLSX.writeFile(workbook, "Inventario_Gruken.xlsx");
+        }
+
+        function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text("Reporte de Inventario - Gruken", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 22);
+
+            const body = productosLocal.map(p => [p.titulo, `${p.talla} / ${p.color}`, p.stock, `$${p.precio}`]);
+            
+            doc.autoTable({
+                startY: 30,
+                head: [['Producto', 'Variante', 'Stock', 'Precio']],
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [51, 51, 51] }
+            });
+
+            doc.save("Inventario_Gruken.pdf");
+        }
+    </script>
+</body>
+</html>

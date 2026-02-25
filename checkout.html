@@ -68,16 +68,15 @@
     </div>
 
     <script>
-        const supabaseUrl = 'TU_URL_DE_SUPABASE';
-const supabaseKey = 'TU_ANON_KEY_DE_SUPABASE';
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
+        const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         const mp = new MercadoPago('APP_USR-2af2c397-2458-4b3e-92ca-d2a9982fdbd7', {
             locale: 'es-AR'
         });
 
         const resumenDiv = document.querySelector('#resumen-final');
-        // Importante: No borrar el carrito aquí, solo leerlo
         let carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
         let total = 0;
 
@@ -115,20 +114,22 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
                 btn.classList.remove('btn-mp');
             }
         }
-async function actualizarStockEnBaseDeDatos() {
-    for (const p of carrito) {
-        const { error } = await _supabase.rpc('descontar_stock', {
-            producto_id: p.id,
-            talle_val: p.talla,
-            color_val: p.color,
-            cantidad_comprada: p.cantidad
-        });
 
-        if (error) {
-            console.error("Error actualizando stock de:", p.titulo, error);
+        async function actualizarStockEnBaseDeDatos() {
+            for (const p of carrito) {
+                const { error } = await _supabase.rpc('descontar_stock', {
+                    producto_id: p.id,
+                    talle_val: p.talla,
+                    color_val: p.color,
+                    cantidad_comprada: p.cantidad
+                });
+
+                if (error) {
+                    console.error("Error actualizando stock de:", p.titulo, error);
+                }
+            }
         }
-    }
-}
+
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -136,22 +137,30 @@ async function actualizarStockEnBaseDeDatos() {
             const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
             const nombre = document.querySelector('#nombre').value;
             const direccion = document.querySelector('#direccion').value;
+            
+            // CORRECCIÓN: Usar la variable "carrito" (no articulosCarrito)
+            const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
 
-               // Bloquear botón para evitar clics dobles
+            // Bloquear botón para evitar clics dobles
             const btn = document.querySelector('#boton-accion');
             btn.disabled = true;
             btn.innerHTML = "Procesando pedido...";
 
-               // 1. ACTUALIZAMOS EL STOCK EN SUPABASE
+            // 1. REGISTRAMOS LA VENTA
+            await registrarVenta(nombre, direccion, metodoTexto, totalCalculado);
+            
+            // 2. ACTUALIZAMOS EL STOCK EN SUPABASE
             await actualizarStockEnBaseDeDatos();
+            
             if (metodoSelect.value === "WhatsApp") {
-                enviarPorWhatsApp(nombre, direccion, metodoTexto);
+                enviarPorWhatsApp(nombre, direccion, metodoTexto, totalCalculado);
             } else {
                 ejecutarMercadoPago();
             }
         });
 
-        function enviarPorWhatsApp(nombre, direccion, metodo) {
+        // CORRECCIÓN: Recibir el total calculado como parámetro
+        function enviarPorWhatsApp(nombre, direccion, metodo, totalCalc) {
             let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
             mensaje += `*Nombre:* ${nombre}\n`;
             mensaje += `*Dirección:* ${direccion}\n`;
@@ -162,17 +171,31 @@ async function actualizarStockEnBaseDeDatos() {
                 mensaje += `- ${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${(parseInt(p.precio) * p.cantidad).toLocaleString('es-AR')}\n`;
             });
             
-            mensaje += `\n*TOTAL: $${total.toLocaleString('es-AR')}*`;
+            mensaje += `\n*TOTAL: $${totalCalc.toLocaleString('es-AR')}*`;
 
             const url = `https://api.whatsapp.com/send?phone=5491130103905&text=${encodeURIComponent(mensaje)}`;
             
             // Abrir WhatsApp
             window.open(url, '_blank');
             
-            // Opcional: Solo limpiar el carrito DESPUÉS de enviar con éxito
+            // Limpiar el carrito DESPUÉS de enviar con éxito
             localStorage.removeItem('carrito_gruken');
             alert("¡Pedido enviado! Muchas gracias.");
             window.location.href = "index.html"; 
+        }
+        
+        async function registrarVenta(nombre, direccion, metodo, totalVenta) {
+            const { error } = await _supabase
+                .from('ventas')
+                .insert([{
+                    cliente: nombre,
+                    direccion: direccion,
+                    metodo_pago: metodo,
+                    total: totalVenta,
+                    articulos: carrito // Guardamos todo el array de productos
+                }]);
+
+            if (error) console.error("Error al registrar venta:", error);
         }
 
         async function ejecutarMercadoPago() {
@@ -181,6 +204,7 @@ async function actualizarStockEnBaseDeDatos() {
             btn.disabled = true;
 
             try {
+                // Requiere un endpoint backend que genere la preferencia
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
