@@ -303,3 +303,37 @@ window.toggleRecomendaciones = function(boton) {
     // 3. Alternar la actual
     if (ventana) ventana.classList.toggle('mostrar-ventana');
 };
+
+// --- LÓGICA DEL INVENTARIO FLOTANTE (TECLA X) ---
+document.addEventListener('keydown', (e) => {
+    // Evita que se abra si estás escribiendo texto en algún formulario
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    // Detecta la tecla "x" o "X"
+    if (e.key.toLowerCase() === 'x') {
+        toggleInventarioFlotante();
+    }
+});
+
+function toggleInventarioFlotante() {
+    let modal = document.getElementById('modal-inventario');
+    
+    // Si no existe, creamos la ventana flotante
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-inventario';
+        modal.classList.add('activo');
+        modal.innerHTML = `
+            <div class="inventario-flotante">
+                <button class="cerrar-inventario" onclick="toggleInventarioFlotante()">
+                    <i class="fa fa-times"></i>
+                </button>
+                <iframe src="admin.html" class="iframe-inventario"></iframe>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } else {
+        // Si ya existe, alternamos su visibilidad
+        modal.classList.toggle('activo');
+    }
+}
