@@ -3,286 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Gruken</title>
+    <title>Panel de Administración</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root {
-            --primary: #333;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --info: #17a2b8;
-            --light: #f4f4f4;
+            --primary: #333; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --light: #f4f4f4;
         }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 20px; 
-            background: transparent !important; 
-            color: #333; 
-            margin: 0; 
+            padding: 10px; background: #f4f4f4 !important; color: #333; margin: 0; 
         }
         .container { 
-            max-width: 1200px; /* Un poco más ancho para que entren todas las columnas */
-            margin: auto; 
-            background: rgba(255, 255, 255, 0.7) !important; 
-            backdrop-filter: blur(10px);
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            max-width: 1200px; margin: auto; background: #ffffff !important; 
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
         }
-        .header-admin { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--light); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+
+        /* --- MENÚ DE PESTAÑAS Y HERRAMIENTAS --- */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--light); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .tabs { display: flex; gap: 10px; }
+        .tab-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; color: #555; }
+        .tab-btn.active { background: var(--primary); color: white; }
         
-        .export-buttons { display: flex; gap: 10px; }
-        .btn-export { border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; display: flex; align-items: center; gap: 5px; }
+        .toolbar-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.3s; }
+        .btn:hover { opacity: 0.8; }
+        .btn-add { background: #007bff; }
         .btn-excel { background: #1d6f42; }
         .btn-pdf { background: #b30b00; }
-        .btn-logout { background: #dc3545; }
-        .btn-export:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn-logout { background: var(--danger); }
 
-        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .card { padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card.low-stock { border-left-color: var(--danger); }
+        /* --- VISTAS (Pestañas) --- */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
 
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); background: #f9f9f9; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .search-bar { margin-bottom: 20px; display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
 
-        /* Estilos de la tabla y los inputs */
+        /* --- TABLAS Y DISEÑO RESPONSIVE --- */
         .table-responsive { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 900px; }
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
         th { background: var(--primary); color: white; font-size: 14px; }
         
-        .form-control { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
-        .img-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 5px; vertical-align: middle; border: 1px solid #ddd; }
-        
-        .col-img { width: 150px; }
-        .col-titulo { width: 200px; font-weight: bold; }
-        .col-talle { width: 80px; }
-        .col-color { width: 100px; }
-        .col-stock { width: 80px; text-align: center; }
-        .col-precio { width: 100px; }
-        
-        .badge-danger { display: inline-block; margin-top: 5px; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #ffebee; color: var(--danger); font-weight: bold; }
-        
-        .btn-update { background: var(--success); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; gap: 5px; align-items: center; width: 100%; justify-content: center; }
-        .btn-update:hover { background: #218838; }
+        .img-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 5px; border: 1px solid #ddd; }
+        .btn-update { background: var(--success); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; }
+
+        /* --- MODAL NUEVO PRODUCTO --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        .modal-content h3 { margin-top: 0; text-align: center; }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .top-bar { flex-direction: column; align-items: stretch; }
+            .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+            .toolbar-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+            
+            thead { display: none; }
+            table, tbody, tr, td { display: block; width: 100%; }
+            tr { background: #fff; margin-bottom: 15px; border-radius: 8px; padding: 10px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+            td { text-align: left; padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; flex-direction: column; }
+            td::before { content: attr(data-label); font-weight: bold; font-size: 12px; color: #888; margin-bottom: 4px; }
+            
+            body::-webkit-scrollbar, .table-responsive::-webkit-scrollbar { display: none; }
+            body, .table-responsive { -ms-overflow-style: none; scrollbar-width: none; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="overlay-login" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9998;"></div>
-
-    <div id="pantalla-login" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); padding: 30px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 9999; text-align: center; color: white;">
-        <h2 style="color: white; margin-bottom: 20px;">🔐 Acceso Administrativo</h2>
-        <input type="email" id="email-admin" placeholder="Tu correo de Supabase" style="width: 90%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; font-family: inherit; background: rgba(255, 255, 255, 0.9); color: #333;">
-        <input type="password" id="pass-admin" placeholder="Tu contraseña" style="width: 90%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; font-family: inherit; background: rgba(255, 255, 255, 0.9); color: #333;">
-        <button onclick="iniciarSesion()" style="padding: 12px 20px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; width: 95%; margin-top: 15px; font-size: 16px; font-weight: bold; transition: 0.3s;">Entrar al Inventario</button>
+    <div id="pantalla-login" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #222; z-index: 10000; display: flex; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px;">
+            <h2>🔐 Acceso</h2>
+            <input type="email" id="email-admin" placeholder="Correo" style="margin-bottom:10px;">
+            <input type="password" id="pass-admin" placeholder="Contraseña" style="margin-bottom:15px;">
+            <button onclick="iniciarSesion()" class="btn btn-update" style="padding:12px;">Entrar</button>
+        </div>
     </div>
 
-    <div id="panel-admin" style="display: block;">
-        <div class="container">
-            <div class="header-admin">
-                <div>
-                    <h1><i class="fas fa-boxes"></i> Inventario Gruken</h1>
-                </div>
-                <div class="export-buttons">
-                    <button onclick="exportarExcel()" class="btn-export btn-excel">
-                        <i class="fas fa-file-excel"></i> Excel
-                    </button>
-                    <button onclick="exportarPDF()" class="btn-export btn-pdf">
-                        <i class="fas fa-file-pdf"></i> PDF
-                    </button>
-                    <button onclick="cerrarSesion()" class="btn-export btn-logout">
-                        <i class="fas fa-sign-out-alt"></i> Salir
-                    </button>
-                </div>
+    <div class="container">
+        <div class="top-bar">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="cambiarPestana('inventario', this)">📦 Inventario</button>
+                <button class="tab-btn" onclick="cambiarPestana('ventas', this)">📈 Ventas</button>
             </div>
-
-            <div class="stats-cards">
-                <div class="card" id="stat-total-prods">Esperando acceso...</div>
-                <div class="card low-stock" id="stat-low-stock">Esperando acceso...</div>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" id="busqueda" placeholder="Buscar por nombre, talle, color..." onkeyup="filtrarProductos()">
-            </div>
-
-            <div class="table-responsive">
-                <div id="tabla-inventario" style="max-height: 600px; overflow-y: auto;">
-                    <p style="text-align: center; padding: 20px; color: #666;">Inicia sesión para ver y editar los productos.</p>
-                </div>
+            <div class="toolbar-buttons">
+                <button onclick="abrirModalProducto()" class="btn btn-add"><i class="fas fa-plus"></i> Nuevo</button>
+                <button onclick="exportarExcel()" class="btn btn-excel"><i class="fas fa-file-excel"></i></button>
+                <button onclick="exportarPDF()" class="btn btn-pdf"><i class="fas fa-file-pdf"></i></button>
+                <button onclick="cerrarSesion()" class="btn btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</button>
             </div>
         </div>
-    </div> 
+
+        <div id="vista-inventario" class="view-section active">
+            <div class="stats-cards">
+                <div class="card" id="stat-total-prods">Total: -</div>
+                <div class="card" id="stat-low-stock" style="border-color:var(--danger);">Bajo Stock: -</div>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="busqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+            </div>
+            <div class="table-responsive">
+                <div id="tabla-inventario">Cargando...</div>
+            </div>
+        </div>
+
+        <div id="vista-ventas" class="view-section">
+            <div class="search-bar">
+                <input type="text" id="busqueda-ventas" placeholder="Buscar por cliente o método..." onkeyup="filtrarVentas()">
+            </div>
+            <div class="table-responsive">
+                <div id="tabla-historial-ventas">Cargando ventas...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-nuevo" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Agregar Producto</h3>
+            <input type="text" id="add-id" placeholder="ID (Ej: vestido-01)">
+            <input type="text" id="add-nombre" placeholder="Nombre (Ej: Vestido Lino)">
+            <input type="text" id="add-talle" placeholder="Talle">
+            <input type="text" id="add-color" placeholder="Color">
+            <input type="number" id="add-stock" placeholder="Stock Inicial" value="10">
+            <input type="number" id="add-precio" placeholder="Precio ($)">
+            <input type="text" id="add-imagen" placeholder="URL de la Imagen">
+            <button onclick="guardarNuevoProducto()" id="btn-guardar-nuevo" class="btn btn-update">Guardar Producto</button>
+            <button onclick="cerrarModalProducto()" class="btn" style="background:#888; color:white; justify-content:center;">Cancelar</button>
+        </div>
+    </div>
     
     <script>
-        // Configuración de Supabase 
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         let productosLocal = []; 
+        let ventasLocal = [];
 
-        // --- FUNCIÓN DE LOGIN Y CERRAR SESIÓN ---
+        // --- NAVEGACIÓN DE PESTAÑAS ---
+        function cambiarPestana(vista, btn) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`vista-${vista}`).classList.add('active');
+            btn.classList.add('active');
+
+            if (vista === 'ventas' && ventasLocal.length === 0) {
+                cargarVentas();
+            }
+        }
+
+        // --- LOGIN Y SESIÓN ---
         async function iniciarSesion() {
             const email = document.getElementById('email-admin').value;
             const password = document.getElementById('pass-admin').value;
-
-            const { data, error } = await _supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
 
             if (error) {
-                alert("Acceso denegado: Correo o contraseña incorrectos. ❌");
+                alert("Acceso denegado ❌");
             } else {
                 document.getElementById('pantalla-login').style.display = 'none';
-                document.getElementById('overlay-login').style.display = 'none'; 
-                
-                document.getElementById('tabla-inventario').innerHTML = "<p style='text-align: center;'>Cargando inventario...</p>";
                 cargarInventario();
             }
         }
 
         async function cerrarSesion() {
             await _supabase.auth.signOut();
-            localStorage.removeItem('admin'); 
             window.location.replace('index.html'); 
         }
 
-        // --- CARGA Y RENDERIZADO ---
+        // --- LÓGICA DE INVENTARIO ---
         async function cargarInventario() {
-            const { data, error } = await _supabase
-                .from('productos')
-                .select('*')
-                .order('titulo', { ascending: true });
-
-            if (error) return;
+            const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
+            if (error) {
+                document.getElementById('tabla-inventario').innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+                return;
+            }
             productosLocal = data;
-            renderizarTabla(data);
-            actualizarEstadisticas(data);
+            renderizarInventario(data);
         }
 
-        function renderizarTabla(productos) {
+        function renderizarInventario(productos) {
             let html = `<table><thead><tr>
-                <th>Imagen (Ruta/URL)</th>
-                <th>Nombre del Producto</th>
-                <th>Talle</th>
-                <th>Color</th>
-                <th>Stock / Cant.</th>
-                <th>Precio ($)</th>
-                <th>Acción</th>
+                <th>Imagen</th><th>Producto</th><th>Talle</th><th>Color</th><th>Stock</th><th>Precio</th><th>Acción</th>
             </tr></thead><tbody>`;
 
             productos.forEach((p, index) => {
-                // Generamos un ID único y limpio para cada fila para no tener problemas con los espacios en los talles o colores
-                const rowId = `row-${index}`;
-                // Aseguramos que la propiedad imagen exista para no dar error de "undefined"
-                const imagenStr = p.imagen ? p.imagen : '';
-
+                const img = p.imagen_url || '';
+                const nom = p.nombre || '';
                 html += `
-                    <tr class="fila-producto" data-search="${p.titulo} ${p.talla} ${p.color}">
-                        
-                        <td class="col-img">
-                            <div style="display:flex; align-items:center;">
-                                <img src="${imagenStr}" onerror="this.src='https://via.placeholder.com/40?text=IMG'" class="img-preview">
-                                <input type="text" id="img-${rowId}" class="form-control" value="${imagenStr}" placeholder="img/foto.jpg">
-                            </div>
+                    <tr class="fila-producto" data-search="${nom} ${p.talla} ${p.color}">
+                        <td data-label="🖼️ Imagen">
+                            <div style="display:flex; gap:5px;"><img src="${img}" class="img-preview">
+                            <input type="text" id="img-${index}" value="${img}"></div>
                         </td>
-                        
-                        <td class="col-titulo">
-                            <input type="text" id="titulo-${rowId}" class="form-control" value="${p.titulo}">
-                        </td>
-                        
-                        <td class="col-talle">
-                            <input type="text" id="talla-${rowId}" class="form-control" value="${p.talla}">
-                        </td>
-                        
-                        <td class="col-color">
-                            <input type="text" id="color-${rowId}" class="form-control" value="${p.color}">
-                        </td>
-                        
-                        <td class="col-stock">
-                            <input type="number" id="stock-${rowId}" class="form-control" value="${p.stock}">
-                            ${p.stock < 5 ? '<span class="badge-danger">Crítico</span>' : ''}
-                        </td>
-                        
-                        <td class="col-precio">
-                            <input type="number" id="precio-${rowId}" class="form-control" value="${p.precio}">
-                        </td>
-                        
-                        <td>
-                            <button class="btn-update" onclick="actualizarProducto(event, '${rowId}', '${p.id}', '${p.talla}', '${p.color}')">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
+                        <td data-label="🏷️ Nombre"><input type="text" id="nom-${index}" value="${nom}"></td>
+                        <td data-label="📏 Talle"><input type="text" id="tal-${index}" value="${p.talla}"></td>
+                        <td data-label="🎨 Color"><input type="text" id="col-${index}" value="${p.color}"></td>
+                        <td data-label="📦 Stock"><input type="number" id="stk-${index}" value="${p.stock}"></td>
+                        <td data-label="💲 Precio"><input type="number" id="pre-${index}" value="${p.precio}"></td>
+                        <td data-label="⚙️ Acción">
+                            <button class="btn-update" onclick="actualizarProducto(event, ${index}, '${p.id_unico}')"><i class="fas fa-save"></i> Guardar</button>
                         </td>
                     </tr>`;
             });
             document.getElementById('tabla-inventario').innerHTML = html + '</tbody></table>';
+            
+            document.getElementById('stat-total-prods').innerHTML = `📦 <strong>Total:</strong> ${productos.length}`;
+            document.getElementById('stat-low-stock').innerHTML = `⚠️ <strong>Bajo Stock:</strong> ${productos.filter(p=>p.stock<5).length}`;
         }
 
-        // --- ACTUALIZACIÓN DE DATOS ---
-        async function actualizarProducto(event, rowId, idSupabase, oldTalla, oldColor) {
-            // Obtenemos todos los valores nuevos de los inputs usando el rowId
-            const nuevaImagen = document.getElementById(`img-${rowId}`).value;
-            const nuevoTitulo = document.getElementById(`titulo-${rowId}`).value;
-            const nuevaTalla = document.getElementById(`talla-${rowId}`).value;
-            const nuevoColor = document.getElementById(`color-${rowId}`).value;
-            const nuevoStock = document.getElementById(`stock-${rowId}`).value;
-            const nuevoPrecio = document.getElementById(`precio-${rowId}`).value;
-
-            // Cambiamos visualmente el botón a "Guardando..."
+        async function actualizarProducto(event, idx, idUnico) {
             const btn = event.target.closest('button');
-            const btnOriginalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
-            btn.style.background = "#ffc107";
-            btn.style.color = "#000";
-
-            // Enviamos todo a Supabase
-            const { error } = await _supabase
-                .from('productos')
-                .update({ 
-                    imagen: nuevaImagen,
-                    titulo: nuevoTitulo, 
-                    talla: nuevaTalla,
-                    color: nuevoColor,
-                    stock: parseInt(nuevoStock), 
-                    precio: parseInt(nuevoPrecio) 
-                })
-                // BUSCAMOS LA FILA USANDO LOS DATOS VIEJOS POR SI ACASO EL USUARIO CAMBIÓ EL TALLE O EL COLOR
-                .eq('id', idSupabase)
-                .eq('talla', oldTalla)
-                .eq('color', oldColor);
+            const txtOriginal = btn.innerHTML;
+            btn.innerHTML = '...';
+            
+            const { error } = await _supabase.from('productos').update({ 
+                imagen_url: document.getElementById(`img-${idx}`).value,
+                nombre: document.getElementById(`nom-${idx}`).value, 
+                talla: document.getElementById(`tal-${idx}`).value,
+                color: document.getElementById(`col-${idx}`).value,
+                stock: parseInt(document.getElementById(`stk-${idx}`).value), 
+                precio: parseInt(document.getElementById(`pre-${idx}`).value) 
+            }).eq('id_unico', parseInt(idUnico)).select();
 
             if (!error) {
-                // Éxito
-                btn.style.background = "#2ecc71";
-                btn.style.color = "#fff";
-                btn.innerHTML = '<i class="fas fa-check"></i> Listo';
-                
-                setTimeout(() => {
-                    cargarInventario(); // Recargamos la tabla para asentar los nuevos datos base
-                }, 1000);
+                btn.style.background = "#2ecc71"; btn.innerHTML = 'Listo';
+                setTimeout(() => { btn.style.background = "var(--success)"; btn.innerHTML = txtOriginal; }, 1500);
             } else {
-                // Error
-                btn.style.background = "#dc3545";
-                btn.style.color = "#fff";
-                btn.innerHTML = '<i class="fas fa-times"></i> Error';
-                alert("Hubo un error al guardar: " + error.message);
-                setTimeout(() => {
-                    btn.style.background = "#28a745";
-                    btn.innerHTML = btnOriginalHTML;
-                }, 2000);
+                alert("Error al actualizar: " + error.message);
+                btn.innerHTML = txtOriginal;
             }
         }
 
-        // --- OTRAS FUNCIONES ---
         function filtrarProductos() {
             const term = document.getElementById('busqueda').value.toLowerCase();
             document.querySelectorAll('.fila-producto').forEach(fila => {
@@ -290,45 +251,111 @@
             });
         }
 
-        function actualizarEstadisticas(prods) {
-            document.getElementById('stat-total-prods').innerHTML = `<strong>Total Variantes:</strong> ${prods.length}`;
-            document.getElementById('stat-low-stock').innerHTML = `<strong>⚠️ Bajo Stock:</strong> ${prods.filter(p => p.stock < 5).length}`;
+        // --- AGREGAR NUEVO PRODUCTO ---
+        function abrirModalProducto() { document.getElementById('modal-nuevo').style.display = 'flex'; }
+        function cerrarModalProducto() { document.getElementById('modal-nuevo').style.display = 'none'; }
+
+        async function guardarNuevoProducto() {
+            const btn = document.getElementById('btn-guardar-nuevo');
+            btn.innerHTML = "Guardando...";
+            btn.disabled = true;
+
+            const nId = document.getElementById('add-id').value;
+            const nNombre = document.getElementById('add-nombre').value;
+            const nTalle = document.getElementById('add-talle').value;
+            const nColor = document.getElementById('add-color').value;
+            const nStock = document.getElementById('add-stock').value;
+            const nPrecio = document.getElementById('add-precio').value;
+            const nImg = document.getElementById('add-imagen').value;
+
+            const { error } = await _supabase.from('productos').insert([{
+                id: nId, nombre: nNombre, talla: nTalle, color: nColor, 
+                stock: parseInt(nStock), precio: parseInt(nPrecio), imagen_url: nImg
+            }]);
+
+            if (error) {
+                alert("Error al guardar: Asegúrate de tener permisos 'INSERT' en Supabase.\n" + error.message);
+            } else {
+                alert("¡Producto agregado con éxito!");
+                cerrarModalProducto();
+                cargarInventario(); // Recargar tabla
+            }
+            btn.innerHTML = "Guardar Producto";
+            btn.disabled = false;
         }
 
+        // --- LÓGICA DE VENTAS ---
+        async function cargarVentas() {
+            document.getElementById('tabla-historial-ventas').innerHTML = "Cargando datos...";
+            const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
+            
+            if (error) {
+                document.getElementById('tabla-historial-ventas').innerHTML = `<p style="color:red;">Error: ${error.message}<br>¿Tienes la tabla 'ventas' y permisos SELECT habilitados?</p>`;
+                return;
+            }
+            ventasLocal = data;
+            renderizarVentas(data);
+        }
+
+        function renderizarVentas(ventas) {
+            if(ventas.length === 0) {
+                document.getElementById('tabla-historial-ventas').innerHTML = "<p>Aún no hay ventas registradas.</p>";
+                return;
+            }
+
+            let html = `<table><thead><tr>
+                <th>ID</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Total</th><th>Detalle</th>
+            </tr></thead><tbody>`;
+
+            ventas.forEach((v, idx) => {
+                // Formateamos la fecha si existe "created_at"
+                let fecha = v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A';
+                
+                // Formateamos los artículos si están guardados como texto JSON
+                let articulosHTML = "Ver detalle";
+                if(v.articulos) {
+                    try {
+                        let arts = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
+                        articulosHTML = arts.map(a => `${a.cantidad}x ${a.titulo} (${a.color}/${a.talla})`).join('<br>');
+                    } catch(e) { articulosHTML = v.articulos; }
+                }
+
+                html += `
+                    <tr class="fila-venta" data-search="${v.cliente} ${v.metodo_pago}">
+                        <td data-label="ID Venta">#${v.id || idx}</td>
+                        <td data-label="📅 Fecha">${fecha}</td>
+                        <td data-label="👤 Cliente"><strong>${v.cliente || 'Anónimo'}</strong><br><small>${v.direccion || ''}</small></td>
+                        <td data-label="💳 Método">${v.metodo_pago || 'N/A'}</td>
+                        <td data-label="💰 Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
+                        <td data-label="🛒 Artículos"><small>${articulosHTML}</small></td>
+                    </tr>`;
+            });
+            document.getElementById('tabla-historial-ventas').innerHTML = html + '</tbody></table>';
+        }
+
+        function filtrarVentas() {
+            const term = document.getElementById('busqueda-ventas').value.toLowerCase();
+            document.querySelectorAll('.fila-venta').forEach(fila => {
+                fila.style.display = fila.dataset.search.toLowerCase().includes(term) ? "" : "none";
+            });
+        }
+
+        // --- EXPORTAR ---
         function exportarExcel() {
             const dataExcel = productosLocal.map(p => ({
-                Producto: p.titulo,
-                Talla: p.talla,
-                Color: p.color,
-                Stock: p.stock,
-                Precio: p.precio,
-                Imagen: p.imagen
+                Producto: p.nombre, Talla: p.talla, Color: p.color, Stock: p.stock, Precio: p.precio
             }));
-            const worksheet = XLSX.utils.json_to_sheet(dataExcel);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
-            XLSX.writeFile(workbook, "Inventario_Gruken.xlsx");
+            const ws = XLSX.utils.json_to_sheet(dataExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+            XLSX.writeFile(wb, "Inventario_Gruken.xlsx");
         }
-
         function exportarPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.text("Reporte de Inventario - Gruken", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 22);
-
-            const body = productosLocal.map(p => [p.titulo, `${p.talla} / ${p.color}`, p.stock, `$${p.precio}`]);
-            
-            doc.autoTable({
-                startY: 30,
-                head: [['Producto', 'Variante', 'Stock', 'Precio']],
-                body: body,
-                theme: 'striped',
-                headStyles: { fillColor: [51, 51, 51] }
-            });
-
-            doc.save("Inventario_Gruken.pdf");
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.text("Inventario - Gruken", 14, 15);
+            const body = productosLocal.map(p => [p.nombre, `${p.talla}/${p.color}`, p.stock, `$${p.precio}`]);
+            doc.autoTable({ startY: 25, head: [['Producto', 'Variante', 'Stock', 'Precio']], body: body });
+            doc.save("Inventario.pdf");
         }
     </script>
 </body>

@@ -1455,3 +1455,25 @@ th, td {
     background: rgba(0, 0, 0, 0.9);
     transform: translateY(-3px);
 }
+
+/* ======================================================== */
+        /* OCULTAR BARRAS DE SCROLL EN CELULARES (PERMITE DESLIZAR) */
+        /* ======================================================== */
+        @media (max-width: 768px) {
+            /* Ocultar para Chrome, Safari y Opera */
+            body::-webkit-scrollbar,
+            .table-responsive::-webkit-scrollbar,
+            #tabla-inventario::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Ocultar para IE, Edge y Firefox */
+            body,
+            .table-responsive,
+            #tabla-inventario {
+                -ms-overflow-style: none;  /* IE y Edge */
+                scrollbar-width: none;  /* Firefox */
+            }
+        }
+
+        

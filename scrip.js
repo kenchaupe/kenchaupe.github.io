@@ -252,40 +252,80 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // FUNCIONES GLOBALES (INVENTARIO Y RESEÑAS)
 // ==========================================
+async function inicializarStockTienda() {
+    console.log("Iniciando sincronización general de la tienda...");
+    
+    try {
+        // Obtenemos solo los campos necesarios de Supabase para mayor velocidad
+        const { data, error } = await _supabase.from('productos').select('id, stock, nombre, precio, imagen_url');
+        if (error) throw error;
 
+        // 1. Agrupamos los datos (nombre, precio, imagen y suma de stock) usando .reduce()
+        const productoInfo = data.reduce((map, item) => {
+            const limpiaId = item.id.trim().toLowerCase();
+            
+            // Si es la primera vez que vemos este ID, inicializamos sus datos
+            if (!map[limpiaId]) {
+                map[limpiaId] = {
+                    nombre: item.nombre,
+                    precio: item.precio,
+                    imagen: item.imagen_url,
+                    stockTotal: 0
+                };
+            }
+            
+            // Sumamos el stock (útil si hay variaciones del mismo ID)
+            map[limpiaId].stockTotal += item.stock;
+            return map;
+        }, {});
+
+        // 2. Buscamos cada producto en el HTML y actualizamos su tarjeta
+        document.querySelectorAll('.agregar-carrito').forEach(btn => {
+            const idHtml = btn.getAttribute('data-id').trim().toLowerCase();
+            const datosBD = productoInfo[idHtml];
+
+            // Si el producto existe en Supabase, actualizamos la web
+            if (datosBD) {
+                const contenedorTexto = btn.closest('.product-txt');
+                
+                if (contenedorTexto) {
+                    // --- A) ACTUALIZAR NOMBRE ---
+                    const titulo = contenedorTexto.querySelector('h3');
+                    if (titulo && datosBD.nombre) titulo.textContent = datosBD.nombre;
+
+                    // --- B) ACTUALIZAR PRECIO ---
+                    const precioSpan = contenedorTexto.querySelector('.precio');
+                    if (precioSpan && datosBD.precio) {
+                        precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
+                    }
+
+                    // --- C) ACTUALIZAR IMAGEN ---
+                    const contenedorPrincipal = contenedorTexto.parentElement;
+                    if (contenedorPrincipal) {
+                        const primeraImagen = contenedorPrincipal.querySelector('.swiper-wrapper img');
+                        if (primeraImagen && datosBD.imagen) primeraImagen.src = datosBD.imagen;
+                    }
+                }
+
+                // --- D) LÓGICA DE STOCK (AGOTADO) ---
+                const sinStock = datosBD.stockTotal <= 0;
+                
+                btn.disabled = sinStock;
+                btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
+                btn.style.backgroundColor = sinStock ? "#ff0000" : "";
+                btn.style.opacity = sinStock ? "0.8" : "1";
+                btn.style.pointerEvents = sinStock ? "none" : "auto";
+            }
+        });
+
+    } catch (error) {
+        console.error("Error al sincronizar la tienda con Supabase:", error);
+    }
+}
 /**
  * Revisa el stock general al cargar la página unificando variables de ID
  */
-async function inicializarStockTienda() {
-    console.log("Iniciando validación general de stock...");
-    const { data: productosBase, error } = await _supabase.from('productos').select('id, stock');
-    if (error) return;
 
-    const stockMap = {};
-    productosBase.forEach(item => {
-        const limpiaId = item.id.trim().toLowerCase();
-        stockMap[limpiaId] = (stockMap[limpiaId] || 0) + item.stock;
-    });
-
-    document.querySelectorAll('.agregar-carrito').forEach(btn => {
-        let idHtml = btn.getAttribute('data-id').trim().toLowerCase();
-        const stockDisponible = stockMap[idHtml] || 0;
-
-        if (stockDisponible <= 0) {
-            btn.disabled = true;
-            btn.textContent = "Agotado";
-            btn.style.backgroundColor = "#ff0000";
-            btn.style.opacity = "0.8";
-            btn.style.pointerEvents = "none";
-        } else {
-            btn.disabled = false;
-            btn.textContent = "Agregar al carrito";
-            btn.style.backgroundColor = "";
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
-        }
-    });
-}
 
 /**
  * Abre y cierra la ventana flotante de reseñas (Estrellas)
@@ -304,17 +344,62 @@ window.toggleRecomendaciones = function(boton) {
     if (ventana) ventana.classList.toggle('mostrar-ventana');
 };
 
+const sinStock = datosBD.stockTotal <= 0;
+btn.disabled = sinStock;
+btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
+btn.classList.toggle('boton-agotado', sinStock); // Esto pone o quita el color rojo automáticamente
+
+
 // --- LÓGICA DEL INVENTARIO FLOTANTE (TECLA X) ---
 document.addEventListener('keydown', (e) => {
-    // Evita que se abra si estás escribiendo texto en algún formulario
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     
-    // Detecta la tecla "x" o "X"
     if (e.key.toLowerCase() === 'x') {
         toggleInventarioFlotante();
     }
 });
 
+function toggleInventarioFlotante() {
+    let modal = document.getElementById('modal-inventario');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-inventario';
+        modal.classList.add('activo');
+        modal.innerHTML = `
+            <div class="inventario-flotante" style="position: relative;">
+                <button class="cerrar-inventario" onclick="cerrarInventarioYSalir()" style="position: absolute; top: 15px; right: 20px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: 0.3s;">
+                    <i class="fa fa-times"></i>
+                </button>
+                <iframe src="admin.html" class="iframe-inventario" style="width: 100%; height: 100%; border: none; border-radius: 15px;"></iframe>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.toggle('activo');
+    }
+}
+
+// Función que hace la doble acción (Cierra Sesión + Oculta Ventana)
+async function cerrarInventarioYSalir() {
+    // 1. Cerramos sesión por seguridad
+    await _supabase.auth.signOut();
+    
+    // 2. Ocultamos la ventana de la pantalla
+    let modal = document.getElementById('modal-inventario');
+    if (modal) {
+        modal.classList.remove('activo');
+        
+        // 3. Reiniciamos el iframe para que vuelva a pedir clave la próxima vez
+        let iframe = modal.querySelector('.iframe-inventario');
+        if (iframe) iframe.src = 'admin.html';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Esto le dice al navegador: "Espera a que cargue todo el HTML y luego ejecuta la función"
+    inicializarStockTienda();
+});
 function toggleInventarioFlotante() {
     let modal = document.getElementById('modal-inventario');
     
@@ -337,3 +422,4 @@ function toggleInventarioFlotante() {
         modal.classList.toggle('activo');
     }
 }
+
