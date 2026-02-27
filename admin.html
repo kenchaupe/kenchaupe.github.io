@@ -145,7 +145,7 @@
                         <label><b>Correo Electrónico:</b></label><br>
                         <input type="email" id="config-email" placeholder="Ej: contacto@gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
-                    <button id="btn-guardar-config" onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
+                    <button onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
                 </div>
             </div>
         </div>
@@ -388,6 +388,7 @@
         }
         // --- CONFIGURACIÓN DE LA TIENDA (SUPABASE) ---
         async function cargarConfiguracionAdmin() {
+            // Buscamos la fila con id 1 en la tabla configuracion
             const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
             
             if (data) {
@@ -396,16 +397,12 @@
                 document.getElementById('config-wsp').value = data.wsp || '';
                 document.getElementById('config-email').value = data.email || '';
             } else if (error) {
-                // Maneja el error normal que devuelve Supabase si la tabla está vacía sin romper el panel
-                if(error.code !== 'PGRST116') {
-                    console.error("Error al cargar configuración:", error);
-                }
+                console.error("Error al cargar configuración:", error);
             }
         }
 
         async function guardarConfiguracion() {
-            // AHORA SE BUSCA EL BOTÓN DIRECTO POR SU ID EXCLUSIVO
-            const btn = document.getElementById('btn-guardar-config');
+            const btn = document.querySelector('.btn-update');
             const textoOriginal = btn.textContent;
             btn.textContent = "Guardando en servidor...";
             btn.disabled = true;
@@ -433,3 +430,7 @@
     </script>
 </body>
 </html>
+
+
+
+
