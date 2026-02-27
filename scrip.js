@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INICIALIZACIÓN ---
     carritoHTML();
     inicializarStockTienda(); 
+    aplicarConfiguracionWeb()
 
     // --- EVENT LISTENERS ---
     if (listaProductos) listaProductos.addEventListener('click', agregarProducto);
@@ -425,3 +426,45 @@ function toggleInventarioFlotante() {
     }
 }
 
+// ==========================================
+// FUNCIÓN PARA APLICAR CONFIGURACIÓN VISUAL
+// ==========================================
+function aplicarConfiguracionWeb() {
+    const config = JSON.parse(localStorage.getItem('datos_web'));
+    if (!config) return; // Si no hay nada guardado, no hace nada
+
+    // 1. Cambiar el nombre de la pestaña
+    if (config.nombre) {
+        document.title = config.nombre;
+    }
+
+    // 2. Cambiar Logo y Favicon
+    if (config.logo) {
+        // Busca la imagen del logo (ajusta el selector si tu logo tiene otra clase)
+        const logoImg = document.querySelector('.logo img') || document.querySelector('.logo'); 
+        if (logoImg) logoImg.src = config.logo;
+        
+        const favicon = document.querySelector('link[rel="icon"]');
+        if (favicon) favicon.href = config.logo;
+    }
+
+    // 3. Cambiar número de WhatsApp
+    if (config.wsp) {
+        const wspIcono = document.querySelector('.fa-whatsapp');
+        if (wspIcono) {
+            const btnWsp = wspIcono.closest('a');
+            if (btnWsp) {
+                btnWsp.href = `https://api.whatsapp.com/send?phone=${config.wsp.replace('+', '')}&text=Hola, me gustaria obtener más información`;
+            }
+        }
+    }
+
+    // 4. Cambiar Correo Electrónico
+    if (config.email) {
+        const elementoCorreo = document.getElementById('correo-tienda');
+        if (elementoCorreo) {
+            elementoCorreo.textContent = config.email;
+            elementoCorreo.href = `mailto:${config.email}`;
+        }
+    }
+}
