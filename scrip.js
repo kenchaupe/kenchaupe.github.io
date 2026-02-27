@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INICIALIZACIÓN ---
     carritoHTML();
     inicializarStockTienda(); 
-    aplicarConfiguracionWeb()
 
     // --- EVENT LISTENERS ---
     if (listaProductos) listaProductos.addEventListener('click', agregarProducto);
@@ -427,44 +426,48 @@ function toggleInventarioFlotante() {
 }
 
 // ==========================================
-// FUNCIÓN PARA APLICAR CONFIGURACIÓN VISUAL
+// FUNCIÓN PARA APLICAR CONFIGURACIÓN VISUAL DESDE SUPABASE
 // ==========================================
-function aplicarConfiguracionWeb() {
-    const config = JSON.parse(localStorage.getItem('datos_web'));
-    if (!config) return; // Si no hay nada guardado, no hace nada
-
-    // 1. Cambiar el nombre de la pestaña
-    if (config.nombre) {
-        document.title = config.nombre;
-    }
-
-    // 2. Cambiar Logo y Favicon
-    if (config.logo) {
-        // Busca la imagen del logo (ajusta el selector si tu logo tiene otra clase)
-        const logoImg = document.querySelector('.logo img') || document.querySelector('.logo'); 
-        if (logoImg) logoImg.src = config.logo;
+async function aplicarConfiguracionWeb() {
+    try {
+        const { data: config, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
         
-        const favicon = document.querySelector('link[rel="icon"]');
-        if (favicon) favicon.href = config.logo;
-    }
+        if (error || !config) return; // Si hay error o no hay datos, no hace nada
 
-    // 3. Cambiar número de WhatsApp
-    if (config.wsp) {
-        const wspIcono = document.querySelector('.fa-whatsapp');
-        if (wspIcono) {
-            const btnWsp = wspIcono.closest('a');
-            if (btnWsp) {
-                btnWsp.href = `https://api.whatsapp.com/send?phone=${config.wsp.replace('+', '')}&text=Hola, me gustaria obtener más información`;
+        // 1. Cambiar el nombre de la pestaña
+        if (config.nombre) {
+            document.title = config.nombre;
+        }
+
+        // 2. Cambiar Logo y Favicon
+        if (config.logo) {
+            const logoImg = document.querySelector('.logo img') || document.querySelector('.logo'); 
+            if (logoImg) logoImg.src = config.logo;
+            
+            const favicon = document.querySelector('link[rel="icon"]');
+            if (favicon) favicon.href = config.logo;
+        }
+
+        // 3. Cambiar número de WhatsApp
+        if (config.wsp) {
+            const wspIcono = document.querySelector('.fa-whatsapp');
+            if (wspIcono) {
+                const btnWsp = wspIcono.closest('a');
+                if (btnWsp) {
+                    btnWsp.href = `https://api.whatsapp.com/send?phone=${config.wsp.replace('+', '')}&text=Hola, me gustaria obtener más información`;
+                }
             }
         }
-    }
 
-    // 4. Cambiar Correo Electrónico
-    if (config.email) {
-        const elementoCorreo = document.getElementById('correo-tienda');
-        if (elementoCorreo) {
-            elementoCorreo.textContent = config.email;
-            elementoCorreo.href = `mailto:${config.email}`;
+        // 4. Cambiar Correo Electrónico
+        if (config.email) {
+            const elementoCorreo = document.getElementById('correo-tienda');
+            if (elementoCorreo) {
+                elementoCorreo.textContent = config.email;
+                elementoCorreo.href = `mailto:${config.email}`;
+            }
         }
+    } catch (error) {
+        console.error("Error al aplicar la configuración web:", error);
     }
 }

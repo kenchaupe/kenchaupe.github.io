@@ -386,31 +386,46 @@
             doc.autoTable({ startY: 25, head: [['Producto', 'Variante', 'Stock', 'Precio']], body: body });
             doc.save("Inventario.pdf");
         }
-        // --- CONFIGURACIÓN DE LA TIENDA ---
-        function cargarConfiguracionAdmin() {
-            const config = JSON.parse(localStorage.getItem('datos_web')) || {
-                nombre: 'Gruken',
-                logo: 'images/gruicon.png',
-                wsp: '',
-                email: ''
-            };
+        // --- CONFIGURACIÓN DE LA TIENDA (SUPABASE) ---
+        async function cargarConfiguracionAdmin() {
+            // Buscamos la fila con id 1 en la tabla configuracion
+            const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
             
-            document.getElementById('config-nombre').value = config.nombre || '';
-            document.getElementById('config-logo').value = config.logo || '';
-            document.getElementById('config-wsp').value = config.wsp || '';
-            document.getElementById('config-email').value = config.email || '';
+            if (data) {
+                document.getElementById('config-nombre').value = data.nombre || '';
+                document.getElementById('config-logo').value = data.logo || '';
+                document.getElementById('config-wsp').value = data.wsp || '';
+                document.getElementById('config-email').value = data.email || '';
+            } else if (error) {
+                console.error("Error al cargar configuración:", error);
+            }
         }
 
-        function guardarConfiguracion() {
+        async function guardarConfiguracion() {
+            const btn = document.querySelector('.btn-update');
+            const textoOriginal = btn.textContent;
+            btn.textContent = "Guardando en servidor...";
+            btn.disabled = true;
+
             const config = {
+                id: 1, // Siempre actualizamos la fila 1
                 nombre: document.getElementById('config-nombre').value,
                 logo: document.getElementById('config-logo').value,
                 wsp: document.getElementById('config-wsp').value,
                 email: document.getElementById('config-email').value
             };
             
-            localStorage.setItem('datos_web', JSON.stringify(config));
-            alert('Configuración guardada correctamente.');
+            // Upsert inserta si no existe, o actualiza si ya existe el id 1
+            const { error } = await _supabase.from('configuracion').upsert(config);
+            
+            btn.textContent = textoOriginal;
+            btn.disabled = false;
+
+            if (error) {
+                alert('Hubo un error al guardar en el servidor: ' + error.message);
+            } else {
+                alert('¡Configuración guardada en el servidor correctamente!');
+            }
         }
     </script>
 </body>
