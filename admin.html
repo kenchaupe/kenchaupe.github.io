@@ -91,9 +91,10 @@
     <div class="container">
         <div class="top-bar">
             <div class="tabs">
-                <button class="tab-btn active" onclick="cambiarPestana('inventario', this)">📦 Inventario</button>
-                <button class="tab-btn" onclick="cambiarPestana('ventas', this)">📈 Ventas</button>
-            </div>
+            <button class="tab-btn active" onclick="cambiarPestana('inventario', this)">📦 Inventario</button>
+            <button class="tab-btn" onclick="cambiarPestana('ventas', this)">📈 Ventas</button>
+            <button class="tab-btn" onclick="cambiarPestana('configuracion', this)">⚙️ Configuración</button>
+        </div>
             <div class="toolbar-buttons">
                 <button onclick="abrirModalProducto()" class="btn btn-add"><i class="fas fa-plus"></i> Nuevo</button>
                 <button onclick="exportarExcel()" class="btn btn-excel"><i class="fas fa-file-excel"></i></button>
@@ -123,6 +124,31 @@
                 <div id="tabla-historial-ventas">Cargando ventas...</div>
             </div>
         </div>
+        <div id="vista-configuracion" class="view-section">
+            <div style="background: #fff; padding: 20px; border-radius: 12px; border-top: 3px solid #333;">
+                <h2 style="margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Configuración de la Tienda</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px;">
+                    <div>
+                        <label><b>Nombre de la Página Web:</b></label><br>
+                        <input type="text" id="config-nombre" placeholder="Ej: Gruken" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Logo (Ruta de la imagen):</b></label><br>
+                        <input type="text" id="config-logo" placeholder="Ej: images/gruicon.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Número de WhatsApp:</b></label><br>
+                        <input type="text" id="config-wsp" placeholder="Ej: +5491130103905" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Correo Electrónico:</b></label><br>
+                        <input type="email" id="config-email" placeholder="Ej: contacto@gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <button onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="modal-nuevo" class="modal-overlay">
@@ -149,7 +175,7 @@
         let ventasLocal = [];
 
         // --- NAVEGACIÓN DE PESTAÑAS ---
-        function cambiarPestana(vista, btn) {
+      function cambiarPestana(vista, btn) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
@@ -158,6 +184,9 @@
 
             if (vista === 'ventas' && ventasLocal.length === 0) {
                 cargarVentas();
+            }
+            if (vista === 'configuracion') {
+                cargarConfiguracionAdmin();
             }
         }
 
@@ -357,6 +386,36 @@
             doc.autoTable({ startY: 25, head: [['Producto', 'Variante', 'Stock', 'Precio']], body: body });
             doc.save("Inventario.pdf");
         }
+        // --- CONFIGURACIÓN DE LA TIENDA ---
+        function cargarConfiguracionAdmin() {
+            const config = JSON.parse(localStorage.getItem('datos_web')) || {
+                nombre: 'Gruken',
+                logo: 'images/gruicon.png',
+                wsp: '',
+                email: ''
+            };
+            
+            document.getElementById('config-nombre').value = config.nombre || '';
+            document.getElementById('config-logo').value = config.logo || '';
+            document.getElementById('config-wsp').value = config.wsp || '';
+            document.getElementById('config-email').value = config.email || '';
+        }
+
+        function guardarConfiguracion() {
+            const config = {
+                nombre: document.getElementById('config-nombre').value,
+                logo: document.getElementById('config-logo').value,
+                wsp: document.getElementById('config-wsp').value,
+                email: document.getElementById('config-email').value
+            };
+            
+            localStorage.setItem('datos_web', JSON.stringify(config));
+            alert('Configuración guardada correctamente.');
+        }
     </script>
 </body>
 </html>
+
+
+
+

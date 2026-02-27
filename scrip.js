@@ -399,6 +399,8 @@ async function cerrarInventarioYSalir() {
 document.addEventListener('DOMContentLoaded', () => {
     // Esto le dice al navegador: "Espera a que cargue todo el HTML y luego ejecuta la función"
     inicializarStockTienda();
+    // NUEVO: Cargar los datos visuales
+    aplicarConfiguracionWeb();
 });
 function toggleInventarioFlotante() {
     let modal = document.getElementById('modal-inventario');
