@@ -417,37 +417,17 @@ function toggleInventarioFlotante() {
 }
 
 // ==========================================
-// LÓGICA DE INSTALACIÓN PWA (BANNER FLOTANTE)
+// REGISTRO DEL SERVICE WORKER (Requisito obligatorio PWA)
 // ==========================================
-let eventoInstalacion = null;
-const bannerInstalacion = document.getElementById('pwa-install-banner');
-const btnInstalar = document.getElementById('btn-instalar');
-
-// Escuchar cuando el navegador permite instalar
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenir cartel por defecto
-    e.preventDefault();
-    eventoInstalacion = e;
-    
-    // Mostrar tu banner personalizado
-    if (bannerInstalacion) {
-        bannerInstalacion.style.display = 'flex';
-    }
-});
-
-// Qué hacer al presionar "Instalar" en tu banner
-if (btnInstalar) {
-    btnInstalar.addEventListener('click', async () => {
-        if (bannerInstalacion) {
-            bannerInstalacion.style.display = 'none';
-        }
-        
-        if (eventoInstalacion) {
-            eventoInstalacion.prompt();
-            const { outcome } = await eventoInstalacion.userChoice;
-            console.log(`Usuario ${outcome} la instalación`);
-            eventoInstalacion = null;
-        }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(registro => {
+                console.log('Service Worker registrado con éxito en el alcance:', registro.scope);
+            })
+            .catch(error => {
+                console.error('Error al registrar el Service Worker:', error);
+            });
     });
 }
 
