@@ -435,9 +435,12 @@ if ('serviceWorker' in navigator) {
 // ==========================================
 // LÓGICA DE INSTALACIÓN PWA (BANNER FLOTANTE)
 // ==========================================
-let eventoInstalacion = null;
-const bannerInstalacion = document.getElementById('pwa-install-banner');
-const btnInstalar = document.getElementById('btn-instalar');
+// FORZAR EL BANNER (Solo para ver si aparece visualmente)
+setTimeout(() => {
+    if (bannerInstalacion) {
+        bannerInstalacion.style.display = 'flex';
+    }
+}, 3000); // Aparecerá a los 3 segundos de entrar a la web
 
 // Escuchar cuando el navegador permite instalar
 window.addEventListener('beforeinstallprompt', (e) => {
