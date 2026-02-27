@@ -343,6 +343,13 @@ window.toggleRecomendaciones = function(boton) {
     // 3. Alternar la actual
     if (ventana) ventana.classList.toggle('mostrar-ventana');
 };
+
+const sinStock = datosBD.stockTotal <= 0;
+btn.disabled = sinStock;
+btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
+btn.classList.toggle('boton-agotado', sinStock); // Esto pone o quita el color rojo automáticamente
+
+
 // --- LÓGICA DEL INVENTARIO FLOTANTE (TECLA X) ---
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -415,61 +422,4 @@ function toggleInventarioFlotante() {
         modal.classList.toggle('activo');
     }
 }
-
-// ==========================================
-// REGISTRO DEL SERVICE WORKER (Requisito obligatorio PWA)
-// ==========================================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(registro => {
-                console.log('Service Worker registrado con éxito en el alcance:', registro.scope);
-            })
-            .catch(error => {
-                console.error('Error al registrar el Service Worker:', error);
-            });
-    });
-}
-
-
-// ==========================================
-// LÓGICA DE INSTALACIÓN PWA (BANNER FLOTANTE)
-// ==========================================
-// FORZAR EL BANNER (Solo para ver si aparece visualmente)
-setTimeout(() => {
-    if (bannerInstalacion) {
-        bannerInstalacion.style.display = 'flex';
-    }
-}, 3000); // Aparecerá a los 3 segundos de entrar a la web
-
-// Escuchar cuando el navegador permite instalar
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenir cartel por defecto
-    e.preventDefault();
-    eventoInstalacion = e;
-    
-    // Mostrar tu banner personalizado
-    if (bannerInstalacion) {
-        bannerInstalacion.style.display = 'flex';
-    }
-});
-
-// Qué hacer al presionar "Instalar" en tu banner
-if (btnInstalar) {
-    btnInstalar.addEventListener('click', async () => {
-        if (bannerInstalacion) {
-            bannerInstalacion.style.display = 'none';
-        }
-        
-        if (eventoInstalacion) {
-            eventoInstalacion.prompt();
-            const { outcome } = await eventoInstalacion.userChoice;
-            console.log(`Usuario ${outcome} la instalación`);
-            eventoInstalacion = null;
-        }
-    });
-}
-
-
-
 
