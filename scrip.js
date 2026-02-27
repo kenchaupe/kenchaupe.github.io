@@ -343,13 +343,6 @@ window.toggleRecomendaciones = function(boton) {
     // 3. Alternar la actual
     if (ventana) ventana.classList.toggle('mostrar-ventana');
 };
-
-const sinStock = datosBD.stockTotal <= 0;
-btn.disabled = sinStock;
-btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
-btn.classList.toggle('boton-agotado', sinStock); // Esto pone o quita el color rojo automáticamente
-
-
 // --- LÓGICA DEL INVENTARIO FLOTANTE (TECLA X) ---
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -430,38 +423,35 @@ let eventoInstalacion = null;
 const bannerInstalacion = document.getElementById('pwa-install-banner');
 const btnInstalar = document.getElementById('btn-instalar');
 
-// 1. Escuchar cuando el navegador dice "Listo para instalar"
+// Escuchar cuando el navegador permite instalar
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenimos que el navegador muestre su propia notificación por defecto
+    // Prevenir cartel por defecto
     e.preventDefault();
-    
-    // Guardamos el evento para usarlo después al hacer clic
     eventoInstalacion = e;
     
-    // Mostramos tu banner personalizado (cambiamos display: none a flex)
+    // Mostrar tu banner personalizado
     if (bannerInstalacion) {
         bannerInstalacion.style.display = 'flex';
     }
 });
 
-// 2. Qué hacer cuando el usuario hace clic en "Instalar" en tu banner
+// Qué hacer al presionar "Instalar" en tu banner
 if (btnInstalar) {
     btnInstalar.addEventListener('click', async () => {
-        // Ocultamos tu banner
         if (bannerInstalacion) {
             bannerInstalacion.style.display = 'none';
         }
         
-        // Si tenemos el evento guardado, disparamos la ventana de instalación del sistema
         if (eventoInstalacion) {
             eventoInstalacion.prompt();
-            
-            // Esperamos a ver qué decide el usuario (si aceptó o canceló)
             const { outcome } = await eventoInstalacion.userChoice;
-            console.log(`El usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación de la PWA`);
-            
-            // Limpiamos la variable
+            console.log(`Usuario ${outcome} la instalación`);
             eventoInstalacion = null;
         }
     });
 }
+
+
+
+
+
