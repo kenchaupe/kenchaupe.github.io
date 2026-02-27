@@ -423,3 +423,45 @@ function toggleInventarioFlotante() {
     }
 }
 
+// ==========================================
+// LÓGICA DE INSTALACIÓN PWA (BANNER FLOTANTE)
+// ==========================================
+let eventoInstalacion = null;
+const bannerInstalacion = document.getElementById('pwa-install-banner');
+const btnInstalar = document.getElementById('btn-instalar');
+
+// 1. Escuchar cuando el navegador dice "Listo para instalar"
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevenimos que el navegador muestre su propia notificación por defecto
+    e.preventDefault();
+    
+    // Guardamos el evento para usarlo después al hacer clic
+    eventoInstalacion = e;
+    
+    // Mostramos tu banner personalizado (cambiamos display: none a flex)
+    if (bannerInstalacion) {
+        bannerInstalacion.style.display = 'flex';
+    }
+});
+
+// 2. Qué hacer cuando el usuario hace clic en "Instalar" en tu banner
+if (btnInstalar) {
+    btnInstalar.addEventListener('click', async () => {
+        // Ocultamos tu banner
+        if (bannerInstalacion) {
+            bannerInstalacion.style.display = 'none';
+        }
+        
+        // Si tenemos el evento guardado, disparamos la ventana de instalación del sistema
+        if (eventoInstalacion) {
+            eventoInstalacion.prompt();
+            
+            // Esperamos a ver qué decide el usuario (si aceptó o canceló)
+            const { outcome } = await eventoInstalacion.userChoice;
+            console.log(`El usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación de la PWA`);
+            
+            // Limpiamos la variable
+            eventoInstalacion = null;
+        }
+    });
+}
