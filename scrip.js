@@ -425,3 +425,68 @@ function toggleInventarioFlotante() {
     }
 }
 
+// ==========================================
+// APLICAR CONFIGURACIÓN VISUAL DESDE SUPABASE
+// ==========================================
+async function aplicarConfiguracionWeb() {
+    const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
+    
+    if (error || !data) {
+        console.error("No se pudo cargar la configuración visual:", error);
+        return; 
+    }
+
+    // 1. Título de la página
+    if (data.nombre) {
+        document.getElementById('titulo-pagina').textContent = data.nombre;
+    }
+
+    // 2. Logo de la página
+    if (data.logo) {
+        const logo = document.getElementById('logo-pagina');
+        if (logo) logo.src = data.logo;
+    }
+
+    // 3. Icono de la página (Favicon)
+    if (data.favicon) {
+        const favicon = document.getElementById('favicon-pagina');
+        if (favicon) favicon.href = data.favicon;
+    }
+
+    // 4. Correo electrónico
+    if (data.email) {
+        const emailLi = document.getElementById('footer-email');
+        if (emailLi) {
+            emailLi.textContent = data.email;
+            emailLi.href = "mailto:" + data.email;
+        }
+    }
+
+    // 5. Página Web
+    if (data.web) {
+        const webLi = document.getElementById('footer-web');
+        if (webLi) {
+            webLi.textContent = data.web;
+            // Aseguramos que tenga http(s) para que funcione el link
+            webLi.href = data.web.startsWith('http') ? data.web : 'https://' + data.web;
+        }
+    }
+
+    // 6. WhatsApp (Footer y Flotante)
+    if (data.wsp) {
+        const wspLimpio = data.wsp.replace(/[^0-9+]/g, ''); // Limpiamos espacios o guiones
+        
+        // WhatsApp Footer
+        const wspFooter = document.getElementById('footer-wsp');
+        if (wspFooter) {
+            wspFooter.textContent = data.wsp;
+            wspFooter.href = `https://api.whatsapp.com/send?phone=${wspLimpio}`;
+        }
+
+        // WhatsApp Flotante
+        const wspFlotante = document.getElementById('wsp-flotante');
+        if (wspFlotante) {
+            wspFlotante.href = `https://api.whatsapp.com/send?phone=${wspLimpio}&text=Hola,%20me%20gustaría%20obtener%20más%20información`;
+        }
+    }
+}

@@ -145,6 +145,14 @@
                         <label><b>Correo Electrónico:</b></label><br>
                         <input type="email" id="config-email" placeholder="Ej: contacto@gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
+                    <div>
+                        <label><b>Icono de la Página (Favicon):</b></label><br>
+                      <input type="text" id="config-favicon" placeholder="Ej: images/gruicon.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Página Web:</b></label><br>
+                        <input type="text" id="config-web" placeholder="Ej: www.gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
                     <button onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
                 </div>
             </div>
@@ -386,51 +394,50 @@
             doc.autoTable({ startY: 25, head: [['Producto', 'Variante', 'Stock', 'Precio']], body: body });
             doc.save("Inventario.pdf");
         }
-        // --- CONFIGURACIÓN DE LA TIENDA (SUPABASE) ---
-        async function cargarConfiguracionAdmin() {
-            // Buscamos la fila con id 1 en la tabla configuracion
-            const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
-            
-            if (data) {
-                document.getElementById('config-nombre').value = data.nombre || '';
-                document.getElementById('config-logo').value = data.logo || '';
-                document.getElementById('config-wsp').value = data.wsp || '';
-                document.getElementById('config-email').value = data.email || '';
-            } else if (error) {
-                console.error("Error al cargar configuración:", error);
-            }
-        }
+       // --- CARGAR DATOS AL ENTRAR AL ADMIN ---
+async function cargarConfiguracion() {
+    const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
+    if (data) {
+        document.getElementById('config-nombre').value = data.nombre || '';
+        document.getElementById('config-logo').value = data.logo || '';
+        document.getElementById('config-wsp').value = data.wsp || '';
+        document.getElementById('config-email').value = data.email || '';
+        document.getElementById('config-favicon').value = data.favicon || ''; // Nuevo
+        document.getElementById('config-web').value = data.web || ''; // Nuevo
+    }
+}
 
-        async function guardarConfiguracion() {
-            const btn = document.querySelector('.btn-update');
-            const textoOriginal = btn.textContent;
-            btn.textContent = "Guardando en servidor...";
-            btn.disabled = true;
+// --- GUARDAR CAMBIOS EN SUPABASE ---
+async function guardarConfiguracion() {
+    const btn = document.querySelector('.btn-update');
+    const textoOriginal = btn.textContent;
+    btn.textContent = "Guardando en servidor...";
+    btn.disabled = true;
 
-            const config = {
-                id: 1, // Siempre actualizamos la fila 1
-                nombre: document.getElementById('config-nombre').value,
-                logo: document.getElementById('config-logo').value,
-                wsp: document.getElementById('config-wsp').value,
-                email: document.getElementById('config-email').value
-            };
-            
-            // Upsert inserta si no existe, o actualiza si ya existe el id 1
-            const { error } = await _supabase.from('configuracion').upsert(config);
-            
-            btn.textContent = textoOriginal;
-            btn.disabled = false;
+    // Usaremos el mismo número de WSP para el footer y el flotante
+    const config = {
+        id: 1, 
+        nombre: document.getElementById('config-nombre').value,
+        logo: document.getElementById('config-logo').value,
+        wsp: document.getElementById('config-wsp').value,
+        email: document.getElementById('config-email').value,
+        favicon: document.getElementById('config-favicon').value, // Nuevo
+        web: document.getElementById('config-web').value // Nuevo
+    };
+    
+    const { error } = await _supabase.from('configuracion').upsert(config);
+    
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
 
-            if (error) {
-                alert('Hubo un error al guardar en el servidor: ' + error.message);
-            } else {
-                alert('¡Configuración guardada en el servidor correctamente!');
-            }
-        }
+    if (error) {
+        alert('Hubo un error al guardar: ' + error.message);
+    } else {
+        alert('¡Configuración guardada en el servidor correctamente!');
+    }
+}
     </script>
 </body>
 </html>
-
-
 
 
