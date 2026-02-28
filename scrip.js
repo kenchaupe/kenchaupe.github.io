@@ -374,21 +374,6 @@ function toggleInventarioFlotante() {
     }
 }
 
-// Función que hace la doble acción (Cierra Sesión + Oculta Ventana)
-async function cerrarInventarioYSalir() {
-    // 1. Cerramos sesión por seguridad
-    await _supabase.auth.signOut();
-    
-    // 2. Ocultamos la ventana de la pantalla
-    let modal = document.getElementById('modal-inventario');
-    if (modal) {
-        modal.classList.remove('activo');
-        
-        // 3. Reiniciamos el iframe para que vuelva a pedir clave la próxima vez
-        let iframe = modal.querySelector('.iframe-inventario');
-        if (iframe) iframe.src = 'admin.html';
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Esto le dice al navegador: "Espera a que cargue todo el HTML y luego ejecuta la función"
@@ -406,7 +391,7 @@ function toggleInventarioFlotante() {
         modal.classList.add('activo');
         modal.innerHTML = `
             <div class="inventario-flotante">
-                <button class="cerrar-inventario" onclick="toggleInventarioFlotante()">
+                <button class="cerrar-inventario" onclick="cerrarYSalirInventario()">
                     <i class="fa fa-times"></i>
                 </button>
                 <iframe src="admin.html" class="iframe-inventario"></iframe>
@@ -488,5 +473,27 @@ async function aplicarConfiguracionWeb() {
     if (data.youtube) {
         const linkYouTube = document.getElementById('link-youtube');
         if (linkYouTube) linkYouTube.href = data.youtube;
+    }
+}
+
+// ==========================================
+// CERRAR VENTANA Y SESIÓN DE INVENTARIO
+// ==========================================
+async function cerrarYSalirInventario() {
+    let modal = document.getElementById('modal-inventario');
+    
+    if (modal) {
+        // 1. Ocultar la ventana flotante
+        modal.classList.remove('activo');
+        
+        // 2. Reiniciar el iframe para que vuelva a pedir la clave la próxima vez
+        let iframe = modal.querySelector('.iframe-inventario');
+        if (iframe) iframe.src = 'admin.html';
+    }
+    
+    // 3. Cerrar la sesión en Supabase
+    const { error } = await _supabase.auth.signOut();
+    if (error) {
+        console.error("Error al cerrar sesión:", error.message);
     }
 }
