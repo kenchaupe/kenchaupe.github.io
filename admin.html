@@ -6,74 +6,43 @@
     <title>Panel de Administración</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
     <style>
-        :root {
-            --primary: #333; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --light: #f4f4f4;
-        }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 10px; background: #f4f4f4 !important; color: #333; margin: 0; 
-        }
-        .container { 
-            max-width: 1200px; margin: auto; background: #ffffff !important; 
-            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-        }
-
-        /* --- MENÚ DE PESTAÑAS Y HERRAMIENTAS --- */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--light); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .tabs { display: flex; gap: 10px; }
-        .tab-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; color: #555; }
-        .tab-btn.active { background: var(--primary); color: white; }
+        /* ESTILOS GENERALES Y LIMPIOS */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; background: #f4f4f4; margin: 0; }
+        .container { max-width: 1200px; margin: auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        .toolbar-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; display: flex; align-items: center; gap: 5px; transition: 0.3s; }
-        .btn:hover { opacity: 0.8; }
-        .btn-add { background: #007bff; }
-        .btn-excel { background: #1d6f42; }
-        .btn-pdf { background: #b30b00; }
-        .btn-logout { background: var(--danger); }
-
-        /* --- VISTAS (Pestañas) --- */
-        .view-section { display: none; }
+        /* BARRA SUPERIOR DE PESTAÑAS */
+        .top-bar { display: flex; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; color: #555; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { background: #ddd; }
+        .tab-btn.active { background: #333; color: white; }
+        .tab-btn-add { background: #007bff; color: white; }
+        .tab-btn-add:hover { background: #0056b3; }
+        
+        /* OCULTAR/MOSTRAR SECCIONES */
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view-section.active { display: block; }
-
-        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); background: #f9f9f9; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .search-bar { margin-bottom: 20px; display: flex; gap: 10px; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-
-        /* --- TABLAS Y DISEÑO RESPONSIVE --- */
-        .table-responsive { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 900px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
-        th { background: var(--primary); color: white; font-size: 14px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .img-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 5px; border: 1px solid #ddd; }
-        .btn-update { background: var(--success); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; }
-
-        /* --- MODAL NUEVO PRODUCTO --- */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
-        .modal-content h3 { margin-top: 0; text-align: center; }
-
+        /* FORMULARIOS Y TABLAS */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-save { margin-top: 15px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.3s; }
+        .btn-save:hover { background: #218838; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #333; color: white; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-delete:hover { background: #c82333; }
+        
+        /* RESPONSIVO PARA CELULARES */
         @media (max-width: 768px) {
-            .container { padding: 10px; }
-            .top-bar { flex-direction: column; align-items: stretch; }
-            .tabs { display: grid; grid-template-columns: 1fr 1fr; }
-            .toolbar-buttons { display: grid; grid-template-columns: 1fr 1fr; }
-            
             thead { display: none; }
-            table, tbody, tr, td { display: block; width: 100%; }
-            tr { background: #fff; margin-bottom: 15px; border-radius: 8px; padding: 10px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-            td { text-align: left; padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; flex-direction: column; }
-            td::before { content: attr(data-label); font-weight: bold; font-size: 12px; color: #888; margin-bottom: 4px; }
-            
-            body::-webkit-scrollbar, .table-responsive::-webkit-scrollbar { display: none; }
-            body, .table-responsive { -ms-overflow-style: none; scrollbar-width: none; }
+            tr { display: block; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; padding: 10px; }
+            td { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; align-items: center; }
+            td::before { content: attr(data-label); font-weight: bold; color: #555; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -81,401 +50,257 @@
 
     <div id="pantalla-login" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #222; z-index: 10000; display: flex; justify-content: center; align-items: center;">
         <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px;">
-            <h2>🔐 Acceso</h2>
-            <input type="email" id="email-admin" placeholder="Correo" style="margin-bottom:10px;">
-            <input type="password" id="pass-admin" placeholder="Contraseña" style="margin-bottom:15px;">
-            <button onclick="iniciarSesion()" class="btn btn-update" style="padding:12px;">Entrar</button>
+            <h2>🔐 Acceso a Gruken</h2>
+            <input type="email" id="email-admin" placeholder="Correo" class="form-input" style="margin-bottom:10px;">
+            <input type="password" id="pass-admin" placeholder="Contraseña" class="form-input" style="margin-bottom:15px;">
+            <button onclick="iniciarSesion()" class="btn-save" style="margin-top:0;">Entrar al Inventario</button>
         </div>
     </div>
 
     <div class="container">
-        <div class="top-bar">
-            <div class="tabs">
-            <button class="tab-btn active" onclick="cambiarPestana('inventario', this)">📦 Inventario</button>
-            <button class="tab-btn" onclick="cambiarPestana('ventas', this)">📈 Ventas</button>
-            <button class="tab-btn" onclick="cambiarPestana('configuracion', this)">⚙️ Configuración</button>
-        </div>
-            <div class="toolbar-buttons">
-                <button onclick="abrirModalProducto()" class="btn btn-add"><i class="fas fa-plus"></i> Nuevo</button>
-                <button onclick="exportarExcel()" class="btn btn-excel"><i class="fas fa-file-excel"></i></button>
-                <button onclick="exportarPDF()" class="btn btn-pdf"><i class="fas fa-file-pdf"></i></button>
         
-            </div>
+        <div class="top-bar">
+            <button class="tab-btn active" onclick="cambiarPestana('vista-inventario', this)"><i class="fas fa-box"></i> Mi Inventario</button>
+            <button class="tab-btn tab-btn-add" onclick="cambiarPestana('vista-agregar', this)"><i class="fas fa-plus"></i> Agregar Producto</button>
+            <button class="tab-btn" onclick="cambiarPestana('vista-ventas', this)"><i class="fas fa-chart-line"></i> Ventas</button>
+            <button class="tab-btn" onclick="cambiarPestana('vista-configuracion', this)"><i class="fas fa-cog"></i> Configuración</button>
         </div>
 
         <div id="vista-inventario" class="view-section active">
-            <div class="stats-cards">
-                <div class="card" id="stat-total-prods">Total: -</div>
-                <div class="card" id="stat-low-stock" style="border-color:var(--danger);">Bajo Stock: -</div>
+            <h3 style="margin-top:0;"><i class="fas fa-list"></i> Lista de Productos</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Talles</th>
+                            <th>Colores</th>
+                            <th>Stock</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-inventario">
+                        <tr><td colspan="8">Cargando inventario...</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="search-bar">
-                <input type="text" id="busqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+        </div>
+
+        <div id="vista-agregar" class="view-section">
+            <h3 style="margin-top:0;"><i class="fas fa-plus-circle"></i> Datos del Producto</h3>
+            <div class="form-grid">
+                <div><label><b>ID (Ej: ART-01):</b></label><input type="text" id="prod-id" class="form-input" placeholder="Identificador único"></div>
+                <div><label><b>Nombre:</b></label><input type="text" id="prod-nombre" class="form-input" placeholder="Ej: Buzo Osito"></div>
+                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: S, M, L, XL"></div>
+                <div><label><b>Colores:</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro"></div>
+                <div><label><b>Stock Total:</b></label><input type="number" id="prod-stock" class="form-input" placeholder="0"></div>
+                <div><label><b>Precio ($):</b></label><input type="number" id="prod-precio" class="form-input" placeholder="0.00"></div>
+                <div style="grid-column: 1 / -1;"><label><b>URL de la Imagen:</b></label><input type="text" id="prod-img" class="form-input" placeholder="Ej: images/buzo.jpg"></div>
             </div>
-            <div class="table-responsive">
-                <div id="tabla-inventario">Cargando...</div>
-            </div>
+            <button onclick="guardarProductoUnificado()" class="btn-save"><i class="fas fa-save"></i> Guardar Producto</button>
         </div>
 
         <div id="vista-ventas" class="view-section">
-            <div class="search-bar">
-                <input type="text" id="busqueda-ventas" placeholder="Buscar por cliente o método..." onkeyup="filtrarVentas()">
-            </div>
-            <div class="table-responsive">
+            <h3 style="margin-top:0;"><i class="fas fa-history"></i> Historial de Ventas</h3>
+            <div style="overflow-x: auto;">
                 <div id="tabla-historial-ventas">Cargando ventas...</div>
             </div>
         </div>
+
         <div id="vista-configuracion" class="view-section">
-            <div style="background: #fff; padding: 20px; border-radius: 12px; border-top: 3px solid #333;">
-                <h2 style="margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Configuración de la Tienda</h2>
-                
-                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px;">
-                    <div>
-                        <label><b>Nombre de la Página Web:</b></label><br>
-                        <input type="text" id="config-nombre" placeholder="Ej: Gruken" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Logo Página:</b></label><br>
-                        <input type="text" id="config-logo" placeholder="Ej: Link.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Número de WhatsApp:</b></label><br>
-                        <input type="text" id="config-wsp" placeholder="Ej: +5491122445566" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Correo Electrónico:</b></label><br>
-                        <input type="email" id="config-email" placeholder="Ej: contacto@nombre.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Icono de la Página (Favicon):</b></label><br>
-                      <input type="text" id="config-favicon" placeholder="Ej: Link.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Página Web:</b></label><br>
-                        <input type="text" id="config-web" placeholder="Ej: www.dominio.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>TikTok:</b></label><br>
-                        <input type="text" id="config-tiktok" placeholder="Ej: https://www.tiktok.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Facebook:</b></label><br>
-                        <input type="text" id="config-facebook" placeholder="Ej: https://www.facebook.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>Instagram:</b></label><br>
-                        <input type="text" id="config-instagram" placeholder="Ej: https://www.instagram.com/nombreusuario style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <div>
-                        <label><b>YouTube:</b></label><br>
-                        <input type="text" id="config-youtube" placeholder="Ej: https://www.youtube.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
-                    </div>
-                    <button onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
-                </div>
+            <h3 style="margin-top:0;"><i class="fas fa-tools"></i> Ajustes Generales y Redes</h3>
+            <div class="form-grid">
+                <div><label>Nombre de la Página:</label><input type="text" id="config-nombre" class="form-input"></div>
+                <div><label>Página Web (Link):</label><input type="text" id="config-web" class="form-input"></div>
+                <div><label>Logo (Ruta):</label><input type="text" id="config-logo" class="form-input"></div>
+                <div><label>Favicon (Icono pestaña):</label><input type="text" id="config-favicon" class="form-input"></div>
+                <div><label>WhatsApp:</label><input type="text" id="config-wsp" class="form-input"></div>
+                <div><label>Correo Electrónico:</label><input type="email" id="config-email" class="form-input"></div>
+                <div><label>Enlace de TikTok:</label><input type="text" id="config-tiktok" class="form-input"></div>
+                <div><label>Enlace de Facebook:</label><input type="text" id="config-facebook" class="form-input"></div>
+                <div><label>Enlace de Instagram:</label><input type="text" id="config-instagram" class="form-input"></div>
+                <div><label>Enlace de YouTube:</label><input type="text" id="config-youtube" class="form-input"></div>
             </div>
+            <button onclick="guardarConfiguracion()" class="btn-save" style="background: #007bff;"><i class="fas fa-cloud-upload-alt"></i> Guardar Configuración</button>
         </div>
+
     </div>
 
-    <div id="modal-nuevo" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Agregar Producto</h3>
-            <input type="text" id="add-id" placeholder="ID (Ej:Producto Nº 1)">
-            <input type="text" id="add-nombre" placeholder="Nombre (Ej: Vestido Lino)">
-            <input type="text" id="add-talle" placeholder="Talle">
-            <input type="text" id="add-color" placeholder="Color">
-            <input type="number" id="add-stock" placeholder="Stock Inicial" value="10">
-            <input type="number" id="add-precio" placeholder="Precio ($)">
-            <input type="text" id="add-imagen" placeholder="URL de la Imagen">
-            <button onclick="guardarNuevoProducto()" id="btn-guardar-nuevo" class="btn btn-update">Guardar Producto</button>
-            <button onclick="cerrarModalProducto()" class="btn" style="background:#888; color:white; justify-content:center;">Cancelar</button>
-        </div>
-    </div>
-    
     <script>
+        // 1. CONEXIÓN A LA BASE DE DATOS
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let productosLocal = []; 
-        let ventasLocal = [];
-
-        // --- NAVEGACIÓN DE PESTAÑAS ---
-      function cambiarPestana(vista, btn) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`vista-${vista}`).classList.add('active');
-            btn.classList.add('active');
-
-            if (vista === 'ventas' && ventasLocal.length === 0) {
-                cargarVentas();
-            }
-            if (vista === 'configuracion') {
-                cargarConfiguracionAdmin();
-            }
-        }
-
-        // --- LOGIN Y SESIÓN ---
+        // 2. SISTEMA DE LOGIN Y CARGA INICIAL
         async function iniciarSesion() {
             const email = document.getElementById('email-admin').value;
             const password = document.getElementById('pass-admin').value;
             const { error } = await _supabase.auth.signInWithPassword({ email, password });
 
             if (error) {
-                alert("Acceso denegado ❌");
+                alert("Acceso denegado ❌ Revisa tu correo o contraseña.");
             } else {
                 document.getElementById('pantalla-login').style.display = 'none';
-                cargarInventario();
+                cargarInventarioUnificado();
+                cargarVentas();
+                cargarConfiguracion();
             }
         }
 
-        async function cerrarSesion() {
-            await _supabase.auth.signOut();
-            window.location.replace('index.html'); 
-        }
-
-        // --- LÓGICA DE INVENTARIO ---
-        async function cargarInventario() {
-            const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
-            if (error) {
-                document.getElementById('tabla-inventario').innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
-                return;
-            }
-            productosLocal = data;
-            renderizarInventario(data);
-        }
-
-        function renderizarInventario(productos) {
-            let html = `<table><thead><tr>
-                <th>Imagen</th><th>Producto</th><th>Talle</th><th>Color</th><th>Stock</th><th>Precio</th><th>Acción</th>
-            </tr></thead><tbody>`;
-
-            productos.forEach((p, index) => {
-                const img = p.imagen_url || '';
-                const nom = p.nombre || '';
-                html += `
-                    <tr class="fila-producto" data-search="${nom} ${p.talla} ${p.color}">
-                        <td data-label="🖼️ Imagen">
-                            <div style="display:flex; gap:5px;"><img src="${img}" class="img-preview">
-                            <input type="text" id="img-${index}" value="${img}"></div>
-                        </td>
-                        <td data-label="🏷️ Nombre"><input type="text" id="nom-${index}" value="${nom}"></td>
-                        <td data-label="📏 Talle"><input type="text" id="tal-${index}" value="${p.talla}"></td>
-                        <td data-label="🎨 Color"><input type="text" id="col-${index}" value="${p.color}"></td>
-                        <td data-label="📦 Stock"><input type="number" id="stk-${index}" value="${p.stock}"></td>
-                        <td data-label="💲 Precio"><input type="number" id="pre-${index}" value="${p.precio}"></td>
-                        <td data-label="⚙️ Acción">
-                            <button class="btn-update" onclick="actualizarProducto(event, ${index}, '${p.id_unico}')"><i class="fas fa-save"></i> Guardar</button>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('tabla-inventario').innerHTML = html + '</tbody></table>';
-            
-            document.getElementById('stat-total-prods').innerHTML = `📦 <strong>Total:</strong> ${productos.length}`;
-            document.getElementById('stat-low-stock').innerHTML = `⚠️ <strong>Bajo Stock:</strong> ${productos.filter(p=>p.stock<5).length}`;
-        }
-
-        async function actualizarProducto(event, idx, idUnico) {
-            const btn = event.target.closest('button');
-            const txtOriginal = btn.innerHTML;
-            btn.innerHTML = '...';
-            
-            const { error } = await _supabase.from('productos').update({ 
-                imagen_url: document.getElementById(`img-${idx}`).value,
-                nombre: document.getElementById(`nom-${idx}`).value, 
-                talla: document.getElementById(`tal-${idx}`).value,
-                color: document.getElementById(`col-${idx}`).value,
-                stock: parseInt(document.getElementById(`stk-${idx}`).value), 
-                precio: parseInt(document.getElementById(`pre-${idx}`).value) 
-            }).eq('id_unico', parseInt(idUnico)).select();
-
-            if (!error) {
-                btn.style.background = "#2ecc71"; btn.innerHTML = 'Listo';
-                setTimeout(() => { btn.style.background = "var(--success)"; btn.innerHTML = txtOriginal; }, 1500);
-            } else {
-                alert("Error al actualizar: " + error.message);
-                btn.innerHTML = txtOriginal;
-            }
-        }
-
-        function filtrarProductos() {
-            const term = document.getElementById('busqueda').value.toLowerCase();
-            document.querySelectorAll('.fila-producto').forEach(fila => {
-                fila.style.display = fila.dataset.search.toLowerCase().includes(term) ? "" : "none";
-            });
-        }
-
-        // --- AGREGAR NUEVO PRODUCTO ---
-        function abrirModalProducto() { document.getElementById('modal-nuevo').style.display = 'flex'; }
-        function cerrarModalProducto() { document.getElementById('modal-nuevo').style.display = 'none'; }
-
-        async function guardarNuevoProducto() {
-            const btn = document.getElementById('btn-guardar-nuevo');
-            btn.innerHTML = "Guardando...";
-            btn.disabled = true;
-
-            const nId = document.getElementById('add-id').value;
-            const nNombre = document.getElementById('add-nombre').value;
-            const nTalle = document.getElementById('add-talle').value;
-            const nColor = document.getElementById('add-color').value;
-            const nStock = document.getElementById('add-stock').value;
-            const nPrecio = document.getElementById('add-precio').value;
-            const nImg = document.getElementById('add-imagen').value;
-
-            const { error } = await _supabase.from('productos').insert([{
-                id: nId, nombre: nNombre, talla: nTalle, color: nColor, 
-                stock: parseInt(nStock), precio: parseInt(nPrecio), imagen_url: nImg
-            }]);
-
-            if (error) {
-                alert("Error al guardar: Asegúrate de tener permisos 'INSERT' en Supabase.\n" + error.message);
-            } else {
-                alert("¡Producto agregado con éxito!");
-                cerrarModalProducto();
-                cargarInventario(); // Recargar tabla
-            }
-            btn.innerHTML = "Guardar Producto";
-            btn.disabled = false;
-        }
-
-        // --- LÓGICA DE VENTAS ---
-        async function cargarVentas() {
-            document.getElementById('tabla-historial-ventas').innerHTML = "Cargando datos...";
-            const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
-            
-            if (error) {
-                document.getElementById('tabla-historial-ventas').innerHTML = `<p style="color:red;">Error: ${error.message}<br>¿Tienes la tabla 'ventas' y permisos SELECT habilitados?</p>`;
-                return;
-            }
-            ventasLocal = data;
-            renderizarVentas(data);
-        }
-
-        function renderizarVentas(ventas) {
-            if(ventas.length === 0) {
-                document.getElementById('tabla-historial-ventas').innerHTML = "<p>Aún no hay ventas registradas.</p>";
-                return;
-            }
-
-            let html = `<table><thead><tr>
-                <th>ID</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Total</th><th>Detalle</th>
-            </tr></thead><tbody>`;
-
-            ventas.forEach((v, idx) => {
-                // Formateamos la fecha si existe "created_at"
-                let fecha = v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A';
-                
-                // Formateamos los artículos si están guardados como texto JSON
-                let articulosHTML = "Ver detalle";
-                if(v.articulos) {
-                    try {
-                        let arts = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
-                        articulosHTML = arts.map(a => `${a.cantidad}x ${a.titulo} (${a.color}/${a.talla})`).join('<br>');
-                    } catch(e) { articulosHTML = v.articulos; }
+        // Si el usuario ya había iniciado sesión, no le pedimos la clave de nuevo
+        document.addEventListener('DOMContentLoaded', () => {
+            _supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    document.getElementById('pantalla-login').style.display = 'none';
+                    cargarInventarioUnificado();
+                    cargarVentas();
+                    cargarConfiguracion();
                 }
-
-                html += `
-                    <tr class="fila-venta" data-search="${v.cliente} ${v.metodo_pago}">
-                        <td data-label="ID Venta">#${v.id || idx}</td>
-                        <td data-label="📅 Fecha">${fecha}</td>
-                        <td data-label="👤 Cliente"><strong>${v.cliente || 'Anónimo'}</strong><br><small>${v.direccion || ''}</small></td>
-                        <td data-label="💳 Método">${v.metodo_pago || 'N/A'}</td>
-                        <td data-label="💰 Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
-                        <td data-label="🛒 Artículos"><small>${articulosHTML}</small></td>
-                    </tr>`;
             });
-            document.getElementById('tabla-historial-ventas').innerHTML = html + '</tbody></table>';
+        });
+
+        // 3. FUNCIÓN PARA CAMBIAR ENTRE PESTAÑAS
+        function cambiarPestana(idVista, btnElement) {
+            // Ocultamos todo
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            // Mostramos lo seleccionado
+            document.getElementById(idVista).classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
         }
 
-        function filtrarVentas() {
-            const term = document.getElementById('busqueda-ventas').value.toLowerCase();
-            document.querySelectorAll('.fila-venta').forEach(fila => {
-                fila.style.display = fila.dataset.search.toLowerCase().includes(term) ? "" : "none";
+        // 4. LÓGICA DEL INVENTARIO (LEER Y MOSTRAR)
+        async function cargarInventarioUnificado() {
+            const { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
+            const tbody = document.getElementById('cuerpo-inventario');
+            
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color:red;">Error: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No tienes productos aún. ¡Ve a Agregar Producto!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ''; 
+            data.forEach(prod => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Imagen"><img src="${prod.imagen || ''}" width="40" style="border-radius: 5px; border: 1px solid #ddd; object-fit: cover;"></td>
+                    <td data-label="ID"><b>${prod.id}</b></td>
+                    <td data-label="Nombre">${prod.nombre || ''}</td>
+                    <td data-label="Talles">${prod.talles || ''}</td>
+                    <td data-label="Colores">${prod.colores || ''}</td>
+                    <td data-label="Stock"><b>${prod.stock || 0}</b></td>
+                    <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
+                    <td data-label="Acciones">
+                        <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" title="Eliminar producto"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // --- EXPORTAR ---
-        function exportarExcel() {
-            const dataExcel = productosLocal.map(p => ({
-                Producto: p.nombre, Talla: p.talla, Color: p.color, Stock: p.stock, Precio: p.precio
-            }));
-            const ws = XLSX.utils.json_to_sheet(dataExcel);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-            XLSX.writeFile(wb, "Inventario_Gruken.xlsx");
+        // 5. LÓGICA DEL INVENTARIO (GUARDAR NUEVO O EDITAR)
+        async function guardarProductoUnificado() {
+            const idProd = document.getElementById('prod-id').value;
+            if (!idProd) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+
+            const nuevoProducto = {
+                id: idProd,
+                nombre: document.getElementById('prod-nombre').value,
+                talles: document.getElementById('prod-talles').value,
+                colores: document.getElementById('prod-colores').value,
+                stock: parseInt(document.getElementById('prod-stock').value) || 0,
+                precio: parseFloat(document.getElementById('prod-precio').value) || 0,
+                imagen: document.getElementById('prod-img').value
+            };
+
+            const { error } = await _supabase.from('productos').upsert(nuevoProducto);
+
+            if (error) {
+                alert("Hubo un error al guardar: " + error.message);
+            } else {
+                alert("✅ ¡Producto guardado correctamente!");
+                // Limpiar el formulario
+                document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
+                
+                // Recargar tabla y llevar al usuario a la pestaña de Inventario automáticamente
+                cargarInventarioUnificado(); 
+                cambiarPestana('vista-inventario', document.querySelector('.tab-btn')); 
+            }
         }
-        function exportarPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.text("Inventario - Gruken", 14, 15);
-            const body = productosLocal.map(p => [p.nombre, `${p.talla}/${p.color}`, p.stock, `$${p.precio}`]);
-            doc.autoTable({ startY: 25, head: [['Producto', 'Variante', 'Stock', 'Precio']], body: body });
-            doc.save("Inventario.pdf");
+
+        // 6. LÓGICA DEL INVENTARIO (ELIMINAR)
+        async function eliminarProducto(idProd) {
+            if (confirm(`¿Estás seguro de eliminar el producto: ${idProd}?`)) {
+                const { error } = await _supabase.from('productos').delete().eq('id', idProd);
+                if (error) alert("Error al eliminar: " + error.message);
+                else cargarInventarioUnificado();
+            }
         }
-       // --- CARGAR DATOS AL ENTRAR AL ADMIN ---
-async function cargarConfiguracion() {
-    const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
-    if (data) {
-        document.getElementById('config-nombre').value = data.nombre || '';
-        document.getElementById('config-logo').value = data.logo || '';
-        document.getElementById('config-wsp').value = data.wsp || '';
-        document.getElementById('config-email').value = data.email || '';
-       // Asegúrate de que estas dos líneas existan si las agregaste antes:
-        if (document.getElementById('config-favicon')) {
-            document.getElementById('config-favicon').value = data.favicon || '';
+
+        // 7. LÓGICA DE CONFIGURACIÓN DE LA TIENDA
+        async function cargarConfiguracion() {
+            const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
+            if (data) {
+                document.getElementById('config-nombre').value = data.nombre || '';
+                document.getElementById('config-logo').value = data.logo || '';
+                document.getElementById('config-wsp').value = data.wsp || '';
+                document.getElementById('config-email').value = data.email || '';
+                document.getElementById('config-favicon').value = data.favicon || '';
+                document.getElementById('config-web').value = data.web || '';
+                document.getElementById('config-tiktok').value = data.tiktok || '';
+                document.getElementById('config-facebook').value = data.facebook || '';
+                document.getElementById('config-instagram').value = data.instagram || '';
+                document.getElementById('config-youtube').value = data.youtube || '';
+            }
         }
-        if (document.getElementById('config-web')) {
-            document.getElementById('config-web').value = data.web || '';
+
+        async function guardarConfiguracion() {
+            const config = {
+                id: 1, 
+                nombre: document.getElementById('config-nombre').value,
+                logo: document.getElementById('config-logo').value,
+                wsp: document.getElementById('config-wsp').value,
+                email: document.getElementById('config-email').value,
+                favicon: document.getElementById('config-favicon').value,
+                web: document.getElementById('config-web').value,
+                tiktok: document.getElementById('config-tiktok').value,
+                facebook: document.getElementById('config-facebook').value,
+                instagram: document.getElementById('config-instagram').value,
+                youtube: document.getElementById('config-youtube').value
+            };
+            const { error } = await _supabase.from('configuracion').upsert(config);
+            if (error) alert('Error al guardar: ' + error.message);
+            else alert('✅ ¡Configuración guardada en el servidor!');
         }
-        if (document.getElementById('config-tiktok')) document.getElementById('config-tiktok').value = data.tiktok || '';
-        if (document.getElementById('config-facebook')) document.getElementById('config-facebook').value = data.facebook || '';
-        if (document.getElementById('config-instagram')) document.getElementById('config-instagram').value = data.instagram || '';
-        if (document.getElementById('config-youtube')) document.getElementById('config-youtube').value = data.youtube || '';
-        } else if (error && error.code !== 'PGRST116') { // Ignoramos el error si la fila 1 aún no existe
-        console.error("Error al cargar configuración:", error);
-    }
 
-    }
-
-
-// --- GUARDAR CAMBIOS EN SUPABASE ---
-async function guardarConfiguracion() {
-    const btn = document.querySelector('.btn-update');
-    const textoOriginal = btn.textContent;
-    btn.textContent = "Guardando en servidor...";
-    btn.disabled = true;
-
-    // Usaremos el mismo número de WSP para el footer y el flotante
-    const config = {
-        id: 1, 
-        nombre: document.getElementById('config-nombre').value,
-        logo: document.getElementById('config-logo').value,
-        wsp: document.getElementById('config-wsp').value,
-        email: document.getElementById('config-email').value,
-        favicon: document.getElementById('config-favicon').value, // Nuevo
-        web: document.getElementById('config-web').value, // Nuevo
-        // NUEVAS REDES SOCIALES
-        tiktok: document.getElementById('config-tiktok').value,
-        facebook: document.getElementById('config-facebook').value,
-        instagram: document.getElementById('config-instagram').value,
-        youtube: document.getElementById('config-youtube').value
-    };
-    
-    const { error } = await _supabase.from('configuracion').upsert(config);
-    
-    btn.textContent = textoOriginal;
-    btn.disabled = false;
-
-    if (error) {
-        alert('Hubo un error al guardar: ' + error.message);
-    } else {
-        alert('¡Configuración guardada en el servidor correctamente!');
-    }
-}
-// Cargar los datos automáticamente cuando se abre la página del admin
-document.addEventListener('DOMContentLoaded', () => {
-    cargarConfiguracion();
-});
+        // 8. LÓGICA DE VENTAS
+        async function cargarVentas() {
+            const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
+            const divVentas = document.getElementById('tabla-historial-ventas');
+            if (error || !data || data.length === 0) {
+                divVentas.innerHTML = "<p>Aún no hay ventas registradas.</p>"; return;
+            }
+            let html = `<table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Total</th></tr></thead><tbody>`;
+            data.forEach((v) => {
+                let fecha = v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A';
+                html += `<tr>
+                    <td data-label="ID Venta">#${v.id}</td><td data-label="Fecha">${fecha}</td>
+                    <td data-label="Cliente"><strong>${v.cliente || 'Anónimo'}</strong></td>
+                    <td data-label="Total">$${(v.total || 0).toLocaleString('es-AR')}</td>
+                </tr>`;
+            });
+            divVentas.innerHTML = html + '</tbody></table>';
+        }
     </script>
 </body>
 </html>
-
-

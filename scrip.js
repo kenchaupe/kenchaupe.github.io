@@ -249,82 +249,116 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ==========================================
-// FUNCIONES GLOBALES (INVENTARIO Y RESEÑAS)
-// ==========================================
+
+
+
+
+
+
 async function inicializarStockTienda() {
-    console.log("Iniciando sincronización general de la tienda...");
+    console.log("Sincronizando tienda y organizando diseño...");
     
     try {
-        // Obtenemos solo los campos necesarios de Supabase para mayor velocidad
-        const { data, error } = await _supabase.from('productos').select('id, stock, nombre, precio, imagen_url');
+        const { data, error } = await _supabase.from('productos').select('*');
         if (error) throw error;
 
-        // 1. Agrupamos los datos (nombre, precio, imagen y suma de stock) usando .reduce()
         const productoInfo = data.reduce((map, item) => {
             const limpiaId = item.id.trim().toLowerCase();
-            
-            // Si es la primera vez que vemos este ID, inicializamos sus datos
             if (!map[limpiaId]) {
                 map[limpiaId] = {
                     nombre: item.nombre,
                     precio: item.precio,
-                    imagen: item.imagen_url,
+                    imagen: item.imagen,
+                    talles: item.talles || "Único",
+                    colores: item.colores || "Único",
                     stockTotal: 0
                 };
             }
-            
-            // Sumamos el stock (útil si hay variaciones del mismo ID)
             map[limpiaId].stockTotal += item.stock;
             return map;
         }, {});
 
-        // 2. Buscamos cada producto en el HTML y actualizamos su tarjeta
         document.querySelectorAll('.agregar-carrito').forEach(btn => {
             const idHtml = btn.getAttribute('data-id').trim().toLowerCase();
             const datosBD = productoInfo[idHtml];
 
-            // Si el producto existe en Supabase, actualizamos la web
             if (datosBD) {
                 const contenedorTexto = btn.closest('.product-txt');
                 
                 if (contenedorTexto) {
-                    // --- A) ACTUALIZAR NOMBRE ---
+                    // 1. LIMPIEZA: Borramos selectores viejos para que no se dupliquen
+                    const duplicados = contenedorTexto.querySelectorAll('.selectores-dinamicos');
+                    duplicados.forEach(el => el.remove());
+
+                    // 2. ACTUALIZAR TEXTOS
                     const titulo = contenedorTexto.querySelector('h3');
-                    if (titulo && datosBD.nombre) titulo.textContent = datosBD.nombre;
+                    if (titulo) titulo.textContent = datosBD.nombre;
 
-                    // --- B) ACTUALIZAR PRECIO ---
                     const precioSpan = contenedorTexto.querySelector('.precio');
-                    if (precioSpan && datosBD.precio) {
-                        precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
+                    if (precioSpan) precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
+
+                    // 3. CREAR EL DISEÑO DE TALLES Y COLORES
+                    const coloresHex = {
+                        'rosa': '#F791A6', 'beige': '#F5F5DC', 'denim': '#1560BD',
+                        'topo': '#1560BD', 'blanco': '#FFFFFF', 'negro': '#000000'
+                    };
+
+                    const htmlTalles = (datosBD.talles).split(',').map(t => `<div class="chip" data-valor="${t.trim()}">${t.trim()}</div>`).join('');
+                    const htmlColores = (datosBD.colores).split(',').map(c => {
+                        let clave = c.trim().toLowerCase();
+                        let fondo = coloresHex[clave] || '#eeeeee';
+                        return `<div class="swatch" data-valor="${c.trim()}" style="background-color: ${fondo};" title="${c.trim()}"></div>`;
+                    }).join('');
+
+                    const divSelectores = document.createElement('div');
+                    divSelectores.className = 'selectores-dinamicos';
+                    divSelectores.innerHTML = `
+                        <div class="selector-contenedor" style="margin-bottom: 8px;">
+                            <span class="label-titulo" style="font-weight: bold;">Color:</span>
+                            <div class="color-swatches" style="display: flex; gap: 5px; margin-top: 5px;">${htmlColores}</div>
+                        </div>
+                        <div class="selector-contenedor" style="margin-bottom: 8px;">
+                            <span class="label-titulo" style="font-weight: bold;">Talle:</span>
+                            <div class="talla-chips" style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">${htmlTalles}</div>
+                        </div>
+                    `;
+
+                    // 4. UBICACIÓN EXACTA: Insertar ARRIBA del precio
+                    if (precioSpan) {
+                        contenedorTexto.insertBefore(divSelectores, precioSpan);
                     }
 
-                    // --- C) ACTUALIZAR IMAGEN ---
-                    const contenedorPrincipal = contenedorTexto.parentElement;
-                    if (contenedorPrincipal) {
-                        const primeraImagen = contenedorPrincipal.querySelector('.swiper-wrapper img');
-                        if (primeraImagen && datosBD.imagen) primeraImagen.src = datosBD.imagen;
-                    }
+                    // Lógica de selección visual
+                    divSelectores.querySelectorAll('.chip, .swatch').forEach(el => {
+                        el.onclick = (e) => {
+                            const hermanos = el.parentElement.querySelectorAll(el.classList[0] === 'chip' ? '.chip' : '.swatch');
+                            hermanos.forEach(h => {
+                                h.style.border = '1px solid #ccc';
+                                h.style.transform = 'scale(1)';
+                            });
+                            el.style.border = '2px solid #000';
+                            if(el.classList.contains('swatch')) el.style.transform = 'scale(1.2)';
+                        };
+                    });
                 }
 
-                // --- D) LÓGICA DE STOCK (AGOTADO) ---
+                // Lógica de botón Agotado
                 const sinStock = datosBD.stockTotal <= 0;
-                
                 btn.disabled = sinStock;
                 btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
                 btn.style.backgroundColor = sinStock ? "#ff0000" : "";
-                btn.style.opacity = sinStock ? "0.8" : "1";
-                btn.style.pointerEvents = sinStock ? "none" : "auto";
             }
         });
 
     } catch (error) {
-        console.error("Error al sincronizar la tienda con Supabase:", error);
+        console.error("Error:", error);
     }
 }
-/**
- * Revisa el stock general al cargar la página unificando variables de ID
- */
+
+
+
+
+
 
 
 /**
