@@ -134,24 +134,40 @@
                         <input type="text" id="config-nombre" placeholder="Ej: Gruken" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <div>
-                        <label><b>Logo (Ruta de la imagen):</b></label><br>
-                        <input type="text" id="config-logo" placeholder="Ej: images/gruicon.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                        <label><b>Logo Página:</b></label><br>
+                        <input type="text" id="config-logo" placeholder="Ej: Link.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <div>
                         <label><b>Número de WhatsApp:</b></label><br>
-                        <input type="text" id="config-wsp" placeholder="Ej: +5491130103905" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                        <input type="text" id="config-wsp" placeholder="Ej: +5491122445566" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <div>
                         <label><b>Correo Electrónico:</b></label><br>
-                        <input type="email" id="config-email" placeholder="Ej: contacto@gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                        <input type="email" id="config-email" placeholder="Ej: contacto@nombre.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <div>
                         <label><b>Icono de la Página (Favicon):</b></label><br>
-                      <input type="text" id="config-favicon" placeholder="Ej: images/gruicon.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                      <input type="text" id="config-favicon" placeholder="Ej: Link.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <div>
                         <label><b>Página Web:</b></label><br>
-                        <input type="text" id="config-web" placeholder="Ej: www.gruken.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                        <input type="text" id="config-web" placeholder="Ej: www.dominio.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>TikTok:</b></label><br>
+                        <input type="text" id="config-tiktok" placeholder="Ej: https://www.tiktok.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Facebook:</b></label><br>
+                        <input type="text" id="config-facebook" placeholder="Ej: https://www.facebook.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>Instagram:</b></label><br>
+                        <input type="text" id="config-instagram" placeholder="Ej: https://www.instagram.com/nombreusuario style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <label><b>YouTube:</b></label><br>
+                        <input type="text" id="config-youtube" placeholder="Ej: https://www.youtube.com/nombreusuario" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
                     </div>
                     <button onclick="guardarConfiguracion()" class="btn btn-update" style="padding: 12px; margin-top: 10px; justify-content: center; width: 100%;">💾 Guardar Cambios</button>
                 </div>
@@ -409,6 +425,10 @@ async function cargarConfiguracion() {
         if (document.getElementById('config-web')) {
             document.getElementById('config-web').value = data.web || '';
         }
+        if (document.getElementById('config-tiktok')) document.getElementById('config-tiktok').value = data.tiktok || '';
+        if (document.getElementById('config-facebook')) document.getElementById('config-facebook').value = data.facebook || '';
+        if (document.getElementById('config-instagram')) document.getElementById('config-instagram').value = data.instagram || '';
+        if (document.getElementById('config-youtube')) document.getElementById('config-youtube').value = data.youtube || '';
         } else if (error && error.code !== 'PGRST116') { // Ignoramos el error si la fila 1 aún no existe
         console.error("Error al cargar configuración:", error);
     }
@@ -431,7 +451,12 @@ async function guardarConfiguracion() {
         wsp: document.getElementById('config-wsp').value,
         email: document.getElementById('config-email').value,
         favicon: document.getElementById('config-favicon').value, // Nuevo
-        web: document.getElementById('config-web').value // Nuevo
+        web: document.getElementById('config-web').value, // Nuevo
+        // NUEVAS REDES SOCIALES
+        tiktok: document.getElementById('config-tiktok').value,
+        facebook: document.getElementById('config-facebook').value,
+        instagram: document.getElementById('config-instagram').value,
+        youtube: document.getElementById('config-youtube').value
     };
     
     const { error } = await _supabase.from('configuracion').upsert(config);

@@ -472,4 +472,21 @@ async function aplicarConfiguracionWeb() {
             wspFlotante.href = `https://api.whatsapp.com/send?phone=${wspLimpio}&text=Hola,%20me%20gustaría%20obtener%20más%20información`;
         }
     }
+    // 7. Redes Sociales
+    if (data.tiktok) {
+        const linkTikTok = document.getElementById('link-tiktok');
+        if (linkTikTok) linkTikTok.href = data.tiktok;
+    }
+    if (data.facebook) {
+        const linkFacebook = document.getElementById('link-facebook');
+        if (linkFacebook) linkFacebook.href = data.facebook;
+    }
+    if (data.instagram) {
+        const linkInstagram = document.getElementById('link-instagram');
+        if (linkInstagram) linkInstagram.href = data.instagram;
+    }
+    if (data.youtube) {
+        const linkYouTube = document.getElementById('link-youtube');
+        if (linkYouTube) linkYouTube.href = data.youtube;
+    }
 }
