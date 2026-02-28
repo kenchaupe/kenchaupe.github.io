@@ -402,10 +402,19 @@ async function cargarConfiguracion() {
         document.getElementById('config-logo').value = data.logo || '';
         document.getElementById('config-wsp').value = data.wsp || '';
         document.getElementById('config-email').value = data.email || '';
-        document.getElementById('config-favicon').value = data.favicon || ''; // Nuevo
-        document.getElementById('config-web').value = data.web || ''; // Nuevo
+       // Asegúrate de que estas dos líneas existan si las agregaste antes:
+        if (document.getElementById('config-favicon')) {
+            document.getElementById('config-favicon').value = data.favicon || '';
+        }
+        if (document.getElementById('config-web')) {
+            document.getElementById('config-web').value = data.web || '';
+        }
+        } else if (error && error.code !== 'PGRST116') { // Ignoramos el error si la fila 1 aún no existe
+        console.error("Error al cargar configuración:", error);
     }
-}
+
+    }
+
 
 // --- GUARDAR CAMBIOS EN SUPABASE ---
 async function guardarConfiguracion() {
@@ -436,6 +445,10 @@ async function guardarConfiguracion() {
         alert('¡Configuración guardada en el servidor correctamente!');
     }
 }
+// Cargar los datos automáticamente cuando se abre la página del admin
+document.addEventListener('DOMContentLoaded', () => {
+    cargarConfiguracion();
+});
     </script>
 </body>
 </html>
