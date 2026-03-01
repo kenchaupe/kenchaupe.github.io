@@ -296,20 +296,23 @@ async function inicializarStockTienda() {
 
                     const precioSpan = contenedorTexto.querySelector('.precio');
                     if (precioSpan) precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
-
-                    // 3. CREAR EL DISEÑO DE TALLES Y COLORES
+// 3. CREAR EL DISEÑO DE TALLES Y COLORES
                     const coloresHex = {
                         'rosa': '#F791A6', 'beige': '#F5F5DC', 'denim': '#1560BD',
-                        'topo': '#1560BD', 'blanco': '#FFFFFF', 'negro': '#000000'
+                        'topo': '#1560BD', 'blanco': '#FFFFFF', 'negro': '#000000',
+                        'azul': '#007bff', 'verde': '#28a745', 'rojo': '#dc3545', 'gris': '#6c757d'
                     };
 
-                    const htmlTalles = (datosBD.talles).split(',').map(t => `<div class="chip" data-valor="${t.trim()}">${t.trim()}</div>`).join('');
-                    const htmlColores = (datosBD.colores).split(',').map(c => {
+                    // CONVERTIMOS A TEXTO (String) PARA EVITAR QUE EL CÓDIGO SE ROMPA CON LOS NÚMEROS
+                    const tallesSeguros = String(datosBD.talles || "Único");
+                    const htmlTalles = tallesSeguros.split(',').map(t => `<div class="chip" data-valor="${t.trim()}">${t.trim()}</div>`).join('');
+                    
+                    const coloresSeguros = String(datosBD.colores || "Único");
+                    const htmlColores = coloresSeguros.split(',').map(c => {
                         let clave = c.trim().toLowerCase();
                         let fondo = coloresHex[clave] || '#eeeeee';
                         return `<div class="swatch" data-valor="${c.trim()}" style="background-color: ${fondo};" title="${c.trim()}"></div>`;
                     }).join('');
-
                     const divSelectores = document.createElement('div');
                     divSelectores.className = 'selectores-dinamicos';
                     divSelectores.innerHTML = `
