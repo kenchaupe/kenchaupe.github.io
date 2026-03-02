@@ -114,21 +114,23 @@
                 btn.classList.remove('btn-mp');
             }
         }
-
-  async function actualizarStockEnBaseDeDatos() {
+async function actualizarStockEnBaseDeDatos() {
     for (const p of carrito) {
-        // Los nombres de la izquierda deben ser IGUALES a los del SQL de arriba
+        // Deben ser 4 parámetros y llamarse igual que en el SQL: p_id, p_talle...
         const { error } = await _supabase.rpc('descontar_stock', {
-            id_prod: parseInt(p.id),
-            cant_comprada: parseInt(p.cantidad)
+            p_id: Number(p.id),
+            p_talle: p.talla,
+            p_color: p.color,
+            p_cantidad: Number(p.cantidad)
         });
 
         if (error) {
-            console.error("Error de Supabase:", error.message);
+            console.error(`Error al descontar stock de ${p.titulo} (${p.talla} - ${p.color}):`, error);
+        } else {
+            console.log(`Stock descontado de ${p.titulo} (${p.talla} - ${p.color})`);
         }
     }
 }
-
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -197,26 +199,22 @@
             if (error) console.error("Error al registrar venta:", error);
         }
 
-        async function ejecutarMercadoPago() {
+      async function ejecutarMercadoPago() {
             const btn = document.querySelector('#boton-accion');
             btn.innerHTML = "Conectando...";
             btn.disabled = true;
 
             try {
-// CAMBIA ESTO:
-// const response = await fetch('/api/crear-preferencia', ...
+                // Volvemos a apuntar a tu carpeta local/Vercel
+                const response = await fetch('/api/crear-preferencia', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ items: carrito })
+                });
 
-// POR ESTO (URL de tu Edge Function):
-const response = await fetch('https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/mercadopago', {
-    method: 'POST',
-    headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + supabaseKey 
-    },
-    body: JSON.stringify({ items: carrito })
-});
-
-                if (!response.ok) throw new Error("Error en el servidor");
+                if (!response.ok) throw new Error("Error en el servidor al conectar con Mercado Pago");
 
                 const data = await response.json();
                 if (data.id) {
@@ -229,7 +227,7 @@ const response = await fetch('https://pvniwivsxluujijyqqpc.supabase.co/functions
                 alert("Hubo un problema: " + error.message);
             } finally {
                 btn.disabled = false;
-                actualizarBoton();
+                btn.innerHTML = "Pagar con Mercado Pago";
             }
         }
     </script>
