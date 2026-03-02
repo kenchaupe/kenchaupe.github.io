@@ -128,12 +128,22 @@
         </div>
 
     </div>
-
-    <script>
+     <script>
         // 1. CONEXIÓN A LA BASE DE DATOS
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let productosGlobal = []; // Guardamos los productos aquí para poder editarlos fácil
+
+        // DICCIONARIO DE COLORES PARA EL ADMIN
+        const coloresHexAdmin = {
+            'rosa': '#F791A6', 'beige': '#F5F5DC', 'denim': '#1560BD',
+            'topo': '#8B8589', 'blanco': '#FFFFFF', 'negro': '#000000',
+            'azul': '#007bff', 'verde': '#28a745', 'rojo': '#dc3545', 
+            'gris': '#6c757d', 'amarillo': '#ffc107', 'celeste': '#17a2b8',
+            'violeta': '#6f42c1', 'naranja': '#fd7e14', 'marron': '#8b4513'
+        };
 
         // 2. SISTEMA DE LOGIN Y CARGA INICIAL
         async function iniciarSesion() {
@@ -151,7 +161,6 @@
             }
         }
 
-        // Si el usuario ya había iniciado sesión, no le pedimos la clave de nuevo
         document.addEventListener('DOMContentLoaded', () => {
             _supabase.auth.getSession().then(({ data: { session } }) => {
                 if (session) {
@@ -165,11 +174,8 @@
 
         // 3. FUNCIÓN PARA CAMBIAR ENTRE PESTAÑAS
         function cambiarPestana(idVista, btnElement) {
-            // Ocultamos todo
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            
-            // Mostramos lo seleccionado
             document.getElementById(idVista).classList.add('active');
             if(btnElement) btnElement.classList.add('active');
         }
@@ -189,32 +195,73 @@
                 return;
             }
 
+            productosGlobal = data; // Guardamos en memoria
             tbody.innerHTML = ''; 
-            data.forEach(prod => {
+
+           data.forEach(prod => {
+                // ---> ARREGLO DE LA MINI IMAGEN: Tomamos solo la primera foto <---
+                let primeraImagen = '';
+                if (prod.imagen) {
+                    primeraImagen = prod.imagen.split(',')[0].trim();
+                }
+
+                // Generar bolitas de color para la tabla
+                let coloresArray = (prod.colores || 'Único').split(',');
+                let htmlColoresVisibles = coloresArray.map(c => {
+                    let clave = c.trim().toLowerCase();
+                    let fondo = coloresHexAdmin[clave] || '#eeeeee';
+                    return `<span title="${c.trim()}" style="display:inline-block; width:15px; height:15px; background-color:${fondo}; border:1px solid #ccc; border-radius:50%; margin-right:3px; vertical-align:middle;"></span> ${c.trim()}`;
+                }).join('<br>');
+
                 const tr = document.createElement('tr');
+                // Ahora usamos ${primeraImagen} y le agregué height="40" para que sean cuadraditas perfectas
                 tr.innerHTML = `
-                    <td data-label="Imagen"><img src="${prod.imagen || ''}" width="40" style="border-radius: 5px; border: 1px solid #ddd; object-fit: cover;"></td>
+                    <td data-label="Imagen"><img src="${primeraImagen}" width="40" height="40" style="border-radius: 5px; border: 1px solid #ddd; object-fit: cover;"></td>
                     <td data-label="ID"><b>${prod.id}</b></td>
                     <td data-label="Nombre">${prod.nombre || ''}</td>
                     <td data-label="Talles">${prod.talles || ''}</td>
-                    <td data-label="Colores">${prod.colores || ''}</td>
+                    <td data-label="Colores">${htmlColoresVisibles}</td>
                     <td data-label="Stock"><b>${prod.stock || 0}</b></td>
                     <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
-                    <td data-label="Acciones">
-                        <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" title="Eliminar producto"><i class="fas fa-trash"></i></button>
+                    <td data-label="Acciones" style="display: flex; gap: 5px; flex-direction: column;">
+                        <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #ffc107; color: #333;"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                        <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" title="Eliminar producto" style="width: 100%;"><i class="fas fa-trash"></i> Eliminar</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // 5. LÓGICA DEL INVENTARIO (GUARDAR NUEVO O EDITAR)
-        async function guardarProductoUnificado() {
-            const idProd = document.getElementById('prod-id').value;
-            if (!idProd) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+        // NUEVO: CARGAR DATOS PARA EDITAR
+        window.cargarParaEditar = function(idProd) {
+            const prod = productosGlobal.find(p => p.id === idProd);
+            if(!prod) return;
+            
+            document.getElementById('prod-id').value = prod.id || '';
+            document.getElementById('prod-nombre').value = prod.nombre || '';
+            document.getElementById('prod-talles').value = prod.talles || '';
+            document.getElementById('prod-colores').value = prod.colores || '';
+            document.getElementById('prod-stock').value = prod.stock || 0;
+            document.getElementById('prod-precio').value = prod.precio || 0;
+            document.getElementById('prod-img').value = prod.imagen || '';
+            
+            // Nos movemos a la pestaña de agregar/editar
+            cambiarPestana('vista-agregar', document.querySelectorAll('.tab-btn')[1]);
+            window.scrollTo(0, 0);
+        };
+// 5. LÓGICA DEL INVENTARIO (GUARDAR NUEVO O EDITAR)
+        async function guardarProductoUnificado(evento) {
+            // Evita que la página se recargue sola
+            if (evento) evento.preventDefault(); 
 
-            const nuevoProducto = {
-                id: idProd,
+            const idTexto = document.getElementById('prod-id').value;
+            if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+
+            // CONVERTIMOS EL ID A NÚMERO (clave para que Supabase actualice)
+            const idNumerico = parseInt(idTexto);
+
+            const productoGuardar = {
+                id: idNumerico,
                 nombre: document.getElementById('prod-nombre').value,
                 talles: document.getElementById('prod-talles').value,
                 colores: document.getElementById('prod-colores').value,
@@ -223,18 +270,21 @@
                 imagen: document.getElementById('prod-img').value
             };
 
-            const { error } = await _supabase.from('productos').upsert(nuevoProducto);
+            console.log("Intentando enviar esto a Supabase:", productoGuardar);
+
+            // Agregamos .select() al final para forzar a Supabase a devolvernos el resultado
+            const { data, error } = await _supabase.from('productos').upsert(productoGuardar).select();
 
             if (error) {
+                console.error("Error detectado por Supabase:", error);
                 alert("Hubo un error al guardar: " + error.message);
             } else {
-                alert("✅ ¡Producto guardado correctamente!");
-                // Limpiar el formulario
+                console.log("Respuesta exitosa de Supabase:", data);
+                alert("✅ ¡Producto guardado/actualizado correctamente!");
+                // Limpiamos los campos
                 document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
-                
-                // Recargar tabla y llevar al usuario a la pestaña de Inventario automáticamente
                 cargarInventarioUnificado(); 
-                cambiarPestana('vista-inventario', document.querySelector('.tab-btn')); 
+                cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]); 
             }
         }
 

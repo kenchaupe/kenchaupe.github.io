@@ -87,14 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ==========================================
+   // ==========================================
     // FUNCIONES DEL CARRITO Y STOCK LOCAL
     // ==========================================
     async function verificarStockYPrecio(productoContenedor) {
         const btnAgregar = productoContenedor.querySelector('.agregar-carrito');
         const precioEtiqueta = productoContenedor.querySelector('.precio');
         
-        const id = btnAgregar.getAttribute('data-id').trim().toLowerCase();
+        // El secreto 1: Convertimos el ID a número estricto
+        const idTexto = btnAgregar.getAttribute('data-id');
+        const idNumero = parseInt(idTexto); 
+        
         const talla = productoContenedor.querySelector('.chip.selected')?.getAttribute('data-valor');
         const color = productoContenedor.querySelector('.swatch.selected')?.getAttribute('data-valor');
 
@@ -103,10 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAgregar.textContent = "Consultando...";
         btnAgregar.disabled = true;
 
+        // El secreto 2: Buscamos SOLO por ID
         const { data, error } = await _supabase
             .from('productos')
             .select('stock, precio')
-            .eq('id', id).eq('talla', talla).eq('color', color).single();
+            .eq('id', idNumero)
+            .single();
 
         if (error || !data) {
             btnAgregar.textContent = "No disponible";
@@ -120,11 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btnAgregar.textContent = "Agotado";
             btnAgregar.style.opacity = "0.5";
             btnAgregar.style.backgroundColor = "#ccc";
+            btnAgregar.style.pointerEvents = "none";
         } else {
             btnAgregar.disabled = false;
             btnAgregar.textContent = "Agregar al carrito";
             btnAgregar.style.opacity = "1";
             btnAgregar.style.backgroundColor = ""; // Restaura color original
+            btnAgregar.style.pointerEvents = "auto";
         }
     }
 
@@ -138,7 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.textContent = "Validando...";
             btn.disabled = true;
 
-            const id = btn.getAttribute('data-id').trim().toLowerCase();
+            // Convertimos el ID a número aquí también
+            const idTexto = btn.getAttribute('data-id');
+            const idNumero = parseInt(idTexto);
+
             const talla = productoSeleccionado.querySelector('.chip.selected')?.getAttribute('data-valor');
             const color = productoSeleccionado.querySelector('.swatch.selected')?.getAttribute('data-valor');
             const cantidadPedida = parseInt(productoSeleccionado.querySelector('.input-cantidad')?.value) || 1;
@@ -150,7 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const { data } = await _supabase.from('productos').select('stock').eq('id', id).eq('talla', talla).eq('color', color).single();
+            // BUSCAMOS SOLO POR ID para evitar el error de "0 unidades"
+            const { data } = await _supabase
+                .from('productos')
+                .select('stock')
+                .eq('id', idNumero)
+                .single();
 
             if (data && data.stock >= cantidadPedida) {
                 leerDatosProducto(productoSeleccionado, data.stock);
@@ -243,17 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => alerta.classList.remove('mostrar'), 3000);
     }
 
-    // PWA LOGIC
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW Error:", err));
     }
 });
-
-
-
-
-
-
 
 async function inicializarStockTienda() {
     console.log("Sincronizando tienda y organizando diseño...");
@@ -261,7 +269,91 @@ async function inicializarStockTienda() {
     try {
         const { data, error } = await _supabase.from('productos').select('*');
         if (error) throw error;
+// ==========================================
+        // CREACIÓN AUTOMÁTICA DE PRODUCTOS NUEVOS (CON SLIDER DE IMÁGENES)
+        // ==========================================
+        const contenedorPrincipal = document.querySelector('.contenedor-items'); 
+        
+        if (contenedorPrincipal && data) { 
+            data.forEach(prodBD => {
+                const existeEnPagina = document.querySelector(`.agregar-carrito[data-id="${prodBD.id}"]`);
+                
+                if (!existeEnPagina) {
+                    const nuevaTarjeta = document.createElement('div');
+                    nuevaTarjeta.className = 'item'; 
+                    
+                    // 1. LÓGICA DE MÚLTIPLES IMÁGENES
+                    // Separamos las URLs por comas (si no hay, usamos la por defecto)
+                    let imagenesArray = (prodBD.imagen || 'images/default.jpg').split(',');
+                    let htmlImagenes = '';
 
+                    // Si hay más de una imagen, armamos el HTML del mini-slider
+                    if (imagenesArray.length > 1) {
+                        let slides = imagenesArray.map(img => 
+                            `<div class="swiper-slide"><img src="${img.trim()}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px;"></div>`
+                        ).join('');
+                        
+                        htmlImagenes = `
+                            <div class="swiper mini-slider-${prodBD.id}" style="border-radius: 10px; margin-bottom: 15px;">
+                                <div class="swiper-wrapper">
+                                    ${slides}
+                                </div>
+                                <div class="swiper-pagination"></div>
+                                <div class="swiper-button-next" style="color: #fff; transform: scale(0.6);"></div>
+                                <div class="swiper-button-prev" style="color: #fff; transform: scale(0.6);"></div>
+                            </div>
+                        `;
+                    } else {
+                        // Si hay una sola imagen, la mostramos normal
+                        htmlImagenes = `<img src="${imagenesArray[0].trim()}" alt="${prodBD.nombre}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;">`;
+                    }
+
+                    // 2. DIBUJAMOS LA TARJETA
+                    nuevaTarjeta.innerHTML = `
+                        ${htmlImagenes}
+                        <div class="product-txt">
+                            <h3>${prodBD.nombre}</h3>
+                            
+                            <div class="selector-contenedor">
+                                <span class="label-titulo">Cantidad:</span>
+                                <div class="cantidad-control">
+                                    <button class="btn-cantidad minus">-</button>
+                                    <input type="number" class="input-cantidad" value="1" min="1" readonly>
+                                    <button class="btn-cantidad plus">+</button>
+                                </div>
+                            </div>
+                            
+                            <div class="precio-contenedor">
+                                <span class="precio">$${(prodBD.precio || 0).toLocaleString('es-AR')}</span>
+                                <span class="cantidad-ventas"> 🔥 ¡Nuevo!</span>
+                            </div>
+                            
+                            <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="${prodBD.id}">Agregar al carrito</a>
+                        </div>
+                    `;
+                    
+                    contenedorPrincipal.appendChild(nuevaTarjeta);
+
+                    // 3. ACTIVAMOS EL SLIDER SI HAY MÁS DE 1 IMAGEN
+                    if (imagenesArray.length > 1) {
+                        new Swiper(`.mini-slider-${prodBD.id}`, {
+                            loop: true, // Para que gire infinitamente
+                            pagination: {
+                                el: ".swiper-pagination",
+                                clickable: true,
+                            },
+                            navigation: {
+                                nextEl: ".swiper-button-next",
+                                prevEl: ".swiper-button-prev",
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        // ==========================================
+
+        // AQUÍ SIGUE TU CÓDIGO ORIGINAL SIN CAMBIOS...
         const productoInfo = data.reduce((map, item) => {
             const limpiaId = item.id.trim().toLowerCase();
             if (!map[limpiaId]) {
@@ -277,6 +369,7 @@ async function inicializarStockTienda() {
             map[limpiaId].stockTotal += item.stock;
             return map;
         }, {});
+        
 
         document.querySelectorAll('.agregar-carrito').forEach(btn => {
             const idHtml = btn.getAttribute('data-id').trim().toLowerCase();
@@ -286,52 +379,74 @@ async function inicializarStockTienda() {
                 const contenedorTexto = btn.closest('.product-txt');
                 
                 if (contenedorTexto) {
-                    // 1. LIMPIEZA: Borramos selectores viejos para que no se dupliquen
+                    // ---> 1. LIMPIEZA DE SELECTORES VIEJOS (Evita duplicados) <---
+                    let contenedorCantidad = null;
+                    const selectoresViejos = contenedorTexto.querySelectorAll('.selector-contenedor');
+                    
+                    selectoresViejos.forEach(el => {
+                        // Protegemos el selector de Cantidad para no borrarlo
+                        if (el.textContent.includes('Cantidad')) {
+                            contenedorCantidad = el; 
+                        } 
+                        // Borramos los colores y talles fijos del HTML viejo
+                        else if (el.textContent.includes('Color') || el.textContent.includes('Talle')) {
+                            el.remove(); 
+                        }
+                    });
+                    // También borramos si quedaron inyecciones dinámicas previas
                     const duplicados = contenedorTexto.querySelectorAll('.selectores-dinamicos');
                     duplicados.forEach(el => el.remove());
 
-                    // 2. ACTUALIZAR TEXTOS
+                    // ---> 2. ACTUALIZACIÓN DE DATOS <---
                     const titulo = contenedorTexto.querySelector('h3');
                     if (titulo) titulo.textContent = datosBD.nombre;
 
                     const precioSpan = contenedorTexto.querySelector('.precio');
                     if (precioSpan) precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
-// 3. CREAR EL DISEÑO DE TALLES Y COLORES
+
                     const coloresHex = {
                         'rosa': '#F791A6', 'beige': '#F5F5DC', 'denim': '#1560BD',
-                        'topo': '#1560BD', 'blanco': '#FFFFFF', 'negro': '#000000',
-                        'azul': '#007bff', 'verde': '#28a745', 'rojo': '#dc3545', 'gris': '#6c757d'
+                        'topo': '#8B8589', 'blanco': '#FFFFFF', 'negro': '#000000',
+                        'azul': '#007bff', 'verde': '#28a745', 'rojo': '#dc3545', 
+                        'gris': '#6c757d', 'amarillo': '#ffc107', 'celeste': '#17a2b8'
                     };
 
-                    // CONVERTIMOS A TEXTO (String) PARA EVITAR QUE EL CÓDIGO SE ROMPA CON LOS NÚMEROS
-                    const tallesSeguros = String(datosBD.talles || "Único");
-                    const htmlTalles = tallesSeguros.split(',').map(t => `<div class="chip" data-valor="${t.trim()}">${t.trim()}</div>`).join('');
+                    const tallesStr = String(datosBD.talles || "Único");
+                    const htmlTalles = tallesStr.split(',').map(t => `<div class="chip" data-valor="${t.trim()}">${t.trim()}</div>`).join('');
                     
-                    const coloresSeguros = String(datosBD.colores || "Único");
-                    const htmlColores = coloresSeguros.split(',').map(c => {
+                    const coloresStr = String(datosBD.colores || "Único");
+                    const htmlColores = coloresStr.split(',').map(c => {
                         let clave = c.trim().toLowerCase();
                         let fondo = coloresHex[clave] || '#eeeeee';
                         return `<div class="swatch" data-valor="${c.trim()}" style="background-color: ${fondo};" title="${c.trim()}"></div>`;
                     }).join('');
+
+                    // ---> 3. CREACIÓN CON EL DISEÑO EXACTO ORIGINAL <---
                     const divSelectores = document.createElement('div');
                     divSelectores.className = 'selectores-dinamicos';
+                    
+                    // Recreamos exactamente la estructura de tu index.html original para que respete tu style.css
                     divSelectores.innerHTML = `
-                        <div class="selector-contenedor" style="margin-bottom: 8px;">
-                            <span class="label-titulo" style="font-weight: bold;">Color:</span>
-                            <div class="color-swatches" style="display: flex; gap: 5px; margin-top: 5px;">${htmlColores}</div>
+                        <div class="selector-contenedor">
+                            <span class="label-titulo">Color:</span>
+                            <div class="color-swatches" data-tipo="color">
+                                ${htmlColores}
+                            </div>
                         </div>
-                        <div class="selector-contenedor" style="margin-bottom: 8px;">
-                            <span class="label-titulo" style="font-weight: bold;">Talle:</span>
-                            <div class="talla-chips" style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">${htmlTalles}</div>
+                        <div class="selector-contenedor">
+                            <span class="label-titulo">Talle:</span>
+                            <div class="talla-chips" data-tipo="talla">
+                                ${htmlTalles}
+                            </div>
                         </div>
                     `;
 
-                    // 4. UBICACIÓN EXACTA: Insertar ARRIBA del precio
-                    if (precioSpan) {
-                        contenedorTexto.insertBefore(divSelectores, precioSpan);
+                    // ---> 4. INSERTAR EN EL LUGAR CORRECTO (Arriba de Cantidad) <---
+                    if (contenedorCantidad) {
+                        contenedorCantidad.parentNode.insertBefore(divSelectores, contenedorCantidad);
+                    } else if (precioSpan) {
+                        precioSpan.parentNode.insertBefore(divSelectores, precioSpan);
                     }
-
-                    // Lógica de selección visual
                     divSelectores.querySelectorAll('.chip, .swatch').forEach(el => {
                         el.onclick = (e) => {
                             const hermanos = el.parentElement.querySelectorAll(el.classList[0] === 'chip' ? '.chip' : '.swatch');
@@ -345,7 +460,6 @@ async function inicializarStockTienda() {
                     });
                 }
 
-                // Lógica de botón Agotado
                 const sinStock = datosBD.stockTotal <= 0;
                 btn.disabled = sinStock;
                 btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
@@ -358,30 +472,17 @@ async function inicializarStockTienda() {
     }
 }
 
-
-
-
-
-
-
-/**
- * Abre y cierra la ventana flotante de reseñas (Estrellas)
- */
 window.toggleRecomendaciones = function(boton) {
-    // 1. Encontrar el contenedor de las reseñas junto a este botón
     const contenedorReputacion = boton.closest('.reputacion');
     const ventana = contenedorReputacion.querySelector('.ventana-flotante-resenas');
 
-    // 2. Cerrar todas las demás ventanas abiertas para evitar superposiciones
     document.querySelectorAll('.ventana-flotante-resenas').forEach(v => {
         if (v !== ventana) v.classList.remove('mostrar-ventana');
     });
 
-    // 3. Alternar la actual
     if (ventana) ventana.classList.toggle('mostrar-ventana');
 };
 
-// --- LÓGICA DEL INVENTARIO FLOTANTE (TECLA X) ---
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     
@@ -399,7 +500,7 @@ function toggleInventarioFlotante() {
         modal.classList.add('activo');
         modal.innerHTML = `
             <div class="inventario-flotante" style="position: relative;">
-                <button class="cerrar-inventario" onclick="cerrarInventarioYSalir()" style="position: absolute; top: 15px; right: 20px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: 0.3s;">
+                <button class="cerrar-inventario" onclick="cerrarYSalirInventario()" style="position: absolute; top: 15px; right: 20px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; z-index: 10000; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: 0.3s;">
                     <i class="fa fa-times"></i>
                 </button>
                 <iframe src="admin.html" class="iframe-inventario" style="width: 100%; height: 100%; border: none; border-radius: 15px;"></iframe>
@@ -411,39 +512,11 @@ function toggleInventarioFlotante() {
     }
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Esto le dice al navegador: "Espera a que cargue todo el HTML y luego ejecuta la función"
     inicializarStockTienda();
-    // NUEVO: Cargar los datos visuales
     aplicarConfiguracionWeb();
 });
-function toggleInventarioFlotante() {
-    let modal = document.getElementById('modal-inventario');
-    
-    // Si no existe, creamos la ventana flotante
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-inventario';
-        modal.classList.add('activo');
-        modal.innerHTML = `
-            <div class="inventario-flotante">
-                <button class="cerrar-inventario" onclick="cerrarYSalirInventario()">
-                    <i class="fa fa-times"></i>
-                </button>
-                <iframe src="admin.html" class="iframe-inventario"></iframe>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    } else {
-        // Si ya existe, alternamos su visibilidad
-        modal.classList.toggle('activo');
-    }
-}
 
-// ==========================================
-// APLICAR CONFIGURACIÓN VISUAL DESDE SUPABASE
-// ==========================================
 async function aplicarConfiguracionWeb() {
     const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
     
@@ -494,7 +567,7 @@ async function aplicarConfiguracionWeb() {
             wspFlotante.href = `https://api.whatsapp.com/send?phone=${wspLimpio}&text=Hola,%20me%20gustaría%20obtener%20más%20información`;
         }
     }
-    // 7. Redes Sociales
+
     if (data.tiktok) {
         const linkTikTok = document.getElementById('link-tiktok');
         if (linkTikTok) linkTikTok.href = data.tiktok;
@@ -513,22 +586,15 @@ async function aplicarConfiguracionWeb() {
     }
 }
 
-// ==========================================
-// CERRAR VENTANA Y SESIÓN DE INVENTARIO
-// ==========================================
 async function cerrarYSalirInventario() {
     let modal = document.getElementById('modal-inventario');
     
     if (modal) {
-        // 1. Ocultar la ventana flotante
         modal.classList.remove('activo');
-        
-        // 2. Reiniciar el iframe para que vuelva a pedir la clave la próxima vez
         let iframe = modal.querySelector('.iframe-inventario');
         if (iframe) iframe.src = 'admin.html';
     }
     
-    // 3. Cerrar la sesión en Supabase
     const { error } = await _supabase.auth.signOut();
     if (error) {
         console.error("Error al cerrar sesión:", error.message);

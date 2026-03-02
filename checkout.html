@@ -115,20 +115,19 @@
             }
         }
 
-        async function actualizarStockEnBaseDeDatos() {
-            for (const p of carrito) {
-                const { error } = await _supabase.rpc('descontar_stock', {
-                    producto_id: p.id,
-                    talle_val: p.talla,
-                    color_val: p.color,
-                    cantidad_comprada: p.cantidad
-                });
+  async function actualizarStockEnBaseDeDatos() {
+    for (const p of carrito) {
+        // Los nombres de la izquierda deben ser IGUALES a los del SQL de arriba
+        const { error } = await _supabase.rpc('descontar_stock', {
+            id_prod: parseInt(p.id),
+            cant_comprada: parseInt(p.cantidad)
+        });
 
-                if (error) {
-                    console.error("Error actualizando stock de:", p.titulo, error);
-                }
-            }
+        if (error) {
+            console.error("Error de Supabase:", error.message);
         }
+    }
+}
 
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -204,12 +203,18 @@
             btn.disabled = true;
 
             try {
-                // Requiere un endpoint backend que genere la preferencia
-                const response = await fetch('/api/crear-preferencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: carrito })
-                });
+// CAMBIA ESTO:
+// const response = await fetch('/api/crear-preferencia', ...
+
+// POR ESTO (URL de tu Edge Function):
+const response = await fetch('https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/mercadopago', {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + supabaseKey 
+    },
+    body: JSON.stringify({ items: carrito })
+});
 
                 if (!response.ok) throw new Error("Error en el servidor");
 

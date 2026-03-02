@@ -1475,4 +1475,34 @@ th, td {
             }
         }
 
-        
+        /* ========================================= */
+/* ESTILOS PARA TALLES Y COLORES DINÁMICOS   */
+/* ========================================= */
+
+.color-swatches .swatch {
+    width: 25px;         /* Ancho del círculo de color */
+    height: 25px;        /* Alto del círculo de color */
+    border-radius: 50%;  /* Esto los hace redondos */
+    border: 1px solid #ccc; /* Borde sutil gris */
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.talla-chips .chip {
+    padding: 5px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    color: #333;
+    transition: all 0.2s;
+}
+
+/* Efecto al pasar el mouse */
+.talla-chips .chip:hover {
+    background-color: #e0e0e0;
+}
+.color-swatches .swatch:hover {
+    transform: scale(1.1);
+}
