@@ -44,6 +44,50 @@
             td { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; align-items: center; }
             td::before { content: attr(data-label); font-weight: bold; color: #555; }
             .form-grid { grid-template-columns: 1fr; }
+            /* Ocultamos los encabezados de la tabla original */
+        #tabla-ventas thead {
+            display: none;
+        }
+
+        /* Convertimos cada fila en una "caja" o tarjeta */
+        #tabla-ventas tr {
+            display: block;
+            background-color: #87CEEB; /* Color Celeste */
+            color: white !important;   /* Letras blancas */
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Estilo para cada celda de la fila */
+        #tabla-ventas td {
+            display: flex;
+            justify-content: space-between; /* Empuja el texto automático a la derecha */
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Línea divisoria suave */
+            text-align: right; /* Alineación a la derecha para el contenido */
+        }
+
+        /* Quitar la línea al último elemento de la caja */
+        #tabla-ventas td:last-child {
+            border-bottom: none;
+        }
+
+        /* Estilo para los nombres de los campos (etiquetas a la izquierda) */
+        #tabla-ventas td::before {
+            content: attr(data-label); /* Esto saca el nombre del campo */
+            font-weight: bold;
+            text-align: left;
+            padding-right: 10px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Asegurar que cualquier texto dentro sea blanco */
+        #tabla-ventas td, #tabla-ventas td b, #tabla-ventas td span {
+            color: white !important;
+        }
         }
     </style>
 </head>
@@ -451,26 +495,30 @@
                     </tr>
                 </thead>
                 <tbody>`;
-            
-            data.forEach((v) => {
-                // Formato de Fecha y Hora (Ej: 23/10/2026, 14:30:00)
-                let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
-                
-                // Formatear los productos (leyendo el carrito)
-                let detalleProd = "Sin detalles";
-                if (v.productos) {
-                    try {
-                        let prods = typeof v.productos === 'string' ? JSON.parse(v.productos) : v.productos;
-                        if (Array.isArray(prods)) {
-                            // Muestra: 2x Buzo Osito (M - Negro)
-                            detalleProd = prods.map(p => `<b>${p.cantidad}x</b> ${p.titulo} <br><small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
-                        } else {
-                            detalleProd = v.productos;
-                        }
-                    } catch(e) {
-                        detalleProd = v.productos;
-                    }
-                }
+           // Busca esta parte dentro de cargarVentas en admin.html
+data.forEach((v) => {
+    let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
+    
+    // CAMBIO AQUÍ: Usamos v.articulos en lugar de v.productos
+    let detalleProd = "Sin detalles";
+    if (v.articulos) { 
+        try {
+            // Se procesa la columna 'articulos' que enviaste desde Supabase
+            let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
+            if (Array.isArray(prods)) {
+                detalleProd = prods.map(p => 
+                    `<b>${p.cantidad}x</b> ${p.titulo} <br>
+                     <small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`
+                ).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
+            } else {
+                detalleProd = v.articulos;
+            }
+        } catch(e) {
+            detalleProd = v.articulos;
+        }
+    }
+
+    // El resto del código sigue igual...
 
                 // Asegurar los nombres de las columnas (ajusta esto si en tu BD se llaman diferente)
                 let nombreCompleto = (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo');
@@ -491,29 +539,24 @@
             divVentas.innerHTML = html;
         }
 
-        // 9. FUNCIÓN PARA DESCARGAR EN EXCEL
-        function descargarExcelVentas() {
-            if (!window.ventasGlobal || window.ventasGlobal.length === 0) {
-                alert("No hay ventas para descargar.");
-                return;
-            }
-
-            // Mapeamos los datos para que las columnas en el Excel queden limpias y ordenadas
-            const datosExcel = window.ventasGlobal.map(v => {
-                let detalleProdExcel = "";
-                if (v.productos) {
-                    try {
-                        let prods = typeof v.productos === 'string' ? JSON.parse(v.productos) : v.productos;
-                        if (Array.isArray(prods)) {
-                            // En excel lo separamos por comas o saltos simples
-                            detalleProdExcel = prods.map(p => `${p.cantidad}x ${p.titulo} (Talle: ${p.talla || '-'} / Color: ${p.color || '-'})`).join(' | ');
-                        } else {
-                            detalleProdExcel = v.productos;
-                        }
-                    } catch(e) {
-                        detalleProdExcel = v.productos;
-                    }
+       function descargarExcelVentas() {
+    // ... parte inicial de la función ...
+    const datosExcel = window.ventasGlobal.map(v => {
+        let detalleProdExcel = "";
+        if (v.articulos) { // CAMBIO: de v.productos a v.articulos
+            try {
+                let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
+                if (Array.isArray(prods)) {
+                    detalleProdExcel = prods.map(p => 
+                        `${p.cantidad}x ${p.titulo} (Talle: ${p.talla || '-'} / Color: ${p.color || '-'})`
+                    ).join(' | ');
+                } else {
+                    detalleProdExcel = v.articulos;
                 }
+            } catch(e) {
+                detalleProdExcel = v.articulos;
+            }
+        }
 
                 return {
                     "ID Venta": v.id,
