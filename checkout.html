@@ -115,22 +115,22 @@
             }
         }
 async function actualizarStockEnBaseDeDatos() {
-    for (const p of carrito) {
-        // Deben ser 4 parámetros y llamarse igual que en el SQL: p_id, p_talle...
-       const { error } = await _supabase.rpc('descontar_stock', {
-            p_id: p.id, // Antes decía Number(p.id)
-            p_talle: p.talla,
-            p_color: p.color,
-            p_cantidad: Number(p.cantidad)
-        });
+            for (const p of carrito) {
+                // Ahora enviamos los 4 datos con los nombres EXACTOS que espera Supabase
+                const { error } = await _supabase.rpc('descontar_stock', {
+                    p_id: p.id,
+                    p_talle: p.talla,
+                    p_color: p.color,
+                    p_cantidad: Number(p.cantidad)
+                });
 
-        if (error) {
-            console.error(`Error al descontar stock de ${p.titulo} (${p.talla} - ${p.color}):`, error);
-        } else {
-            console.log(`Stock descontado de ${p.titulo} (${p.talla} - ${p.color})`);
+                if (error) {
+                    console.error(`Error al descontar stock de ${p.titulo}:`, error.message);
+                } else {
+                    console.log(`Stock descontado correctamente para ${p.titulo}`);
+                }
+            }
         }
-    }
-}
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
