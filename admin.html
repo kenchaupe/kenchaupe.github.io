@@ -392,6 +392,10 @@
         async function cargarConfiguracion() {
             const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
             if (data) {
+                // Esta línea conecta el dato de la base de datos con el cuadro de texto
+        if (document.getElementById('config-nombre-tienda')) {
+            document.getElementById('config-nombre-tienda').value = data.nombre_tienda || '';
+        }
                 document.getElementById('config-nombre').value = data.nombre || '';
                 document.getElementById('config-logo').value = data.logo || '';
                 document.getElementById('config-wsp').value = data.wsp || '';
@@ -408,7 +412,8 @@
         async function guardarConfiguracion() {
             const config = {
                 id: 1, 
-                nombre: document.getElementById('config-nombre').value,
+                nombre_tienda: document.getElementById('config-nombre-tienda').value, // IMPORTANTE
+        
                 logo: document.getElementById('config-logo').value,
                 wsp: document.getElementById('config-wsp').value,
                 email: document.getElementById('config-email').value,

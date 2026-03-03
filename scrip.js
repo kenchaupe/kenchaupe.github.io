@@ -530,7 +530,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function aplicarConfiguracionWeb() {
     const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
+    function aplicarConfiguracion(data) {
+    if (data.nombre_tienda) {
+        // Cambia el nombre en la pestaña del navegador
+        document.title = data.nombre_tienda;
+        
+        // Cambia el título visible en el encabezado de la página
+        const tituloHeader = document.querySelector('header h1');
+        if (tituloHeader) {
+            tituloHeader.textContent = data.nombre_tienda;
+        }
+    }
     
+    // ... resto de tu código (whatsapp, redes, etc)
+}
     if (error || !data) {
         console.error("No se pudo cargar la configuración visual:", error);
         return; 
