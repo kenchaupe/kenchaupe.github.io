@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* ESTILOS GENERALES Y LIMPIOS */
@@ -110,6 +111,9 @@
 
         <div id="vista-ventas" class="view-section">
             <h3 style="margin-top:0;"><i class="fas fa-history"></i> Historial de Ventas</h3>
+            <button onclick="descargarExcelVentas()" class="btn-save" style="background: #28a745; margin-bottom: 15px; width: auto; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-file-excel"></i> Descargar en Excel
+            </button>
             <div style="overflow-x: auto;">
                 <div id="tabla-historial-ventas">Cargando ventas...</div>
             </div>
@@ -420,23 +424,116 @@
             else alert('✅ ¡Configuración guardada en el servidor!');
         }
 
-        // 8. LÓGICA DE VENTAS
+     // 8. LÓGICA DE VENTAS ACTUALIZADA
         async function cargarVentas() {
             const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
             const divVentas = document.getElementById('tabla-historial-ventas');
+            
             if (error || !data || data.length === 0) {
-                divVentas.innerHTML = "<p>Aún no hay ventas registradas.</p>"; return;
+                divVentas.innerHTML = "<p>Aún no hay ventas registradas.</p>"; 
+                window.ventasGlobal = []; 
+                return;
             }
-            let html = `<table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Total</th></tr></thead><tbody>`;
+            
+            window.ventasGlobal = data; 
+
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha y Hora</th>
+                        <th>Cliente</th>
+                        <th>Dirección y C.P.</th>
+                        <th>Productos (Cant. y Detalle)</th>
+                        <th>Forma de Pago</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
             data.forEach((v) => {
-                let fecha = v.created_at ? new Date(v.created_at).toLocaleDateString() : 'N/A';
+                let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
+                
+                // --- MAGIA AQUÍ: Buscamos en cualquier columna donde pudiste haber guardado el carrito ---
+                let datosProductos = v.productos || v.carrito || v.articulos || v.pedido || v.detalle || v.items;
+                
+                let detalleProd = "Sin detalles";
+                if (datosProductos) {
+                    try {
+                        // Intentamos leerlo como formato de Carrito (JSON)
+                        let prods = typeof datosProductos === 'string' ? JSON.parse(datosProductos) : datosProductos;
+                        if (Array.isArray(prods)) {
+                            // Extrae cantidad, título, talla y color de cada producto comprado
+                            detalleProd = prods.map(p => `<b>${p.cantidad || 1}x</b> ${p.titulo || p.nombre || 'Producto'} <br><small>(Talle: ${p.talla || p.talle || '-'} | Color: ${p.color || '-'})</small>`).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
+                        } else {
+                            detalleProd = String(datosProductos); // Muestra el texto plano si no es un array
+                        }
+                    } catch(e) {
+                        detalleProd = String(datosProductos); // Muestra el texto plano si hay error de formato
+                    }
+                }
+
+                let nombreCompleto = (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo');
+                let direccionCompleta = `${v.direccion || 'Sin calle'} - CP: ${v.codigo_postal || v.cp || 'N/A'}`;
+                let pago = v.forma_pago || v.metodo_pago || 'No especificada';
+
                 html += `<tr>
-                    <td data-label="ID Venta">#${v.id}</td><td data-label="Fecha">${fecha}</td>
-                    <td data-label="Cliente"><strong>${v.cliente || 'Anónimo'}</strong></td>
-                    <td data-label="Total">$${(v.total || 0).toLocaleString('es-AR')}</td>
+                    <td data-label="ID Venta">#${v.id}</td>
+                    <td data-label="Fecha y Hora">${fechaHora}</td>
+                    <td data-label="Cliente"><strong>${nombreCompleto}</strong></td>
+                    <td data-label="Dirección">${direccionCompleta}</td>
+                    <td data-label="Productos">${detalleProd}</td>
+                    <td data-label="Forma de Pago"><em>${pago}</em></td>
+                    <td data-label="Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
                 </tr>`;
             });
-            divVentas.innerHTML = html + '</tbody></table>';
+            html += `</tbody></table>`;
+            divVentas.innerHTML = html;
+        }
+
+        // 9. FUNCIÓN PARA DESCARGAR EN EXCEL ACTUALIZADA
+        function descargarExcelVentas() {
+            if (!window.ventasGlobal || window.ventasGlobal.length === 0) {
+                alert("No hay ventas para descargar.");
+                return;
+            }
+
+            const datosExcel = window.ventasGlobal.map(v => {
+                // Buscamos también en todas las posibles columnas
+                let datosProductos = v.productos || v.carrito || v.articulos || v.pedido || v.detalle || v.items;
+                let detalleProdExcel = "Sin detalles";
+                
+                if (datosProductos) {
+                    try {
+                        let prods = typeof datosProductos === 'string' ? JSON.parse(datosProductos) : datosProductos;
+                        if (Array.isArray(prods)) {
+                            detalleProdExcel = prods.map(p => `${p.cantidad || 1}x ${p.titulo || p.nombre || 'Producto'} (Talle: ${p.talla || p.talle || '-'} / Color: ${p.color || '-'})`).join(' | ');
+                        } else {
+                            detalleProdExcel = String(datosProductos);
+                        }
+                    } catch(e) {
+                        detalleProdExcel = String(datosProductos);
+                    }
+                }
+
+                return {
+                    "ID Venta": v.id,
+                    "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A',
+                    "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'),
+                    "Dirección": v.direccion || 'No especificada',
+                    "Código Postal": v.codigo_postal || v.cp || 'N/A',
+                    "Productos (Cant y Detalle)": detalleProdExcel,
+                    "Forma de Pago": v.forma_pago || v.metodo_pago || 'N/A',
+                    "Monto Total ($)": v.total || 0
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas Gruken");
+            
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, `Ventas_Gruken_${fechaHoy}.xlsx`);
         }
     </script>
 </body>
