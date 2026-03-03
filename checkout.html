@@ -114,23 +114,57 @@
                 btn.classList.remove('btn-mp');
             }
         }
-async function actualizarStockEnBaseDeDatos() {
-            for (const p of carrito) {
-                // Ahora enviamos los 4 datos con los nombres EXACTOS que espera Supabase
-                const { error } = await _supabase.rpc('descontar_stock', {
-                    p_id: p.id,
-                    p_talle: p.talla,
-                    p_color: p.color,
-                    p_cantidad: Number(p.cantidad)
-                });
 
-                if (error) {
-                    console.error(`Error al descontar stock de ${p.titulo}:`, error.message);
-                } else {
-                    console.log(`Stock descontado correctamente para ${p.titulo}`);
+        // === ESTA ES LA FUNCIÓN CORREGIDA QUE AHORA SÍ DESCUENTA EL STOCK ===
+        async function actualizarStockEnBaseDeDatos() {
+            for (const p of carrito) {
+                try {
+                    // 1. Descontar stock de la variante (Color y Talle)
+                    const { data: variante } = await _supabase
+                        .from('productos_variantes')
+                        .select('stock')
+                        .eq('producto_id', p.id)
+                        .eq('talle', p.talla) 
+                        .eq('color', p.color)
+                        .single();
+
+                    if (variante) {
+                        let nuevoStockVariante = variante.stock - Number(p.cantidad);
+                        if (nuevoStockVariante < 0) nuevoStockVariante = 0;
+
+                        await _supabase
+                            .from('productos_variantes')
+                            .update({ stock: nuevoStockVariante })
+                            .eq('producto_id', p.id)
+                            .eq('talle', p.talla)
+                            .eq('color', p.color);
+                    }
+
+                    // 2. Descontar stock total del producto principal
+                    const { data: productoPrincipal } = await _supabase
+                        .from('productos')
+                        .select('stock')
+                        .eq('id', p.id)
+                        .single();
+
+                    if (productoPrincipal) {
+                        let nuevoStockTotal = productoPrincipal.stock - Number(p.cantidad);
+                        if (nuevoStockTotal < 0) nuevoStockTotal = 0;
+
+                        await _supabase
+                            .from('productos')
+                            .update({ stock: nuevoStockTotal })
+                            .eq('id', p.id);
+                        
+                        console.log(`Stock descontado correctamente para ${p.titulo}`);
+                    }
+                } catch (error) {
+                    console.error(`Error procesando el stock de ${p.titulo}:`, error);
                 }
             }
         }
+        // ====================================================================
+
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -139,7 +173,6 @@ async function actualizarStockEnBaseDeDatos() {
             const nombre = document.querySelector('#nombre').value;
             const direccion = document.querySelector('#direccion').value;
             
-            // CORRECCIÓN: Usar la variable "carrito" (no articulosCarrito)
             const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
 
             // Bloquear botón para evitar clics dobles
@@ -150,7 +183,7 @@ async function actualizarStockEnBaseDeDatos() {
             // 1. REGISTRAMOS LA VENTA
             await registrarVenta(nombre, direccion, metodoTexto, totalCalculado);
             
-            // 2. ACTUALIZAMOS EL STOCK EN SUPABASE
+            // 2. ACTUALIZAMOS EL STOCK EN SUPABASE (Llamando a la función corregida)
             await actualizarStockEnBaseDeDatos();
             
             if (metodoSelect.value === "WhatsApp") {
@@ -160,7 +193,6 @@ async function actualizarStockEnBaseDeDatos() {
             }
         });
 
-        // CORRECCIÓN: Recibir el total calculado como parámetro
         function enviarPorWhatsApp(nombre, direccion, metodo, totalCalc) {
             let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
             mensaje += `*Nombre:* ${nombre}\n`;
@@ -193,7 +225,7 @@ async function actualizarStockEnBaseDeDatos() {
                     direccion: direccion,
                     metodo_pago: metodo,
                     total: totalVenta,
-                    articulos: carrito // Guardamos todo el array de productos
+                    articulos: carrito 
                 }]);
 
             if (error) console.error("Error al registrar venta:", error);
@@ -205,7 +237,6 @@ async function actualizarStockEnBaseDeDatos() {
             btn.disabled = true;
 
             try {
-                // Volvemos a apuntar a tu carpeta local/Vercel
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 
