@@ -145,11 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.textContent = "Validando...";
                 btn.disabled = true;
 
-                // Como tu ID ahora es un texto (Ej: ART-01), lo leemos directamente
                 const idTexto = btn.getAttribute('data-id').trim();
-
-                const talla = productoSeleccionado.querySelector('.chip.selected')?.getAttribute('data-valor')?.trim();
-                const color = productoSeleccionado.querySelector('.swatch.selected')?.getAttribute('data-valor')?.trim();
+                
+                // Leemos lo que eligió el cliente y lo pasamos a mayúsculas para comparar mejor
+                const talla = productoSeleccionado.querySelector('.chip.selected')?.getAttribute('data-valor')?.trim().toUpperCase();
+                const color = productoSeleccionado.querySelector('.swatch.selected')?.getAttribute('data-valor')?.trim().toUpperCase();
                 const cantidadPedida = parseInt(productoSeleccionado.querySelector('.input-cantidad')?.value) || 1;
 
                 if (!talla || !color) {
@@ -159,23 +159,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // NUEVA LÓGICA: Buscamos el stock EXACTO en la tabla de variantes.
-                // Usamos 'ilike' para que no le importen las mayúsculas ni minúsculas.
+                // LÓGICA BLINDADA: Traemos todas las variantes y buscamos la exacta ignorando espacios
                 const { data, error } = await _supabase
                     .from('productos_variantes')
-                    .select('stock')
-                    .ilike('producto_id', idTexto)
-                    .ilike('talle', talla)
-                    .ilike('color', color)
-                    .single();
+                    .select('talle, color, stock')
+                    .ilike('producto_id', idTexto);
 
-                if (error || !data) {
-                    alert("Lo sentimos, esa combinación de talla y color no existe o está agotada.");
-                } else if (data.stock >= cantidadPedida) {
-                    // Le enviamos el stock de la variante exacta a tu función leerDatosProducto
-                    leerDatosProducto(productoSeleccionado, data.stock);
+                if (error || !data || data.length === 0) {
+                    alert("Lo sentimos, no pudimos verificar el stock en este momento.");
                 } else {
-                    alert(`Lo sentimos, solo quedan ${data.stock} unidades de ese color y talle.`);
+                    // Buscamos la coincidencia exacta
+                    const varianteExacta = data.find(v => 
+                        v.talle.trim().toUpperCase() === talla && 
+                        v.color.trim().toUpperCase() === color
+                    );
+
+                    if (!varianteExacta) {
+                        alert("Lo sentimos, esa combinación de talla y color no existe o está agotada.");
+                    } else if (varianteExacta.stock >= cantidadPedida) {
+                        // ¡Si hay stock, lo agregamos al carrito!
+                        leerDatosProducto(productoSeleccionado, varianteExacta.stock);
+                    } else {
+                        alert(`Lo sentimos, solo quedan ${varianteExacta.stock} unidades de ese color y talle.`);
+                    }
                 }
 
                 btn.textContent = originalText;
