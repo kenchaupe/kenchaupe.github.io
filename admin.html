@@ -392,10 +392,6 @@
         async function cargarConfiguracion() {
             const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
             if (data) {
-                // Esta línea conecta el dato de la base de datos con el cuadro de texto
-        if (document.getElementById('config-nombre-tienda')) {
-            document.getElementById('config-nombre-tienda').value = data.nombre_tienda || '';
-        }
                 document.getElementById('config-nombre').value = data.nombre || '';
                 document.getElementById('config-logo').value = data.logo || '';
                 document.getElementById('config-wsp').value = data.wsp || '';
@@ -412,8 +408,7 @@
         async function guardarConfiguracion() {
             const config = {
                 id: 1, 
-                nombre_tienda: document.getElementById('config-nombre-tienda').value, // IMPORTANTE
-        
+                nombre: document.getElementById('config-nombre').value,
                 logo: document.getElementById('config-logo').value,
                 wsp: document.getElementById('config-wsp').value,
                 email: document.getElementById('config-email').value,
@@ -429,17 +424,18 @@
             else alert('✅ ¡Configuración guardada en el servidor!');
         }
 
-     // 8. LÓGICA DE VENTAS ACTUALIZADA
+       // 8. LÓGICA DE VENTAS ACTUALIZADA
         async function cargarVentas() {
             const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
             const divVentas = document.getElementById('tabla-historial-ventas');
             
             if (error || !data || data.length === 0) {
                 divVentas.innerHTML = "<p>Aún no hay ventas registradas.</p>"; 
-                window.ventasGlobal = []; 
+                window.ventasGlobal = []; // Guardamos un array vacío para evitar errores
                 return;
             }
             
+            // Guardamos las ventas en una variable global para el Excel
             window.ventasGlobal = data; 
 
             let html = `<table>
@@ -457,27 +453,26 @@
                 <tbody>`;
             
             data.forEach((v) => {
+                // Formato de Fecha y Hora (Ej: 23/10/2026, 14:30:00)
                 let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
                 
-                // --- MAGIA AQUÍ: Buscamos en cualquier columna donde pudiste haber guardado el carrito ---
-                let datosProductos = v.productos || v.carrito || v.articulos || v.pedido || v.detalle || v.items;
-                
+                // Formatear los productos (leyendo el carrito)
                 let detalleProd = "Sin detalles";
-                if (datosProductos) {
+                if (v.productos) {
                     try {
-                        // Intentamos leerlo como formato de Carrito (JSON)
-                        let prods = typeof datosProductos === 'string' ? JSON.parse(datosProductos) : datosProductos;
+                        let prods = typeof v.productos === 'string' ? JSON.parse(v.productos) : v.productos;
                         if (Array.isArray(prods)) {
-                            // Extrae cantidad, título, talla y color de cada producto comprado
-                            detalleProd = prods.map(p => `<b>${p.cantidad || 1}x</b> ${p.titulo || p.nombre || 'Producto'} <br><small>(Talle: ${p.talla || p.talle || '-'} | Color: ${p.color || '-'})</small>`).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
+                            // Muestra: 2x Buzo Osito (M - Negro)
+                            detalleProd = prods.map(p => `<b>${p.cantidad}x</b> ${p.titulo} <br><small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
                         } else {
-                            detalleProd = String(datosProductos); // Muestra el texto plano si no es un array
+                            detalleProd = v.productos;
                         }
                     } catch(e) {
-                        detalleProd = String(datosProductos); // Muestra el texto plano si hay error de formato
+                        detalleProd = v.productos;
                     }
                 }
 
+                // Asegurar los nombres de las columnas (ajusta esto si en tu BD se llaman diferente)
                 let nombreCompleto = (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo');
                 let direccionCompleta = `${v.direccion || 'Sin calle'} - CP: ${v.codigo_postal || v.cp || 'N/A'}`;
                 let pago = v.forma_pago || v.metodo_pago || 'No especificada';
@@ -496,28 +491,27 @@
             divVentas.innerHTML = html;
         }
 
-        // 9. FUNCIÓN PARA DESCARGAR EN EXCEL ACTUALIZADA
+        // 9. FUNCIÓN PARA DESCARGAR EN EXCEL
         function descargarExcelVentas() {
             if (!window.ventasGlobal || window.ventasGlobal.length === 0) {
                 alert("No hay ventas para descargar.");
                 return;
             }
 
+            // Mapeamos los datos para que las columnas en el Excel queden limpias y ordenadas
             const datosExcel = window.ventasGlobal.map(v => {
-                // Buscamos también en todas las posibles columnas
-                let datosProductos = v.productos || v.carrito || v.articulos || v.pedido || v.detalle || v.items;
-                let detalleProdExcel = "Sin detalles";
-                
-                if (datosProductos) {
+                let detalleProdExcel = "";
+                if (v.productos) {
                     try {
-                        let prods = typeof datosProductos === 'string' ? JSON.parse(datosProductos) : datosProductos;
+                        let prods = typeof v.productos === 'string' ? JSON.parse(v.productos) : v.productos;
                         if (Array.isArray(prods)) {
-                            detalleProdExcel = prods.map(p => `${p.cantidad || 1}x ${p.titulo || p.nombre || 'Producto'} (Talle: ${p.talla || p.talle || '-'} / Color: ${p.color || '-'})`).join(' | ');
+                            // En excel lo separamos por comas o saltos simples
+                            detalleProdExcel = prods.map(p => `${p.cantidad}x ${p.titulo} (Talle: ${p.talla || '-'} / Color: ${p.color || '-'})`).join(' | ');
                         } else {
-                            detalleProdExcel = String(datosProductos);
+                            detalleProdExcel = v.productos;
                         }
                     } catch(e) {
-                        detalleProdExcel = String(datosProductos);
+                        detalleProdExcel = v.productos;
                     }
                 }
 
@@ -533,10 +527,12 @@
                 };
             });
 
+            // Creamos y descargamos el Excel
             const worksheet = XLSX.utils.json_to_sheet(datosExcel);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas Gruken");
             
+            // Genera el archivo con la fecha actual para que no se pisen los nombres
             const fechaHoy = new Date().toISOString().split('T')[0];
             XLSX.writeFile(workbook, `Ventas_Gruken_${fechaHoy}.xlsx`);
         }
