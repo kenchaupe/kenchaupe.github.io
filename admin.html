@@ -89,18 +89,23 @@
             </div>
         </div>
 
-        <div id="vista-agregar" class="view-section">
+     <div id="vista-agregar" class="view-section">
             <h3 style="margin-top:0;"><i class="fas fa-plus-circle"></i> Datos del Producto</h3>
             <div class="form-grid">
                 <div><label><b>ID (Ej: ART-01):</b></label><input type="text" id="prod-id" class="form-input" placeholder="Identificador único"></div>
                 <div><label><b>Nombre:</b></label><input type="text" id="prod-nombre" class="form-input" placeholder="Ej: Buzo Osito"></div>
-                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: S, M, L, XL"></div>
+                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: S, M, L"></div>
                 <div><label><b>Colores:</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro"></div>
-                <div><label><b>Stock Total:</b></label><input type="number" id="prod-stock" class="form-input" placeholder="0"></div>
                 <div><label><b>Precio ($):</b></label><input type="number" id="prod-precio" class="form-input" placeholder="0.00"></div>
                 <div style="grid-column: 1 / -1;"><label><b>URL de la Imagen:</b></label><input type="text" id="prod-img" class="form-input" placeholder="Ej: images/buzo.jpg"></div>
+                
+                <div style="grid-column: 1 / -1; margin-top: 10px;">
+                    <button type="button" onclick="generarVariantes()" class="btn-save" style="background: #17a2b8;"><i class="fas fa-cogs"></i> Generar campos de Stock por Variante</button>
+                </div>
+                <div id="contenedor-variantes" style="grid-column: 1 / -1; display:flex; flex-direction:column; gap:10px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    </div>
             </div>
-            <button onclick="guardarProductoUnificado()" class="btn-save"><i class="fas fa-save"></i> Guardar Producto</button>
+            <button onclick="guardarProductoUnificado(event)" class="btn-save"><i class="fas fa-save"></i> Guardar Producto Final</button>
         </div>
 
         <div id="vista-ventas" class="view-section">
@@ -232,62 +237,144 @@
             });
         }
 
-        // NUEVO: CARGAR DATOS PARA EDITAR
-        window.cargarParaEditar = function(idProd) {
-            const prod = productosGlobal.find(p => p.id === idProd);
-            if(!prod) return;
-            
-            document.getElementById('prod-id').value = prod.id || '';
-            document.getElementById('prod-nombre').value = prod.nombre || '';
-            document.getElementById('prod-talles').value = prod.talles || '';
-            document.getElementById('prod-colores').value = prod.colores || '';
-            document.getElementById('prod-stock').value = prod.stock || 0;
-            document.getElementById('prod-precio').value = prod.precio || 0;
-            document.getElementById('prod-img').value = prod.imagen || '';
-            
+       // -----------------------------------------------------------------
+        // NUEVO: CARGAR DATOS PARA EDITAR (CON VARIANTES)
+        // -----------------------------------------------------------------
+        window.cargarParaEditar = async function(idProd) {
+            // 1. Buscamos los datos básicos del producto en la base de datos
+            const { data: producto, error } = await _supabase.from('productos').select('*').eq('id', idProd).single();
+            if (error) { alert("Error al cargar producto: " + error.message); return; }
+
+            // 2. Buscamos el stock de sus variantes
+            const { data: variantes, error: errVar } = await _supabase.from('productos_variantes').select('*').eq('producto_id', idProd);
+
+            // 3. Llenamos el formulario con los datos
+            document.getElementById('prod-id').value = producto.id || '';
+            document.getElementById('prod-id').disabled = true; // Bloqueamos el ID para no romper nada
+            document.getElementById('prod-nombre').value = producto.nombre || '';
+            document.getElementById('prod-talles').value = producto.talles || '';
+            document.getElementById('prod-colores').value = producto.colores || '';
+            document.getElementById('prod-precio').value = producto.precio || 0;
+            document.getElementById('prod-img').value = producto.imagen || '';
+
+            // 4. Armamos la tablita de stock con las variantes recuperadas
+            const contenedor = document.getElementById('contenedor-variantes');
+            if (variantes && variantes.length > 0) {
+                let html = `<h4 style="margin:0 0 10px 0;">Stock actual por combinación:</h4>
+                            <table style="width:100%; max-width: 400px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+                            <tr><th>Talle</th><th>Color</th><th>Stock</th></tr>`;
+                
+                variantes.forEach(v => {
+                    html += `
+                    <tr>
+                        <td><b>${v.talle}</b></td>
+                        <td><b>${v.color}</b></td>
+                        <td><input type="number" class="input-variante-stock" data-talle="${v.talle}" data-color="${v.color}" value="${v.stock}" style="width: 80px; padding: 5px; border:1px solid #ccc; border-radius:4px;"></td>
+                    </tr>`;
+                });
+                html += `</table>`;
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = '<p style="color:#d9534f;">No hay stock detallado. Haz clic en "Generar campos..."</p>';
+            }
+
             // Nos movemos a la pestaña de agregar/editar
             cambiarPestana('vista-agregar', document.querySelectorAll('.tab-btn')[1]);
             window.scrollTo(0, 0);
         };
 // 5. LÓGICA DEL INVENTARIO (GUARDAR NUEVO O EDITAR)
+      // -----------------------------------------------------------------
+        // NUEVO: FUNCIÓN PARA GENERAR LOS INPUTS DE STOCK POR VARIANTE
+        // -----------------------------------------------------------------
+        function generarVariantes() {
+            // Leemos los talles y colores y los separamos por las comas
+            const talles = document.getElementById('prod-talles').value.split(',').map(t => t.trim()).filter(t => t !== '');
+            const colores = document.getElementById('prod-colores').value.split(',').map(c => c.trim()).filter(c => c !== '');
+            const contenedor = document.getElementById('contenedor-variantes');
+            
+            if(talles.length === 0 || colores.length === 0) {
+                alert("Por favor, ingresa al menos un talle y un color separados por coma antes de generar las variantes.");
+                return;
+            }
+
+            let html = `<h4 style="margin:0 0 10px 0;">Define el stock para cada combinación:</h4>
+                        <table style="width:100%; max-width: 400px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+                        <tr><th>Talle</th><th>Color</th><th>Stock</th></tr>`;
+            
+            talles.forEach(talle => {
+                colores.forEach(color => {
+                    html += `
+                    <tr>
+                        <td><b>${talle}</b></td>
+                        <td><b>${color}</b></td>
+                        <td><input type="number" class="input-variante-stock" data-talle="${talle}" data-color="${color}" value="0" style="width: 80px; padding: 5px; border:1px solid #ccc; border-radius:4px;"></td>
+                    </tr>`;
+                });
+            });
+            html += `</table>`;
+            contenedor.innerHTML = html;
+        }
+
+        // -----------------------------------------------------------------
+        // ACTUALIZADO: GUARDAR PRODUCTO + SUS VARIANTES
+        // -----------------------------------------------------------------
         async function guardarProductoUnificado(evento) {
-            // Evita que la página se recargue sola
             if (evento) evento.preventDefault(); 
 
             const idTexto = document.getElementById('prod-id').value;
             if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
 
-            // CONVERTIMOS EL ID A NÚMERO (clave para que Supabase actualice)
-            const idNumerico = parseInt(idTexto);
+            const inputsVariantes = document.querySelectorAll('.input-variante-stock');
+            if (inputsVariantes.length === 0) {
+                alert("Por favor, haz clic en 'Generar campos de Stock por Variante' y define las cantidades.");
+                return;
+            }
+
+            // Calculamos el stock total sumando todas las variantes
+            let stockTotal = 0;
+            const variantesAGuardar = [];
+
+            inputsVariantes.forEach(input => {
+                const cantidad = parseInt(input.value) || 0;
+                stockTotal += cantidad;
+                variantesAGuardar.push({
+                    producto_id: idTexto, // Usamos el ID de texto directamente
+                    talle: input.getAttribute('data-talle'),
+                    color: input.getAttribute('data-color'),
+                    stock: cantidad
+                });
+            });
 
             const productoGuardar = {
-                id: idNumerico,
+                id: idTexto, // Ahora guardamos como texto (ej: ART-01)
                 nombre: document.getElementById('prod-nombre').value,
                 talles: document.getElementById('prod-talles').value,
                 colores: document.getElementById('prod-colores').value,
-                stock: parseInt(document.getElementById('prod-stock').value) || 0,
+                stock: stockTotal, // Guardamos el total sumado como referencia
                 precio: parseFloat(document.getElementById('prod-precio').value) || 0,
                 imagen: document.getElementById('prod-img').value
             };
 
-            console.log("Intentando enviar esto a Supabase:", productoGuardar);
+            // 1. Guardar el producto principal en la tabla "productos"
+            const { error: errorProd } = await _supabase.from('productos').upsert(productoGuardar);
+            if (errorProd) { alert("Error al guardar producto: " + errorProd.message); return; }
 
-            // Agregamos .select() al final para forzar a Supabase a devolvernos el resultado
-            const { data, error } = await _supabase.from('productos').upsert(productoGuardar).select();
+            // 2. Por si estamos actualizando un producto viejo, borramos sus variantes anteriores
+            await _supabase.from('productos_variantes').delete().eq('producto_id', idTexto);
 
-            if (error) {
-                console.error("Error detectado por Supabase:", error);
-                alert("Hubo un error al guardar: " + error.message);
-            } else {
-                console.log("Respuesta exitosa de Supabase:", data);
-                alert("✅ ¡Producto guardado/actualizado correctamente!");
-                // Limpiamos los campos
-                document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
-                cargarInventarioUnificado(); 
-                cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]); 
-            }
+            // 3. Guardar todas las nuevas variantes en la tabla "productos_variantes"
+            const { error: errorVar } = await _supabase.from('productos_variantes').insert(variantesAGuardar);
+            if (errorVar) { alert("Error al guardar el stock detallado: " + errorVar.message); return; }
+
+            alert("✅ ¡Producto y stock detallado guardados correctamente!");
+            
+            // Limpiamos los campos para el próximo producto
+            document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
+            document.getElementById('prod-id').disabled = false;  // <--- AGREGAR ESTA LÍNEA AQUÍ
+            document.getElementById('contenedor-variantes').innerHTML = ''; 
+            cargarInventarioUnificado(); 
+            cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]); 
         }
-
         // 6. LÓGICA DEL INVENTARIO (ELIMINAR)
         async function eliminarProducto(idProd) {
             if (confirm(`¿Estás seguro de eliminar el producto: ${idProd}?`)) {
@@ -354,3 +441,4 @@
     </script>
 </body>
 </html>
+

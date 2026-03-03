@@ -135,48 +135,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function agregarProducto(e) {
-        if (e.target.classList.contains('agregar-carrito')) {
-            e.preventDefault();
-            const productoSeleccionado = e.target.closest('.item') || e.target.closest('.product-txt');
-            
-            const btn = e.target;
-            const originalText = btn.textContent;
-            btn.textContent = "Validando...";
-            btn.disabled = true;
+  async function agregarProducto(e) {
+            if (e.target.classList.contains('agregar-carrito')) {
+                e.preventDefault();
+                const productoSeleccionado = e.target.closest('.item') || e.target.closest('.product-txt');
+                
+                const btn = e.target;
+                const originalText = btn.textContent;
+                btn.textContent = "Validando...";
+                btn.disabled = true;
 
-            // Convertimos el ID a número aquí también
-            const idTexto = btn.getAttribute('data-id');
-            const idNumero = parseInt(idTexto);
+                // Como tu ID ahora es un texto (Ej: ART-01), lo leemos directamente
+                const idTexto = btn.getAttribute('data-id').trim();
 
-            const talla = productoSeleccionado.querySelector('.chip.selected')?.getAttribute('data-valor');
-            const color = productoSeleccionado.querySelector('.swatch.selected')?.getAttribute('data-valor');
-            const cantidadPedida = parseInt(productoSeleccionado.querySelector('.input-cantidad')?.value) || 1;
+                const talla = productoSeleccionado.querySelector('.chip.selected')?.getAttribute('data-valor')?.trim();
+                const color = productoSeleccionado.querySelector('.swatch.selected')?.getAttribute('data-valor')?.trim();
+                const cantidadPedida = parseInt(productoSeleccionado.querySelector('.input-cantidad')?.value) || 1;
 
-            if (!talla || !color) {
-                alert("Por favor selecciona talla y color");
+                if (!talla || !color) {
+                    alert("Por favor selecciona talla y color");
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // NUEVA LÓGICA: Buscamos el stock EXACTO en la tabla de variantes.
+                // Usamos 'ilike' para que no le importen las mayúsculas ni minúsculas.
+                const { data, error } = await _supabase
+                    .from('productos_variantes')
+                    .select('stock')
+                    .ilike('producto_id', idTexto)
+                    .ilike('talle', talla)
+                    .ilike('color', color)
+                    .single();
+
+                if (error || !data) {
+                    alert("Lo sentimos, esa combinación de talla y color no existe o está agotada.");
+                } else if (data.stock >= cantidadPedida) {
+                    // Le enviamos el stock de la variante exacta a tu función leerDatosProducto
+                    leerDatosProducto(productoSeleccionado, data.stock);
+                } else {
+                    alert(`Lo sentimos, solo quedan ${data.stock} unidades de ese color y talle.`);
+                }
+
                 btn.textContent = originalText;
                 btn.disabled = false;
-                return;
             }
-
-            // BUSCAMOS SOLO POR ID para evitar el error de "0 unidades"
-            const { data } = await _supabase
-                .from('productos')
-                .select('stock')
-                .eq('id', idNumero)
-                .single();
-
-            if (data && data.stock >= cantidadPedida) {
-                leerDatosProducto(productoSeleccionado, data.stock);
-            } else {
-                alert(`Lo sentimos, solo quedan ${data ? data.stock : 0} unidades disponibles.`);
-            }
-
-            btn.textContent = originalText;
-            btn.disabled = false;
         }
-    }
 
     function leerDatosProducto(producto, stockDisponible) {
         const infoProducto = {

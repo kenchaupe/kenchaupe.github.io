@@ -117,8 +117,8 @@
 async function actualizarStockEnBaseDeDatos() {
     for (const p of carrito) {
         // Deben ser 4 parámetros y llamarse igual que en el SQL: p_id, p_talle...
-        const { error } = await _supabase.rpc('descontar_stock', {
-            p_id: Number(p.id),
+       const { error } = await _supabase.rpc('descontar_stock', {
+            p_id: p.id, // Antes decía Number(p.id)
             p_talle: p.talla,
             p_color: p.color,
             p_cantidad: Number(p.cantidad)
