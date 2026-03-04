@@ -114,7 +114,70 @@
                 btn.classList.remove('btn-mp');
             }
         }
+async function actualizarStockEnBaseDeDatos() {
+    for (const p of carrito) {
+        // Aseguramos los datos que vienen del carrito
+        const p_id = p.id.trim(); 
+        const p_talle = p.talla.trim(); 
+        const p_color = p.color.trim();
+        const p_cantidad = Number(p.cantidad);
 
+        try {
+            // PASO 1: Descontar de la tabla de VARIANTES (productos_variantes)
+            // CAMBIO CLAVE: Usamos .eq en lugar de .ilike para los IDs
+            const { data: variantes, error: varError } = await _supabase
+                .from('productos_variantes')
+                .select('id, stock')
+                .eq('producto_id', p_id) 
+                .ilike('talle', p_talle)
+                .ilike('color', p_color);
+
+            if (varError) {
+                console.error(`Error buscando variante de ${p.titulo}:`, varError);
+            } else if (variantes && variantes.length > 0) {
+                const variante = variantes[0]; 
+                const nuevoStockVariante = variante.stock - p_cantidad;
+                
+                // CAMBIO CLAVE: Capturamos el error al intentar actualizar
+                const { error: errorUpdateVar } = await _supabase
+                    .from('productos_variantes')
+                    .update({ stock: nuevoStockVariante })
+                    .eq('id', variante.id);
+                    
+                if (errorUpdateVar) {
+                    console.error("Supabase rechazó actualizar la variante (¿Falta permiso RLS?):", errorUpdateVar);
+                }
+            }
+
+            // PASO 2: Descontar de la tabla PRINCIPAL (productos)
+            const { data: producto, error: prodError } = await _supabase
+                .from('productos')
+                .select('id, stock')
+                .eq('id', p_id); // CAMBIO CLAVE: .eq en lugar de .ilike
+
+            if (prodError) {
+                console.error(`Error buscando producto principal ${p.titulo}:`, prodError);
+            } else if (producto && producto.length > 0) {
+                const prodPrincipal = producto[0];
+                const nuevoStockPrincipal = prodPrincipal.stock - p_cantidad;
+                
+                const { error: errorUpdateProd } = await _supabase
+                    .from('productos')
+                    .update({ stock: nuevoStockPrincipal })
+                    .eq('id', prodPrincipal.id);
+                    
+                if (errorUpdateProd) {
+                    console.error("Supabase rechazó actualizar el producto principal:", errorUpdateProd);
+                } else {
+                    console.log(`✅ Stock descontado exitosamente en BD para: ${p.titulo}`);
+                }
+            }
+
+        } catch (error) {
+            console.error(`Error crítico en la función para ${p.titulo}:`, error);
+        }
+    }
+}
         document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -214,41 +277,6 @@
                 btn.innerHTML = "Pagar con Mercado Pago";
             }
         }
-        // Función exclusiva para descontar stock en pagos por Efectivo / WhatsApp
-async function descontarStockManual() {
-    const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
-    
-    for (const p of carrito) {
-        const p_id = p.id.trim(); 
-        const p_talle = p.talla.trim(); 
-        const p_color = p.color.trim();
-        const p_cantidad = Number(p.cantidad);
-
-        // 1. Descontar de la variante (talle/color)
-        const { data: variantes } = await _supabase
-            .from('productos_variantes')
-            .select('id, stock')
-            .eq('producto_id', p_id) 
-            .ilike('talle', p_talle)
-            .ilike('color', p_color);
-
-        if (variantes && variantes.length > 0) {
-            const nuevaCant = variantes[0].stock - p_cantidad;
-            await _supabase.from('productos_variantes').update({ stock: nuevaCant }).eq('id', variantes[0].id);
-        }
-
-        // 2. Descontar del producto principal
-        const { data: producto } = await _supabase
-            .from('productos')
-            .select('id, stock')
-            .eq('id', p_id);
-
-        if (producto && producto.length > 0) {
-            const nuevaCant = producto[0].stock - p_cantidad;
-            await _supabase.from('productos').update({ stock: nuevaCant }).eq('id', producto[0].id);
-        }
-    }
-}
     </script>
 </body>
 </html>

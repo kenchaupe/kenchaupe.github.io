@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>¡Pago Exitoso! - Gruken</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
         .card { max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .icon { font-size: 50px; color: #25d366; }
         h1 { color: #333; }
         p { color: #666; }
-        #estado-stock { font-size: 14px; color: #0056b3; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -19,82 +17,17 @@
         <div class="icon">✔</div>
         <h1>¡Pago Exitoso!</h1>
         <p>Gracias por tu compra. En breve serás redireccionado a la tienda.</p>
-        <p id="estado-stock">Confirmando inventario...</p>
         <p>Si no eres redireccionado, <a href="https://www.gruken.com">haz clic aquí</a>.</p>
     </div>
 
     <script>
-        // 1. Configuración de Supabase
-        const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
-        const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // 1. Limpiamos el carrito del LocalStorage para que no aparezca el pedido viejo
+        localStorage.removeItem('carrito_gruken');
 
-        async function procesarVentaExitosa() {
-            const estadoTexto = document.getElementById('estado-stock');
-            
-            // 2. LEER el carrito ANTES de borrarlo
-            const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
-
-            // Si hay productos en el carrito, procedemos a descontar
-            if (carrito.length > 0) {
-                try {
-                    // 3. Iterar sobre cada prenda comprada
-                    for (const p of carrito) {
-                        const p_id = p.id.trim(); 
-                        const p_talle = p.talla.trim(); 
-                        const p_color = p.color.trim();
-                        const p_cantidad = Number(p.cantidad);
-
-                        // A. Descontar stock de la VARIANTE específica (Talle y Color)
-                        const { data: variantes } = await _supabase
-                            .from('productos_variantes')
-                            .select('id, stock')
-                            .eq('producto_id', p_id) 
-                            .ilike('talle', p_talle)
-                            .ilike('color', p_color);
-
-                        if (variantes && variantes.length > 0) {
-                            const nuevaCantVariante = variantes[0].stock - p_cantidad;
-                            await _supabase.from('productos_variantes')
-                                .update({ stock: nuevaCantVariante })
-                                .eq('id', variantes[0].id);
-                        }
-
-                        // B. Descontar stock del PRODUCTO PRINCIPAL (Total)
-                        const { data: producto } = await _supabase
-                            .from('productos')
-                            .select('id, stock')
-                            .eq('id', p_id);
-
-                        if (producto && producto.length > 0) {
-                            const nuevaCantPrincipal = producto[0].stock - p_cantidad;
-                            await _supabase.from('productos')
-                                .update({ stock: nuevaCantPrincipal })
-                                .eq('id', producto[0].id);
-                        }
-                    }
-                    
-                    estadoTexto.innerText = "¡Inventario actualizado correctamente!";
-                    estadoTexto.style.color = "#25d366";
-
-                } catch (error) {
-                    console.error("Error actualizando Supabase:", error);
-                    estadoTexto.innerText = "Hubo un error de conexión, pero tu pago está a salvo.";
-                    estadoTexto.style.color = "red";
-                }
-            }
-
-            // 4. AHORA SÍ limpiamos el carrito del LocalStorage para que se vacíe la bolsita
-            localStorage.removeItem('carrito_gruken');
-
-            // 5. Redireccionamos a la web principal después de que todo haya terminado (espera 2.5 seg)
-            setTimeout(() => {
-                window.location.href = "https://www.gruken.com";
-            }, 2500);
-        }
-
-        // Ejecutar la función automáticamente en cuanto la página cargue
-        window.onload = procesarVentaExitosa;
+        // 2. Redireccionamos a la web principal después de 3 segundos
+        setTimeout(() => {
+            window.location.href = "https://www.gruken.com";
+        }, 3500);
     </script>
 </body>
 </html>
