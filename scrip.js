@@ -704,13 +704,9 @@ async function cerrarYSalirInventario() {
 }
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-            console.log('Service Worker listo para la App');
-        }).catch(err => {
-            console.log('Error al registrar Service Worker', err);
-        });
-    });
+    navigator.serviceWorker.register('sw.js') // Asegúrate que el nombre coincida
+      .then(reg => console.log('Service Worker registrado con éxito', reg))
+      .catch(err => console.warn('Error al registrar el sw', err));
 }
 
 let eventoInstalacion; // Variable global para guardar el evento
