@@ -214,6 +214,41 @@
                 btn.innerHTML = "Pagar con Mercado Pago";
             }
         }
+        // Función exclusiva para descontar stock en pagos por Efectivo / WhatsApp
+async function descontarStockManual() {
+    const carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
+    
+    for (const p of carrito) {
+        const p_id = p.id.trim(); 
+        const p_talle = p.talla.trim(); 
+        const p_color = p.color.trim();
+        const p_cantidad = Number(p.cantidad);
+
+        // 1. Descontar de la variante (talle/color)
+        const { data: variantes } = await _supabase
+            .from('productos_variantes')
+            .select('id, stock')
+            .eq('producto_id', p_id) 
+            .ilike('talle', p_talle)
+            .ilike('color', p_color);
+
+        if (variantes && variantes.length > 0) {
+            const nuevaCant = variantes[0].stock - p_cantidad;
+            await _supabase.from('productos_variantes').update({ stock: nuevaCant }).eq('id', variantes[0].id);
+        }
+
+        // 2. Descontar del producto principal
+        const { data: producto } = await _supabase
+            .from('productos')
+            .select('id, stock')
+            .eq('id', p_id);
+
+        if (producto && producto.length > 0) {
+            const nuevaCant = producto[0].stock - p_cantidad;
+            await _supabase.from('productos').update({ stock: nuevaCant }).eq('id', producto[0].id);
+        }
+    }
+}
     </script>
 </body>
 </html>
