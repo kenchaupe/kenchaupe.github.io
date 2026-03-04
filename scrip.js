@@ -6,44 +6,6 @@ const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
-   async function sincronizarIdentidadVisual() {
-    const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
-    
-    if (data) {
-        document.title = data.nombre;
-        if(data.favicon) document.getElementById('favicon-pagina').href = data.favicon;
-
-        const configApp = {
-            "name": data.nombre,
-            "short_name": data.nombre.substring(0, 12),
-            "description": "Tienda oficial de " + data.nombre,
-            "start_url": "./index.html", // El ./ es vital
-            "scope": "./",               // Define que TODA la web es una App
-            "display": "standalone",     // <--- ESTO QUITA LA BARRA DE NAVEGACIÓN
-            "background_color": "#ffffff",
-            "theme_color": "#000000",
-            "orientation": "portrait",
-            "icons": [
-                { 
-                    "src": data.logo, 
-                    "sizes": "192x192", 
-                    "type": "image/png",
-                    "purpose": "any maskable" // <--- Esto le encanta a Android
-                },
-                { 
-                    "src": data.logo, 
-                    "sizes": "512x512", 
-                    "type": "image/png",
-                    "purpose": "any maskable"
-                }
-            ]
-        };
-
-        const blob = new Blob([JSON.stringify(configApp)], {type: 'application/json'});
-        const urlManifest = URL.createObjectURL(blob);
-        document.getElementById('link-manifest').setAttribute('href', urlManifest);
-    }
-}
     // --- VARIABLES DE UI ---
     const carrito = document.querySelector('#lista-carrito tbody');
     const listaProductos = document.querySelector('#lista-1');
@@ -696,46 +658,4 @@ async function cerrarYSalirInventario() {
     if (error) {
         console.error("Error al cerrar sesión:", error.message);
     }
-}
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js') // Asegúrate que el nombre coincida
-      .then(reg => console.log('Service Worker registrado con éxito', reg))
-      .catch(err => console.warn('Error al registrar el sw', err));
-}
-
-let eventoInstalacion; // Variable global para guardar el evento
-
-// 1. Escuchar cuando el navegador detecta que la App se puede instalar
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Evita que el navegador muestre su propio cartel por defecto
-    e.preventDefault();
-    // Guardamos el evento para usarlo después
-    eventoInstalacion = e;
-    
-    // Mostramos tu banner personalizado de "Instalar Gruken"
-    const banner = document.getElementById('pwa-install-banner');
-    if (banner) {
-        banner.style.display = 'flex'; // Cambiamos de none a flex
-        console.log("Banner de instalación activado");
-    }
-});
-
-// 2. Lógica del botón "Instalar" dentro de tu banner
-const btnInstalar = document.getElementById('btn-instalar');
-if (btnInstalar) {
-    btnInstalar.addEventListener('click', async () => {
-        if (eventoInstalacion) {
-            // Mostramos el cartel oficial del sistema
-            eventoInstalacion.prompt();
-            
-            // Esperamos a ver si el usuario aceptó o canceló
-            const { outcome } = await eventoInstalacion.userChoice;
-            console.log(`Usuario eligió: ${outcome}`);
-            
-            // Ocultamos tu banner porque ya terminó el proceso
-            document.getElementById('pwa-install-banner').style.display = 'none';
-            eventoInstalacion = null;
-        }
-    });
 }
