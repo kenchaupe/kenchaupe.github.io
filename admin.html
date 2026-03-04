@@ -247,32 +247,35 @@ input[type="file"] {
         </div>
 
         <div id="vista-configuracion" class="view-section">
-            <h3 style="margin-top:0;"><i class="fas fa-tools"></i> Ajustes Generales y Redes</h3>
-            <div class="form-grid">
-                <div><label>Nombre de la Página:</label><input type="text" id="config-nombre" class="form-input" placeholder="Ej: Nombre"></div>
-                <div><label>Página Web (Link):</label><input type="text" id="config-web" class="form-input" placeholder="Ej: www.nombre.com"></div>
-               <div>
-   <label for="file-logo" class="custom-file-upload">
-    <i class="fas fa-image"></i> Subir Logo
-</label>
-<input type="file" id="file-logo" accept="image/*" onchange="subirArchivoDirecto(this, 'config-logo')">
-</div>
-<div>
-    <label for="file-favicon" class="custom-file-upload">
-    <i class="fas fa-icons"></i> Subir Favicon
-</label>
-<input type="file" id="file-favicon" accept="image/*" onchange="subirArchivoDirecto(this, 'config-favicon')">
-</div>
-                <div><label>WhatsApp:</label><input type="text" id="config-wsp" class="form-input" placeholder="Ej: +5491198765412"></div>
+    <h3 style="margin-top:0;"><i class="fas fa-tools"></i> Ajustes Generales y Redes</h3>
+    <div class="form-grid">
+        <div><label>Nombre de la Página:</label><input type="text" id="config-nombre" class="form-input" placeholder="Ej: Nombre"></div>
+        <div><label>Página Web (Link):</label><input type="text" id="config-web" class="form-input" placeholder="Ej: www.nombre.com"></div>
+        
+        <div>
+            <label for="file-logo" class="custom-file-upload">
+                <i class="fas fa-image"></i> Subir Logo
+            </label>
+            <input type="file" id="file-logo" accept="image/*" onchange="subirArchivoDirecto(this, 'config-logo')">
+            <input type="hidden" id="config-logo"> </div>
+
+        <div>
+            <label for="file-favicon" class="custom-file-upload">
+                <i class="fas fa-icons"></i> Subir Favicon
+            </label>
+            <input type="file" id="file-favicon" accept="image/*" onchange="subirArchivoDirecto(this, 'config-favicon')">
+            <input type="hidden" id="config-favicon"> </div>
+
+        <div><label>WhatsApp:</label><input type="text" id="config-wsp" class="form-input" placeholder="Ej: +5491198765412"></div>
                 <div><label>Correo Electrónico:</label><input type="email" id="config-email" class="form-input" placeholder="Ej: nombre_1@hotmail.com"></div>
                 <div><label>Enlace de TikTok:</label><input type="text" id="config-tiktok" class="form-input" placeholder="Ej: https://www.tiktok.com/@nombre"></div>
                 <div><label>Enlace de Facebook:</label><input type="text" id="config-facebook" class="form-input" placeholder="Ej: https://www.facebook.com/nombre"></div>
                 <div><label>Enlace de Instagram:</label><input type="text" id="config-instagram" class="form-input" placeholder="Ej: https://www.instagram.com/nombre"></div>
                 <div><label>Enlace de YouTube:</label><input type="text" id="config-youtube" class="form-input" placeholder="Ej: https://www.youtube.com/@nombre"></div>
-            </div>
-            <button onclick="guardarConfiguracion()" class="btn-save" style="background: #007bff;"><i class="fas fa-cloud-upload-alt"></i> Guardar Configuración</button>
-        </div>
-
+    </div>
+    <button onclick="guardarConfiguracion()" class="btn-save" style="background: #007bff;"><i class="fas fa-cloud-upload-alt"></i> Guardar Configuración</button>
+</div>
+                
     </div>
      <script>
         // 1. CONEXIÓN A LA BASE DE DATOS
