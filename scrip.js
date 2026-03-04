@@ -6,6 +6,81 @@ const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Función para aplicar la configuración desde Supabase
+async function sincronizarIdentidadVisual() {
+    try {
+        const { data, error } = await _supabase
+            .from('configuracion')
+            .select('*')
+            .eq('id', 1)
+            .single();
+
+        if (error) throw error;
+
+        if (data) {
+            // 1. Actualizar el nombre en la pestaña y el título
+            document.title = data.nombre || "Gruken Shop";
+            const tituloPagina = document.getElementById('titulo-pagina');
+            if (tituloPagina) tituloPagina.innerText = data.nombre;
+
+            // 2. Actualizar el Favicon (icono de pestaña)
+            const favicon = document.getElementById('favicon-pagina');
+            if (favicon && data.favicon) {
+                favicon.href = data.favicon;
+            }
+
+            // 3. Generar el Manifest Dinámico para la App
+            actualizarManifestApp(data);
+        }
+    } catch (err) {
+        console.error("Error al sincronizar configuración:", err);
+    }
+}
+
+// Función para crear el Manifest de la App al vuelo
+function actualizarManifestApp(config) {
+    const dynamicManifest = {
+        "name": config.nombre || "Gruken Shop",
+        "short_name": config.nombre || "Gruken",
+        "start_url": "/index.html",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#000000",
+        "icons": [
+            {
+                "src": config.logo || "images/gruicon.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": config.logo || "images/gruicon.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    };
+
+    // Convertir el objeto a una URL de datos
+    const stringManifest = JSON.stringify(dynamicManifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+
+    // Buscar o crear el enlace del manifest en el head
+    let link = document.getElementById('link-manifest');
+    if (!link) {
+        link = document.createElement('link');
+        link.id = 'link-manifest';
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+    }
+    link.href = manifestURL;
+}
+
+// Llamar a la función cuando cargue el documento
+document.addEventListener('DOMContentLoaded', () => {
+    sincronizarIdentidadVisual();
+    // ... resto de tu código existente ...
+});
     // --- VARIABLES DE UI ---
     const carrito = document.querySelector('#lista-carrito tbody');
     const listaProductos = document.querySelector('#lista-1');
