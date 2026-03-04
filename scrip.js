@@ -324,6 +324,7 @@ async function inicializarStockTienda() {
                         ${htmlImagenes}
                         <div class="product-txt">
                             <h3>${prodBD.nombre}</h3>
+                            ${generarResenasAleatorias()}
                             
                             <div class="selector-contenedor">
                                 <span class="label-titulo">Cantidad:</span>
@@ -595,6 +596,53 @@ async function aplicarConfiguracionWeb() {
         const linkYouTube = document.getElementById('link-youtube');
         if (linkYouTube) linkYouTube.href = data.youtube;
     }
+}
+function generarResenasAleatorias() {
+    // Listas de datos para combinar
+    const nombres = ["Jessica M.", "Juan G.", "Pedro S.", "Maria L.", "Ana G.", "Juan P.", "Lucía M.", "Carlos R.", "Marta S.", "Roberto F.", "Camila T.", "Gastón B."];
+    const comentarios = [
+        "Excelente tela.", 
+        "Me encantó el talle.", 
+        "Llegó muy rápido.", 
+        "Muy buena atención.", 
+        "Excelente calidad, muy recomendado.", 
+        "El envío fue muy rápido.", 
+        "Me encantó el producto, talle perfecto.", 
+        "La tela es de primera.", 
+        "Atención al cliente de 10.", 
+        "Volveré a comprar sin duda."
+    ];
+
+    // Genera una puntuación aleatoria entre 4.7 y 5.0
+    const puntuacion = (Math.random() * (5.0 - 4.7) + 4.7).toFixed(1);
+    
+    // Elige entre 4 y 6 reseñas aleatorias por producto
+    const cantResenas = Math.floor(Math.random() * 3) + 4; 
+    let listaHTML = '';
+
+    for (let i = 0; i < cantResenas; i++) {
+        const nom = nombres[Math.floor(Math.random() * nombres.length)];
+        const com = comentarios[Math.floor(Math.random() * comentarios.length)];
+        listaHTML += `<p>⭐ "${com}" - <strong>${nom}</strong></p>`;
+    }
+
+    return `
+        <div class="reputacion" style="position: relative;">
+            <button class="btn-ver-recomendaciones" onclick="toggleRecomendaciones(this)">
+                <div class="estrellas">
+                    <i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
+                    <span class="puntuacion">${puntuacion}</span>
+                </div>
+                <small>(Ver reseñas)</small>
+            </button>
+            <div class="ventana-flotante-resenas">
+                <h4>Opiniones destacadas</h4>
+                <div class="lista-scroll">
+                    ${listaHTML}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 async function cerrarYSalirInventario() {

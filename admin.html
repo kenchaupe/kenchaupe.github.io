@@ -136,6 +136,33 @@
     background: #a71d2a;
     transform: scale(1.1);
 }
+/* Estilo moderno para los botones de subir archivo */
+.custom-file-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+    background: #f8f9fa;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    color: #007bff;
+    font-weight: bold;
+    transition: 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.custom-file-upload:hover {
+    background: #e7f1ff;
+    border-color: #0056b3;
+}
+
+/* Ocultar el input original pero mantenerlo funcional */
+input[type="file"] {
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -186,12 +213,14 @@
             <div class="form-grid">
                 <div><label><b>ID (Ej: ART-01):</b></label><input type="text" id="prod-id" class="form-input" placeholder="Identificador único"></div>
                 <div><label><b>Nombre:</b></label><input type="text" id="prod-nombre" class="form-input" placeholder="Ej: Buzo Osito"></div>
-                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: S, M, L"></div>
-                <div><label><b>Colores:</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro"></div>
+                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: 4, 6, 8, 10, 12"></div>
+                <div><label><b>Colores:</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro, Verde"></div>
                 <div><label><b>Precio ($):</b></label><input type="number" id="prod-precio" class="form-input" placeholder="0.00"></div>
                <div style="grid-column: 1 / -1;">
-    <label><b>Fotos del Producto (puedes elegir varias):</b></label>
-   <input type="file" id="prod-files" class="form-input" multiple accept="image/*" onchange="manejarSeleccionFotos(this)" style="margin-bottom: 5px;">
+    <label for="prod-files" class="custom-file-upload">
+    <i class="fas fa-camera"></i> Seleccionar Fotos del Producto
+</label>
+<input type="file" id="prod-files" multiple accept="image/*" onchange="manejarSeleccionFotos(this)">
     
     <div id="preview-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;"></div>
     
@@ -199,7 +228,7 @@
 </div>
                 
                 <div style="grid-column: 1 / -1; margin-top: 10px;">
-                    <button type="button" onclick="generarVariantes()" class="btn-save" style="background: #17a2b8;"><i class="fas fa-cogs"></i> Generar campos de Stock por Variante</button>
+                    <button type="button" onclick="generarVariantes()" class="btn-save" style="background: #17a2b8;"><i class="fas fa-cogs"></i> AGREGAR STOCK DISPONIBLE</button>
                 </div>
                 <div id="contenedor-variantes" style="grid-column: 1 / -1; display:flex; flex-direction:column; gap:10px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
                     </div>
@@ -220,24 +249,26 @@
         <div id="vista-configuracion" class="view-section">
             <h3 style="margin-top:0;"><i class="fas fa-tools"></i> Ajustes Generales y Redes</h3>
             <div class="form-grid">
-                <div><label>Nombre de la Página:</label><input type="text" id="config-nombre" class="form-input"></div>
-                <div><label>Página Web (Link):</label><input type="text" id="config-web" class="form-input"></div>
+                <div><label>Nombre de la Página:</label><input type="text" id="config-nombre" class="form-input" placeholder="Ej: Nombre"></div>
+                <div><label>Página Web (Link):</label><input type="text" id="config-web" class="form-input" placeholder="Ej: www.nombre.com"></div>
                <div>
-    <label>Logo:</label>
-    <input type="file" id="file-logo" accept="image/*" onchange="subirArchivoDirecto(this, 'config-logo')">
-    <input type="text" id="config-logo" class="form-input" readonly>
+   <label for="file-logo" class="custom-file-upload">
+    <i class="fas fa-image"></i> Subir Logo
+</label>
+<input type="file" id="file-logo" accept="image/*" onchange="subirArchivoDirecto(this, 'config-logo')">
 </div>
 <div>
-    <label>Favicon:</label>
-    <input type="file" id="file-favicon" accept="image/*" onchange="subirArchivoDirecto(this, 'config-favicon')">
-    <input type="text" id="config-favicon" class="form-input" readonly>
+    <label for="file-favicon" class="custom-file-upload">
+    <i class="fas fa-icons"></i> Subir Favicon
+</label>
+<input type="file" id="file-favicon" accept="image/*" onchange="subirArchivoDirecto(this, 'config-favicon')">
 </div>
-                <div><label>WhatsApp:</label><input type="text" id="config-wsp" class="form-input"></div>
-                <div><label>Correo Electrónico:</label><input type="email" id="config-email" class="form-input"></div>
-                <div><label>Enlace de TikTok:</label><input type="text" id="config-tiktok" class="form-input"></div>
-                <div><label>Enlace de Facebook:</label><input type="text" id="config-facebook" class="form-input"></div>
-                <div><label>Enlace de Instagram:</label><input type="text" id="config-instagram" class="form-input"></div>
-                <div><label>Enlace de YouTube:</label><input type="text" id="config-youtube" class="form-input"></div>
+                <div><label>WhatsApp:</label><input type="text" id="config-wsp" class="form-input" placeholder="Ej: +5491198765412"></div>
+                <div><label>Correo Electrónico:</label><input type="email" id="config-email" class="form-input" placeholder="Ej: nombre_1@hotmail.com"></div>
+                <div><label>Enlace de TikTok:</label><input type="text" id="config-tiktok" class="form-input" placeholder="Ej: https://www.tiktok.com/@nombre"></div>
+                <div><label>Enlace de Facebook:</label><input type="text" id="config-facebook" class="form-input" placeholder="Ej: https://www.facebook.com/nombre"></div>
+                <div><label>Enlace de Instagram:</label><input type="text" id="config-instagram" class="form-input" placeholder="Ej: https://www.instagram.com/nombre"></div>
+                <div><label>Enlace de YouTube:</label><input type="text" id="config-youtube" class="form-input" placeholder="Ej: https://www.youtube.com/@nombre"></div>
             </div>
             <button onclick="guardarConfiguracion()" class="btn-save" style="background: #007bff;"><i class="fas fa-cloud-upload-alt"></i> Guardar Configuración</button>
         </div>
@@ -336,7 +367,7 @@
             <td data-label="Stock"><b>${prod.stock || 0}</b></td>
             <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
             <td data-label="Acciones" style="display: flex; gap: 5px; flex-direction: column;">
-                <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #ffc107; color: #333;"><i class="fas fa-sync-alt"></i></button>
+                <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #007bff; color: #white;"><i class="fas fa-sync-alt"></i></button>
                 <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" style="width: 100%; padding: 6px;"><i class="fas fa-trash"></i></button>
             </td>
         `;
