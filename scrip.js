@@ -6,47 +6,42 @@ const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
-    async function sincronizarIdentidadVisual() {
+   async function sincronizarIdentidadVisual() {
     const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
     
     if (data) {
-        // 1. Cambiamos lo visual básico
         document.title = data.nombre;
         if(data.favicon) document.getElementById('favicon-pagina').href = data.favicon;
 
-        // 2. FABRICAMOS EL MANIFEST DINÁMICO
-        // Esto es lo que le dice al celular: "Soy una APP, no una web"
         const configApp = {
             "name": data.nombre,
             "short_name": data.nombre.substring(0, 12),
-            "start_url": "index.html", 
-            "display": "standalone", // <--- ESTO quita la barra del navegador
+            "description": "Tienda oficial de " + data.nombre,
+            "start_url": "./index.html", // El ./ es vital
+            "scope": "./",               // Define que TODA la web es una App
+            "display": "standalone",     // <--- ESTO QUITA LA BARRA DE NAVEGACIÓN
             "background_color": "#ffffff",
             "theme_color": "#000000",
+            "orientation": "portrait",
             "icons": [
-                { "src": data.logo, "sizes": "192x192", "type": "image/png" },
-                { "src": data.logo, "sizes": "512x512", "type": "image/png" }
+                { 
+                    "src": data.logo, 
+                    "sizes": "192x192", 
+                    "type": "image/png",
+                    "purpose": "any maskable" // <--- Esto le encanta a Android
+                },
+                { 
+                    "src": data.logo, 
+                    "sizes": "512x512", 
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }
             ]
         };
-// Dentro de la función sincronizarIdentidadVisual() en scrip.js
-if (data) {
-    // ... código anterior ...
 
-    // Actualizar el banner de instalación con los datos de Supabase
-    const imgBanner = document.querySelector('#pwa-install-banner img');
-    const nombreBanner = document.querySelector('#pwa-install-banner strong');
-
-    if (imgBanner && data.logo) imgBanner.src = data.logo;
-    if (nombreBanner && data.nombre) nombreBanner.innerText = `Instalar ${data.nombre}`;
-}
-        // Convertimos este objeto en un archivo real para el navegador
         const blob = new Blob([JSON.stringify(configApp)], {type: 'application/json'});
         const urlManifest = URL.createObjectURL(blob);
-        
-        // Se lo asignamos al link que pusimos en el HTML
         document.getElementById('link-manifest').setAttribute('href', urlManifest);
-        
-        console.log("App configurada como Standalone con nombre:", data.nombre);
     }
 }
     // --- VARIABLES DE UI ---
