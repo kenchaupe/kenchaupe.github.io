@@ -692,3 +692,13 @@ async function cerrarYSalirInventario() {
         console.error("Error al cerrar sesión:", error.message);
     }
 }
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('Service Worker listo para la App');
+        }).catch(err => {
+            console.log('Error al registrar Service Worker', err);
+        });
+    });
+}
