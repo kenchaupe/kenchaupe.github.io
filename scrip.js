@@ -28,7 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 { "src": data.logo, "sizes": "512x512", "type": "image/png" }
             ]
         };
+// Dentro de la función sincronizarIdentidadVisual() en scrip.js
+if (data) {
+    // ... código anterior ...
 
+    // Actualizar el banner de instalación con los datos de Supabase
+    const imgBanner = document.querySelector('#pwa-install-banner img');
+    const nombreBanner = document.querySelector('#pwa-install-banner strong');
+
+    if (imgBanner && data.logo) imgBanner.src = data.logo;
+    if (nombreBanner && data.nombre) nombreBanner.innerText = `Instalar ${data.nombre}`;
+}
         // Convertimos este objeto en un archivo real para el navegador
         const blob = new Blob([JSON.stringify(configApp)], {type: 'application/json'});
         const urlManifest = URL.createObjectURL(blob);
@@ -700,5 +710,41 @@ if ('serviceWorker' in navigator) {
         }).catch(err => {
             console.log('Error al registrar Service Worker', err);
         });
+    });
+}
+
+let eventoInstalacion; // Variable global para guardar el evento
+
+// 1. Escuchar cuando el navegador detecta que la App se puede instalar
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evita que el navegador muestre su propio cartel por defecto
+    e.preventDefault();
+    // Guardamos el evento para usarlo después
+    eventoInstalacion = e;
+    
+    // Mostramos tu banner personalizado de "Instalar Gruken"
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) {
+        banner.style.display = 'flex'; // Cambiamos de none a flex
+        console.log("Banner de instalación activado");
+    }
+});
+
+// 2. Lógica del botón "Instalar" dentro de tu banner
+const btnInstalar = document.getElementById('btn-instalar');
+if (btnInstalar) {
+    btnInstalar.addEventListener('click', async () => {
+        if (eventoInstalacion) {
+            // Mostramos el cartel oficial del sistema
+            eventoInstalacion.prompt();
+            
+            // Esperamos a ver si el usuario aceptó o canceló
+            const { outcome } = await eventoInstalacion.userChoice;
+            console.log(`Usuario eligió: ${outcome}`);
+            
+            // Ocultamos tu banner porque ya terminó el proceso
+            document.getElementById('pwa-install-banner').style.display = 'none';
+            eventoInstalacion = null;
+        }
     });
 }
