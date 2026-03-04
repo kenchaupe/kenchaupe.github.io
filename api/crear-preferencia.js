@@ -20,18 +20,40 @@ export default async function handler(req, res) {
                     quantity: Number(p.cantidad),
                     unit_price: Number(p.precio),
                     currency_id: 'ARS'
-                    
                 })),
 
-                // CAMBIO CLAVE: Quitamos "me2" para evitar el error de "collector active"
-                shipments: {
-                    mode: "not_specified" 
+                // AGREGADO: Datos del comprador (obligatorios para aprobar calidad)
+                payer: {
+                    name: "Test",
+                    surname: "User",
+                    email: "TESTUSER1859857347057195126@testuser.com",
+                    identification: {
+                        type: "DNI",
+                        number: "12345678"
+                    },
+                    address: {
+                        street_name: "Calle Falsa",
+                        street_number: 123,
+                        zip_code: "1424"
+                    }
                 },
+
+                // AGREGADO: Dirección de envío (necesaria para validar logística)
+                shipments: {
+                    mode: "not_specified", 
+                    receiver_address: {
+                        zip_code: "1424",
+                        street_number: 123,
+                        street_name: "Calle Falsa",
+                        floor: "1",
+                        apartment: "A"
+                    }
+                },
+
                 back_urls: {
-                    // Volvemos a tu página principal al terminar
-                    success: "https://www.gruken.com/success.html", // Página de éxito
-                    failure: "https://www.gruken.com/checkout.html", // Si falla, vuelve al checkout
-                    pending: "https://www.gruken.com/pending.html"   // Pago pendiente (ej: Rapipago)
+                    success: "https://www.gruken.com/success.html",
+                    failure: "https://www.gruken.com/checkout.html",
+                    pending: "https://www.gruken.com/pending.html"
                 },
                 auto_return: "approved",
             }
