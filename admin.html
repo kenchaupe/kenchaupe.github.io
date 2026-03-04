@@ -244,12 +244,12 @@
 
     </div>
      <script>
-       // 1. CONEXIÓN A LA BASE DE DATOS
+        // 1. CONEXIÓN A LA BASE DE DATOS
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let productosGlobal = [];
+        let productosGlobal = []; // Guardamos los productos aquí para poder editarlos fácil
 
         // DICCIONARIO DE COLORES PARA EL ADMIN
         const coloresHexAdmin = {
@@ -297,68 +297,74 @@
 
         // 4. LÓGICA DEL INVENTARIO (LEER Y MOSTRAR)
         async function cargarInventarioUnificado() {
-            const { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
-            const tbody = document.getElementById('cuerpo-inventario');
-            
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="8" style="color:red;">Error: ${error.message}</td></tr>`;
-                return;
-            }
+    const { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
+    const tbody = document.getElementById('cuerpo-inventario');
+    
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="8" style="color:red;">Error: ${error.message}</td></tr>`;
+        return;
+    }
 
-            productosGlobal = data; 
-            tbody.innerHTML = ''; 
+    productosGlobal = data; 
+    tbody.innerHTML = ''; 
 
-            data.forEach(prod => {
-                let primeraImagen = 'https://via.placeholder.com/40?text=No+Img';
-                
-                if (prod.imagen && prod.imagen.trim() !== "") {
-                    primeraImagen = prod.imagen.split(',')[0].trim();
-                }
-
-                let coloresArray = (prod.colores || 'Único').split(',');
-                let htmlColoresVisibles = coloresArray.map(c => {
-                    let clave = c.trim().toLowerCase();
-                    let fondo = coloresHexAdmin[clave] || '#eeeeee';
-                    return `<span title="${c.trim()}" style="display:inline-block; width:12px; height:12px; background-color:${fondo}; border:1px solid #ccc; border-radius:50%; margin-right:3px;"></span>`;
-                }).join('');
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td data-label="Imagen">
-                        <img src="${primeraImagen}" width="40" height="40" style="border-radius: 5px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=Error'">
-                    </td>
-                    <td data-label="ID"><b>${prod.id}</b></td>
-                    <td data-label="Nombre">${prod.nombre || ''}</td>
-                    <td data-label="Talles">${prod.talles || ''}</td>
-                    <td data-label="Colores">${htmlColoresVisibles}</td>
-                    <td data-label="Stock"><b style="color:#007bff; font-size:16px;">${prod.stock || 0}</b></td>
-                    <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
-                    <td data-label="Acciones" style="display: flex; gap: 5px; flex-direction: column;">
-                        <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #ffc107; color: #333;"><i class="fas fa-sync-alt"></i> Actualizar</button>
-                        <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" style="width: 100%; padding: 6px;"><i class="fas fa-trash"></i> Borrar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+    data.forEach(prod => {
+        // Mejoramos la lógica de la imagen
+        let primeraImagen = 'https://via.placeholder.com/40?text=No+Img'; // Imagen por defecto
+        
+        if (prod.imagen && prod.imagen.trim() !== "") {
+            // Si hay varias URLs separadas por coma, tomamos la primera
+            primeraImagen = prod.imagen.split(',')[0].trim();
         }
 
+        let coloresArray = (prod.colores || 'Único').split(',');
+        let htmlColoresVisibles = coloresArray.map(c => {
+            let clave = c.trim().toLowerCase();
+            let fondo = coloresHexAdmin[clave] || '#eeeeee';
+            return `<span title="${c.trim()}" style="display:inline-block; width:12px; height:12px; background-color:${fondo}; border:1px solid #ccc; border-radius:50%; margin-right:3px;"></span>`;
+        }).join('');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td data-label="Imagen">
+                <img src="${primeraImagen}" width="40" height="40" style="border-radius: 5px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=Error'">
+            </td>
+            <td data-label="ID"><b>${prod.id}</b></td>
+            <td data-label="Nombre">${prod.nombre || ''}</td>
+            <td data-label="Talles">${prod.talles || ''}</td>
+            <td data-label="Colores">${htmlColoresVisibles}</td>
+            <td data-label="Stock"><b>${prod.stock || 0}</b></td>
+            <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
+            <td data-label="Acciones" style="display: flex; gap: 5px; flex-direction: column;">
+                <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #ffc107; color: #333;"><i class="fas fa-sync-alt"></i></button>
+                <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" style="width: 100%; padding: 6px;"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+       // -----------------------------------------------------------------
+        // NUEVO: CARGAR DATOS PARA EDITAR (CON VARIANTES)
+        // -----------------------------------------------------------------
         window.cargarParaEditar = async function(idProd) {
+            // 1. Buscamos los datos básicos del producto en la base de datos
             const { data: producto, error } = await _supabase.from('productos').select('*').eq('id', idProd).single();
             if (error) { alert("Error al cargar producto: " + error.message); return; }
 
+            // 2. Buscamos el stock de sus variantes
             const { data: variantes, error: errVar } = await _supabase.from('productos_variantes').select('*').eq('producto_id', idProd);
 
+            // 3. Llenamos el formulario con los datos
             document.getElementById('prod-id').value = producto.id || '';
-            // Usamos readOnly en lugar de disabled para evitar problemas al guardar
-            document.getElementById('prod-id').readOnly = true; 
-            document.getElementById('prod-id').style.backgroundColor = '#eee';
-
+            document.getElementById('prod-id').disabled = true; // Bloqueamos el ID para no romper nada
             document.getElementById('prod-nombre').value = producto.nombre || '';
             document.getElementById('prod-talles').value = producto.talles || '';
             document.getElementById('prod-colores').value = producto.colores || '';
             document.getElementById('prod-precio').value = producto.precio || 0;
             document.getElementById('prod-img').value = producto.imagen || '';
 
+            // 4. Armamos la tablita de stock con las variantes recuperadas
             const contenedor = document.getElementById('contenedor-variantes');
             if (variantes && variantes.length > 0) {
                 let html = `<h4 style="margin:0 0 10px 0;">Stock actual por combinación:</h4>
@@ -379,11 +385,16 @@
                 contenedor.innerHTML = '<p style="color:#d9534f;">No hay stock detallado. Haz clic en "Generar campos..."</p>';
             }
 
+            // Nos movemos a la pestaña de agregar/editar
             cambiarPestana('vista-agregar', document.querySelectorAll('.tab-btn')[1]);
             window.scrollTo(0, 0);
         };
-
+// 5. LÓGICA DEL INVENTARIO (GUARDAR NUEVO O EDITAR)
+      // -----------------------------------------------------------------
+        // NUEVO: FUNCIÓN PARA GENERAR LOS INPUTS DE STOCK POR VARIANTE
+        // -----------------------------------------------------------------
         function generarVariantes() {
+            // Leemos los talles y colores y los separamos por las comas
             const talles = document.getElementById('prod-talles').value.split(',').map(t => t.trim()).filter(t => t !== '');
             const colores = document.getElementById('prod-colores').value.split(',').map(c => c.trim()).filter(c => c !== '');
             const contenedor = document.getElementById('contenedor-variantes');
@@ -411,120 +422,70 @@
             contenedor.innerHTML = html;
         }
 
-        // --- FUNCIONES PARA SUPABASE STORAGE CORREGIDAS ---
-        async function subirImagenASupabase(archivo, carpeta) {
-            const nombreLimpio = archivo.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            
-            // Unimos la carpeta que nos pasan (fotos o web) con el nombre
-            const rutaArchivo = `${carpeta}/${Date.now()}_${nombreLimpio}`;
-
-            // Usamos tu bucket oficial: 'productos'
-            const { data, error } = await _supabase.storage
-                .from('productos') 
-                .upload(rutaArchivo, archivo);
-
-            if (error) {
-                console.error("Error subiendo a Storage:", error);
-                alert("❌ Error subiendo imagen: " + error.message);
-                return null;
-            }
-
-            const { data: urlData } = _supabase.storage.from('productos').getPublicUrl(rutaArchivo);
-            return urlData.publicUrl;
-        }
-
-        async function subirArchivoDirecto(input, idDestino) {
-            if (input.files.length === 0) return;
-            const file = input.files[0];
-            // Logo y Favicon van a la carpeta 'web' dentro del bucket 'productos'
-            const url = await subirImagenASupabase(file, 'web');
-            if (url) {
-                document.getElementById(idDestino).value = url;
-                alert("¡Imagen subida y lista!");
-            }
-        }
-
-        // --- LA LÓGICA DE GUARDADO TOTALMENTE REPARADA ---
+        // -----------------------------------------------------------------
+        // ACTUALIZADO: GUARDAR PRODUCTO + SUS VARIANTES
+        // -----------------------------------------------------------------
         async function guardarProductoUnificado(evento) {
-            if (evento) evento.preventDefault();
+            if (evento) evento.preventDefault(); 
+            // ... buscá donde limpiás los campos al final de guardarProductoUnificado y agregá esto:
+            document.getElementById('preview-container').innerHTML = ''; 
+            document.getElementById('prod-files').value = '';
 
-            const idInput = document.getElementById('prod-id');
-            const idTexto = idInput.value.trim(); // .trim() evita espacios vacíos invisibles que rompen la BD
+            const idTexto = document.getElementById('prod-id').value;
             if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
 
-            const imgInput = document.getElementById('prod-img');
-            let urlFinal = imgInput.value; // Por defecto mantenemos la imagen vieja
-
-            // 1. Subir fotos si seleccionaste nuevas
-            if (listaFotosTemporal.length > 0) {
-                let urlsNuevas = [];
-                for (let i = 0; i < listaFotosTemporal.length; i++) {
-                    // Aquí le indicamos que vaya a la carpeta 'fotos' de tu bucket 'productos'
-                    const url = await subirImagenASupabase(listaFotosTemporal[i], 'fotos');
-                    if (url) urlsNuevas.push(url);
-                }
-                urlFinal = urlsNuevas.join(', ');
-            }
-
-            // 2. Calcular el Stock de las variantes
             const inputsVariantes = document.querySelectorAll('.input-variante-stock');
             if (inputsVariantes.length === 0) {
-                alert("⚠️ Por favor, haz clic en 'Generar campos de Stock por Variante' y coloca las cantidades.");
+                alert("Por favor, haz clic en 'Generar campos de Stock por Variante' y define las cantidades.");
                 return;
             }
 
+            // Calculamos el stock total sumando todas las variantes
             let stockTotal = 0;
             const variantesAGuardar = [];
-            
+
             inputsVariantes.forEach(input => {
                 const cantidad = parseInt(input.value) || 0;
                 stockTotal += cantidad;
                 variantesAGuardar.push({
-                    producto_id: idTexto,
+                    producto_id: idTexto, // Usamos el ID de texto directamente
                     talle: input.getAttribute('data-talle'),
                     color: input.getAttribute('data-color'),
                     stock: cantidad
                 });
             });
 
-            // 3. Preparar Producto para guardar
             const productoGuardar = {
-                id: idTexto,
-                nombre: document.getElementById('prod-nombre').value.trim(),
-                talles: document.getElementById('prod-talles').value.trim(),
-                colores: document.getElementById('prod-colores').value.trim(),
-                stock: stockTotal, // Se suma todo automáticamente
+                id: idTexto, // Ahora guardamos como texto (ej: ART-01)
+                nombre: document.getElementById('prod-nombre').value,
+                talles: document.getElementById('prod-talles').value,
+                colores: document.getElementById('prod-colores').value,
+                stock: stockTotal, // Guardamos el total sumado como referencia
                 precio: parseFloat(document.getElementById('prod-precio').value) || 0,
-                imagen: urlFinal
+                imagen: document.getElementById('prod-img').value
             };
 
-            // 4. GUARDAR EN BASE DE DATOS (CON ALERTAS ACTIVADAS)
+            // 1. Guardar el producto principal en la tabla "productos"
             const { error: errorProd } = await _supabase.from('productos').upsert(productoGuardar);
-            if (errorProd) { alert("❌ Error al guardar producto principal: " + errorProd.message); return; }
+            if (errorProd) { alert("Error al guardar producto: " + errorProd.message); return; }
 
-            // Primero borramos el stock viejo de este producto
-            const { error: errorDel } = await _supabase.from('productos_variantes').delete().eq('producto_id', idTexto);
-            if (errorDel) { alert("⚠️ Problema al borrar el stock antiguo: " + errorDel.message); return; }
+            // 2. Por si estamos actualizando un producto viejo, borramos sus variantes anteriores
+            await _supabase.from('productos_variantes').delete().eq('producto_id', idTexto);
 
-            // Luego insertamos el nuevo
+            // 3. Guardar todas las nuevas variantes en la tabla "productos_variantes"
             const { error: errorVar } = await _supabase.from('productos_variantes').insert(variantesAGuardar);
-            if (errorVar) { alert("❌ Error al guardar las unidades detalladas: " + errorVar.message); return; }
+            if (errorVar) { alert("Error al guardar el stock detallado: " + errorVar.message); return; }
 
-            // Si llega hasta aquí, ¡todo funcionó perfecto!
-            alert(`✅ ¡Producto actualizado! Stock total guardado: ${stockTotal} unidades.`);
-
-            // 5. Limpieza de campos
-            listaFotosTemporal = [];
-            document.getElementById('preview-container').innerHTML = '';
-            document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
-            idInput.readOnly = false; // Desbloqueamos el campo ID para el siguiente producto
-            idInput.style.backgroundColor = '#fff';
-            document.getElementById('contenedor-variantes').innerHTML = ''; 
+            alert("✅ ¡Producto y stock detallado guardados correctamente!");
             
+            // Limpiamos los campos para el próximo producto
+            document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
+            document.getElementById('prod-id').disabled = false;  // <--- AGREGAR ESTA LÍNEA AQUÍ
+            document.getElementById('contenedor-variantes').innerHTML = ''; 
             cargarInventarioUnificado(); 
-            cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]);
+            cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]); 
         }
-
+        // 6. LÓGICA DEL INVENTARIO (ELIMINAR)
         async function eliminarProducto(idProd) {
             if (confirm(`¿Estás seguro de eliminar el producto: ${idProd}?`)) {
                 const { error } = await _supabase.from('productos').delete().eq('id', idProd);
@@ -533,7 +494,7 @@
             }
         }
 
-        // --- LÓGICA DE CONFIGURACIÓN DE LA TIENDA ---
+        // 7. LÓGICA DE CONFIGURACIÓN DE LA TIENDA
         async function cargarConfiguracion() {
             const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
             if (data) {
@@ -569,94 +530,259 @@
             else alert('✅ ¡Configuración guardada en el servidor!');
         }
 
-        // --- LÓGICA DE VENTAS ---
+       // 8. LÓGICA DE VENTAS ACTUALIZADA
         async function cargarVentas() {
             const { data, error } = await _supabase.from('ventas').select('*').order('id', { ascending: false });
             const divVentas = document.getElementById('tabla-historial-ventas');
             
             if (error || !data || data.length === 0) {
                 divVentas.innerHTML = "<p>Aún no hay ventas registradas.</p>"; 
-                window.ventasGlobal = [];
+                window.ventasGlobal = []; // Guardamos un array vacío para evitar errores
                 return;
             }
             
+            // Guardamos las ventas en una variable global para el Excel
             window.ventasGlobal = data; 
-            let html = `<table><thead><tr><th>ID</th><th>Fecha y Hora</th><th>Cliente</th><th>Dirección y C.P.</th><th>Productos (Cant. y Detalle)</th><th>Forma de Pago</th><th>Total</th></tr></thead><tbody>`;
-            
-            data.forEach((v) => {
-                let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
-                let detalleProd = "Sin detalles";
-                
-                if (v.articulos) { 
-                    try {
-                        let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
-                        if (Array.isArray(prods)) {
-                            detalleProd = prods.map(p => `<b>${p.cantidad}x</b> ${p.titulo} <br><small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
-                        } else { detalleProd = v.articulos; }
-                    } catch(e) { detalleProd = v.articulos; }
-                }
 
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha y Hora</th>
+                        <th>Cliente</th>
+                        <th>Dirección y C.P.</th>
+                        <th>Productos (Cant. y Detalle)</th>
+                        <th>Forma de Pago</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+           // Busca esta parte dentro de cargarVentas en admin.html
+data.forEach((v) => {
+    let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
+    
+    // CAMBIO AQUÍ: Usamos v.articulos en lugar de v.productos
+    let detalleProd = "Sin detalles";
+    if (v.articulos) { 
+        try {
+            // Se procesa la columna 'articulos' que enviaste desde Supabase
+            let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
+            if (Array.isArray(prods)) {
+                detalleProd = prods.map(p => 
+                    `<b>${p.cantidad}x</b> ${p.titulo} <br>
+                     <small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`
+                ).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
+            } else {
+                detalleProd = v.articulos;
+            }
+        } catch(e) {
+            detalleProd = v.articulos;
+        }
+    }
+
+    // El resto del código sigue igual...
+
+                // Asegurar los nombres de las columnas (ajusta esto si en tu BD se llaman diferente)
                 let nombreCompleto = (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo');
                 let direccionCompleta = `${v.direccion || 'Sin calle'} - CP: ${v.codigo_postal || v.cp || 'N/A'}`;
                 let pago = v.forma_pago || v.metodo_pago || 'No especificada';
 
-                html += `<tr><td data-label="ID Venta">#${v.id}</td><td data-label="Fecha y Hora">${fechaHora}</td><td data-label="Cliente"><strong>${nombreCompleto}</strong></td><td data-label="Dirección">${direccionCompleta}</td><td data-label="Productos">${detalleProd}</td><td data-label="Forma de Pago"><em>${pago}</em></td><td data-label="Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td></tr>`;
+                html += `<tr>
+                    <td data-label="ID Venta">#${v.id}</td>
+                    <td data-label="Fecha y Hora">${fechaHora}</td>
+                    <td data-label="Cliente"><strong>${nombreCompleto}</strong></td>
+                    <td data-label="Dirección">${direccionCompleta}</td>
+                    <td data-label="Productos">${detalleProd}</td>
+                    <td data-label="Forma de Pago"><em>${pago}</em></td>
+                    <td data-label="Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
+                </tr>`;
             });
             html += `</tbody></table>`;
             divVentas.innerHTML = html;
         }
 
-        function descargarExcelVentas() {
-            const datosExcel = window.ventasGlobal.map(v => {
-                let detalleProdExcel = "";
-                if (v.articulos) {
-                    try {
-                        let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
-                        if (Array.isArray(prods)) {
-                            detalleProdExcel = prods.map(p => `${p.cantidad}x ${p.titulo} (Talle: ${p.talla || '-'} / Color: ${p.color || '-'})`).join(' | ');
-                        } else { detalleProdExcel = v.articulos; }
-                    } catch(e) { detalleProdExcel = v.articulos; }
+       function descargarExcelVentas() {
+    // ... parte inicial de la función ...
+    const datosExcel = window.ventasGlobal.map(v => {
+        let detalleProdExcel = "";
+        if (v.articulos) { // CAMBIO: de v.productos a v.articulos
+            try {
+                let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
+                if (Array.isArray(prods)) {
+                    detalleProdExcel = prods.map(p => 
+                        `${p.cantidad}x ${p.titulo} (Talle: ${p.talla || '-'} / Color: ${p.color || '-'})`
+                    ).join(' | ');
+                } else {
+                    detalleProdExcel = v.articulos;
                 }
+            } catch(e) {
+                detalleProdExcel = v.articulos;
+            }
+        }
+
                 return {
-                    "ID Venta": v.id, "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A', "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'), "Dirección": v.direccion || 'No especificada', "Código Postal": v.codigo_postal || v.cp || 'N/A', "Productos (Cant y Detalle)": detalleProdExcel, "Forma de Pago": v.forma_pago || v.metodo_pago || 'N/A', "Monto Total ($)": v.total || 0
+                    "ID Venta": v.id,
+                    "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A',
+                    "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'),
+                    "Dirección": v.direccion || 'No especificada',
+                    "Código Postal": v.codigo_postal || v.cp || 'N/A',
+                    "Productos (Cant y Detalle)": detalleProdExcel,
+                    "Forma de Pago": v.forma_pago || v.metodo_pago || 'N/A',
+                    "Monto Total ($)": v.total || 0
                 };
             });
+
+            // Creamos y descargamos el Excel
             const worksheet = XLSX.utils.json_to_sheet(datosExcel);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas Gruken");
+            
+            // Genera el archivo con la fecha actual para que no se pisen los nombres
             const fechaHoy = new Date().toISOString().split('T')[0];
             XLSX.writeFile(workbook, `Ventas_Gruken_${fechaHoy}.xlsx`);
         }
 
-        // --- VISTA PREVIA DE IMÁGENES ---
-        let listaFotosTemporal = []; 
+       // --- FUNCIONES PARA SUPABASE STORAGE ---
 
-        function manejarSeleccionFotos(input) {
-            const nuevosArchivos = Array.from(input.files);
-            listaFotosTemporal = [...listaFotosTemporal, ...nuevosArchivos];
-            actualizarVistaPrevia();
-            input.value = ""; 
-        }
+// 1. Función para subir un archivo (SIN CAMBIOS)
+// 1. Función para subir un archivo (CORREGIDA LA RUTA DEL BUCKET)
+async function subirImagenASupabase(archivo, carpeta) {
+    // Limpiamos el nombre para que no haya espacios o tildes que rompan la URL
+    const nombreLimpio = archivo.name.replace(/[^a-zA-Z0-9.]/g, '_');
+    
+    // Si tu bucket es "productos" y la carpeta es "fotos", la ruta debe ser así
+    const rutaArchivo = `fotos/${Date.now()}_${nombreLimpio}`;
 
-        function actualizarVistaPrevia() {
-            const contenedor = document.getElementById('preview-container');
-            contenedor.innerHTML = ''; 
-            listaFotosTemporal.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.classList.add('preview-wrapper');
-                    div.innerHTML = `<img src="${e.target.result}" class="img-preview-item"><button type="button" class="btn-remove-img" onclick="quitarFoto(${index})"><i class="fas fa-times"></i></button>`;
-                    contenedor.appendChild(div);
-                }
-                reader.readAsDataURL(file);
-            });
-        }
+    // Le decimos a Supabase: Sube este archivo al bucket "productos"
+    const { data, error } = await _supabase.storage
+        .from('productos') 
+        .upload(rutaArchivo, archivo);
 
-        function quitarFoto(index) {
-            listaFotosTemporal.splice(index, 1); 
-            actualizarVistaPrevia(); 
+    if (error) {
+        console.error("Error subiendo la imagen a Supabase:", error);
+        alert("Error al subir imagen: " + error.message); // Agregué esta alerta para que te avise si falla
+        return null;
+    }
+
+    // Obtenemos la URL pública desde el bucket "productos"
+    const { data: urlData } = _supabase.storage.from('productos').getPublicUrl(rutaArchivo);
+    return urlData.publicUrl;
+}
+
+// 2. Para subir Logo y Favicon (SIN CAMBIOS)
+async function subirArchivoDirecto(input, idDestino) {
+    if (input.files.length === 0) return;
+    const file = input.files[0];
+    const url = await subirImagenASupabase(file, 'web');
+    if (url) {
+        document.getElementById(idDestino).value = url;
+        alert("¡Imagen subida y lista!");
+    }
+}
+
+// 3. LA CORRECCIÓN CLAVE: Función de guardado integrada
+async function guardarProductoUnificado(evento) {
+    if (evento) evento.preventDefault();
+
+    const idTexto = document.getElementById('prod-id').value;
+    if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+
+    const imgInput = document.getElementById('prod-img');
+    
+    // --- NUEVO: Subir fotos desde la LISTA TEMPORAL ---
+    if (listaFotosTemporal.length > 0) {
+        console.log("Subiendo imágenes...");
+        let urls = [];
+        for (let i = 0; i < listaFotosTemporal.length; i++) {
+            const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
+            if (url) urls.push(url);
         }
+        // Unimos las nuevas URLs con las que ya existieran (si estás editando)
+        imgInput.value = urls.join(', ');
+    }
+
+    const inputsVariantes = document.querySelectorAll('.input-variante-stock');
+    if (inputsVariantes.length === 0) {
+        alert("Por favor, haz clic en 'Generar campos de Stock por Variante'.");
+        return;
+    }
+
+    let stockTotal = 0;
+    const variantesAGuardar = [];
+    inputsVariantes.forEach(input => {
+        const cantidad = parseInt(input.value) || 0;
+        stockTotal += cantidad;
+        variantesAGuardar.push({
+            producto_id: idTexto,
+            talle: input.getAttribute('data-talle'),
+            color: input.getAttribute('data-color'),
+            stock: cantidad
+        });
+    });
+
+    const productoGuardar = {
+        id: idTexto,
+        nombre: document.getElementById('prod-nombre').value,
+        talles: document.getElementById('prod-talles').value,
+        colores: document.getElementById('prod-colores').value,
+        stock: stockTotal,
+        precio: parseFloat(document.getElementById('prod-precio').value) || 0,
+        imagen: imgInput.value // Aquí ya tiene las URLs subidas
+    };
+
+    // Guardar en Supabase
+    const { error: errorProd } = await _supabase.from('productos').upsert(productoGuardar);
+    if (errorProd) { alert("Error: " + errorProd.message); return; }
+
+    await _supabase.from('productos_variantes').delete().eq('producto_id', idTexto);
+    const { error: errorVar } = await _supabase.from('productos_variantes').insert(variantesAGuardar);
+
+    alert("✅ ¡Producto guardado con éxito!");
+
+    // Limpieza total
+    listaFotosTemporal = []; // Vaciamos la lista de fotos
+    document.getElementById('preview-container').innerHTML = '';
+    document.querySelectorAll('#vista-agregar .form-input').forEach(input => input.value = '');
+    document.getElementById('prod-id').disabled = false;
+    document.getElementById('contenedor-variantes').innerHTML = ''; 
+    cargarInventarioUnificado(); 
+    cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]);
+}
+
+// 4. Lógica de vista previa (SIN CAMBIOS)
+let listaFotosTemporal = []; 
+
+function manejarSeleccionFotos(input) {
+    const nuevosArchivos = Array.from(input.files);
+    listaFotosTemporal = [...listaFotosTemporal, ...nuevosArchivos];
+    actualizarVistaPrevia();
+    input.value = ""; 
+}
+
+function actualizarVistaPrevia() {
+    const contenedor = document.getElementById('preview-container');
+    contenedor.innerHTML = ''; 
+    listaFotosTemporal.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.classList.add('preview-wrapper');
+            div.innerHTML = `
+                <img src="${e.target.result}" class="img-preview-item">
+                <button type="button" class="btn-remove-img" onclick="quitarFoto(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            contenedor.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+    });
+}
+
+function quitarFoto(index) {
+    listaFotosTemporal.splice(index, 1); 
+    actualizarVistaPrevia(); 
+}
     </script>
 </body>
 </html>
