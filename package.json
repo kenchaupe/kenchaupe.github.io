@@ -1,0 +1,9 @@
+{
+  "name": "kenchaupe-github-io",
+  "version": "1.0.0",
+  "type": "module", 
+  "dependencies": {
+    "mercadopago": "^2.2.0",
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
