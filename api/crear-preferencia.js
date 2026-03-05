@@ -14,19 +14,16 @@ export default async function handler(req, res) {
         const result = await preference.create({
             body: {
                 items: items.map(p => ({
-                    title: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad}`,
+                    title: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla}`,
                     quantity: Number(p.cantidad),
                     unit_price: Number(p.precio),
                     currency_id: 'ARS'
                 })),
-                // BORRAMOS EL PAYER. AHORA CUALQUIERA PUEDE COMPRAR.
+                // CONFIGURACIÓN DE MERCADO ENVÍOS
                 shipments: {
-                    mode: "not_specified", 
-                    receiver_address: {
-                        zip_code: "1424",
-                        street_number: 123,
-                        street_name: "Calle Falsa"
-                    }
+                    mode: "me2", // "me2" es Mercado Envíos estándar
+                    local_pickup: true, // Ponelo en true si querés que puedan retirar por tu taller
+                    dimensions: "30x20x10,500" // Opcional: alto x ancho x largo (cm) y peso (gramos)
                 },
                 back_urls: {
                     success: "https://www.gruken.com/success.html",
