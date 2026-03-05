@@ -1,4 +1,5 @@
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+// REEMPLAZÁ LAS PRIMERAS LÍNEAS POR ESTAS:
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Metodo no permitido');
@@ -6,7 +7,8 @@ export default async function handler(req, res) {
     const client = new MercadoPagoConfig({ 
         accessToken: process.env.MP_ACCESS_TOKEN 
     });
-
+    
+    // ... (el resto del código sigue igual)
     const preference = new Preference(client);
     const { items } = req.body;
 
