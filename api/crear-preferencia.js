@@ -29,6 +29,9 @@ export default async function handler(req, res) {
                     name: comprador.nombre, // Acción recomendada: Nombre
                     surname: comprador.apellido // Acción recomendada: Apellido
                 },
+                // EL CAMBIO CLAVE PARA WEBHOOKS:
+                notification_url: "https://www.gruken.com/api/webhooks",
+                
                 back_urls: { // Acción recomendada: Back URLs
                     success: "https://www.gruken.com/success.html",
                     failure: "https://www.gruken.com/checkout.html",
