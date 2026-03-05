@@ -48,6 +48,10 @@
                 <input type="text" id="nombre" required placeholder="Ej: Ruben .G">
             </div>
             <div class="form-group">
+                  <label>Email:</label>
+                  <input type="email" id="email" required placeholder="Ej: ruben@gmail.com">
+             </div>
+            <div class="form-group">
                 <label>Dirección de Entrega:</label>
                 <input type="text" id="direccion" required placeholder="Ej: av.rivadavia 123 - buenos aires">
             </div>
@@ -248,8 +252,16 @@ async function actualizarStockEnBaseDeDatos() {
 
       async function ejecutarMercadoPago() {
             const btn = document.querySelector('#boton-accion');
+            const nombreFull = document.querySelector('#nombre').value.split(' ');
+            const emailVal = document.querySelector('#email').value;
             btn.innerHTML = "Conectando...";
             btn.disabled = true;
+
+            const compradorInfo = {
+              email: emailVal,
+              nombre: nombreFull[0] || "Cliente",
+              apellido: nombreFull[1] || "Gruken" // Cambiar Nombre
+            };
 
             try {
                 // Volvemos a apuntar a tu carpeta local/Vercel
@@ -258,7 +270,7 @@ async function actualizarStockEnBaseDeDatos() {
                     headers: { 
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ items: carrito })
+                    body: JSON.stringify({ items: carrito, comprador: compradorInfo })
                 });
 
                 if (!response.ok) throw new Error("Error en el servidor al conectar con Mercado Pago");

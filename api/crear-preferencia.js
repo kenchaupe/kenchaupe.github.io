@@ -1,43 +1,46 @@
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 export default async function handler(req, res) {
-    // Solo permitimos peticiones POST
     if (req.method !== 'POST') return res.status(405).send('Metodo no permitido');
 
-    // Configuración del cliente con tu Token de Vercel
     const client = new MercadoPagoConfig({ 
         accessToken: process.env.MP_ACCESS_TOKEN 
     });
 
     const preference = new Preference(client);
-    const { items } = req.body;
+    
+    // Recibimos los items y la info del comprador (email y nombre) desde el HTML
+    const { items, comprador } = req.body;
 
     try {
         const result = await preference.create({
             body: {
                 items: items.map(p => ({
-                    title: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad}`,
-                    quantity: Number(p.cantidad),
-                    unit_price: Number(p.precio),
+                    id: p.id || 'gruken-001', // Acción recomendada: Código del item
+                    title: p.titulo, // Acción recomendada: Nombre del item
+                    description: `Prenda Gruken: ${p.color} - Talle ${p.talla}`, // Acción recomendada: Descripción
+                    category_id: 'fashion', // Acción recomendada: Categoría
+                    quantity: Number(p.cantidad), // Acción recomendada: Cantidad
+                    unit_price: Number(p.precio), // Acción recomendada: Precio
                     currency_id: 'ARS'
-                    
                 })),
-
-                // CAMBIO CLAVE: Quitamos "me2" para evitar el error de "collector active"
-                shipments: {
-                    mode: "not_specified" 
+                payer: {
+                    email: comprador.email, // Acción obligatoria: Email
+                    name: comprador.nombre, // Acción recomendada: Nombre
+                    surname: comprador.apellido // Acción recomendada: Apellido
                 },
-                back_urls: {
-                    // Volvemos a tu página principal al terminar
-                    success: "https://www.gruken.com/success.html", // Página de éxito
-                    failure: "https://www.gruken.com/checkout.html", // Si falla, vuelve al checkout
-                    pending: "https://www.gruken.com/pending.html"   // Pago pendiente (ej: Rapipago)
+                back_urls: { // Acción recomendada: Back URLs
+                    success: "https://www.gruken.com/success.html",
+                    failure: "https://www.gruken.com/checkout.html",
+                    pending: "https://www.gruken.com/pending.html"
                 },
                 auto_return: "approved",
+                statement_descriptor: "GRUKEN SHOP", // Acción recomendada: Resumen tarjeta
+                external_reference: "PEDIDO-" + Date.now(), // Acción obligatoria: Referencia externa
+                binary_mode: true // Buenas prácticas: Respuesta binaria
             }
         });
 
-        // Enviamos el ID de la preferencia al frontend
         res.status(200).json({ id: result.id });
     } catch (error) {
         console.error("Error en Mercado Pago:", error);
