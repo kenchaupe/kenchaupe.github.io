@@ -181,7 +181,7 @@ input[type="file"] {
         <div class="top-bar">
             <button class="tab-btn active" onclick="cambiarPestana('vista-inventario', this)"><i class="fas fa-box"></i> Mi Inventario</button>
             <button class="tab-btn tab-btn-add" onclick="cambiarPestana('vista-agregar', this)"><i class="fas fa-plus"></i> Agregar Producto</button>
-            <button class="tab-btn" onclick="cambiarPestana('vista-ventas', this)"><i class="fas fa-chart-line"></i> Ventas</button>
+            <button class="tab-btn" onclick="cambiarPestana('vista-ventas', this)"><i class="fas fa-chart-line"></i> Historial Ventas</button>
             <button class="tab-btn" onclick="cambiarPestana('vista-configuracion', this)"><i class="fas fa-cog"></i> Configuración</button>
         </div>
 
@@ -191,14 +191,14 @@ input[type="file"] {
                 <table>
                     <thead>
                         <tr>
-                            <th>Imagen:</th>
-                            <th>ART:</th>
-                            <th>Nombre:</th>
-                            <th>Talles:</th>
-                            <th>Colores:</th>
-                            <th>Stock:</th>
-                            <th>Precio:</th>
-                            <th>Acciones:</th>
+                            <th>Producto</th>
+                            <th>ART</th>
+                            <th>Nombre</th>
+                            <th>Talles</th>
+                            <th>Colores</th>
+                            <th>Stock</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpo-inventario">
@@ -211,11 +211,11 @@ input[type="file"] {
      <div id="vista-agregar" class="view-section">
             <h3 style="margin-top:0;"><i class="fas fa-plus-circle"></i> Datos del Producto</h3>
             <div class="form-grid">
-                <div><label><b>ART:</b></label><input type="text" id="prod-id" class="form-input" placeholder="Ej: 5"></div>
-                <div><label><b>Nombre:</b></label><input type="text" id="prod-nombre" class="form-input" placeholder="Ej: Buzo Osito"></div>
-                <div><label><b>Talles:</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: 4, 6, 8, 10, 12"></div>
-                <div><label><b>Colores:</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro, Verde"></div>
-                <div><label><b>Precio ($):</b></label><input type="number" id="prod-precio" class="form-input" placeholder="0.00"></div>
+                <div><label><b>ART :</b></label><input type="text" id="prod-id" class="form-input" placeholder="Ej: 1"></div>
+                <div><label><b>Nombre :</b></label><input type="text" id="prod-nombre" class="form-input" placeholder="Ej: Buzo Osito"></div>
+                <div><label><b>Talles :</b></label><input type="text" id="prod-talles" class="form-input" placeholder="Ej: 4, 6, 8, 10, 12"></div>
+                <div><label><b>Colores :</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro, Blanco"></div>
+                <div><label><b>Precio ($) :</b></label><input type="number" id="prod-precio" class="form-input" placeholder="5000"></div>
                <div style="grid-column: 1 / -1;">
     <label for="prod-files" class="custom-file-upload">
     <i class="fas fa-camera"></i> Seleccionar Fotos del Producto
@@ -233,7 +233,7 @@ input[type="file"] {
                 <div id="contenedor-variantes" style="grid-column: 1 / -1; display:flex; flex-direction:column; gap:10px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
                     </div>
             </div>
-            <button onclick="guardarProductoUnificado(event)" class="btn-save"><i class="fas fa-save"></i> Guardar Nuevo Producto </button>
+            <button onclick="guardarProductoUnificado(event)" class="btn-save"><i class="fas fa-save"></i> Guardar Nuevo Producto</button>
         </div>
 
         <div id="vista-ventas" class="view-section">
@@ -360,15 +360,15 @@ input[type="file"] {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td data-label="Imagen">
+            <td data-label="Producto :">
                 <img src="${primeraImagen}" width="40" height="40" style="border-radius: 5px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=Error'">
             </td>
-            <td data-label="ID"><b>${prod.id}</b></td>
-            <td data-label="Nombre">${prod.nombre || ''}</td>
-            <td data-label="Talles">${prod.talles || ''}</td>
-            <td data-label="Colores">${htmlColoresVisibles}</td>
-            <td data-label="Stock"><b>${prod.stock || 0}</b></td>
-            <td data-label="Precio">$${(prod.precio || 0).toLocaleString()}</td>
+            <td data-label="ART :"><b>${prod.id}</b></td>
+            <td data-label="Nombre :">${prod.nombre || ''}</td>
+            <td data-label="Talles :">${prod.talles || ''}</td>
+            <td data-label="Colores :">${htmlColoresVisibles}</td>
+            <td data-label="Stock :"><b>${prod.stock || 0}</b></td>
+            <td data-label="Precio :">$${(prod.precio || 0).toLocaleString()}</td>
             <td data-label="Acciones" style="display: flex; gap: 5px; flex-direction: column;">
                 <button onclick="cargarParaEditar('${prod.id}')" class="btn-save" style="margin-top:0; padding: 6px; font-size: 14px; background: #007bff; color: #white;"><i class="fas fa-sync-alt"></i></button>
                 <button onclick="eliminarProducto('${prod.id}')" class="btn-delete" style="width: 100%; padding: 6px;"><i class="fas fa-trash"></i></button>
@@ -581,7 +581,7 @@ input[type="file"] {
             let html = `<table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Venta N°</th>
                         <th>Fecha y Hora</th>
                         <th>Cliente</th>
                         <th>Dirección y C.P.</th>
@@ -622,13 +622,13 @@ data.forEach((v) => {
                 let pago = v.forma_pago || v.metodo_pago || 'No especificada';
 
                 html += `<tr>
-                    <td data-label="ID Venta">#${v.id}</td>
-                    <td data-label="Fecha y Hora">${fechaHora}</td>
-                    <td data-label="Cliente"><strong>${nombreCompleto}</strong></td>
-                    <td data-label="Dirección">${direccionCompleta}</td>
-                    <td data-label="Productos">${detalleProd}</td>
-                    <td data-label="Forma de Pago"><em>${pago}</em></td>
-                    <td data-label="Total"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
+                    <td data-label="Venta N° :">#${v.id}</td>
+                    <td data-label="Fecha y Hora :">${fechaHora}</td>
+                    <td data-label="Cliente :"><strong>${nombreCompleto}</strong></td>
+                    <td data-label="Dirección :">${direccionCompleta}</td>
+                    <td data-label="Productos :">${detalleProd}</td>
+                    <td data-label="Forma de Pago :"><em>${pago}</em></td>
+                    <td data-label="Total :"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
                 </tr>`;
             });
             html += `</tbody></table>`;
@@ -655,7 +655,7 @@ data.forEach((v) => {
         }
 
                 return {
-                    "ID Venta": v.id,
+                    "Venta N°": v.id,
                     "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A',
                     "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'),
                     "Dirección": v.direccion || 'No especificada',
