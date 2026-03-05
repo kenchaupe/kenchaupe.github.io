@@ -16,13 +16,14 @@ export default async function handler(req, res) {
         const result = await preference.create({
             body: {
                 items: items.map(p => ({
-                    id: p.id || 'gruken-001', // Acción recomendada: Código del item
+                    id: p.id || 'ART-001', // Acción recomendada: Código del item
                     title: p.titulo, // Acción recomendada: Nombre del item
-                    description: `Prenda Gruken: ${p.color} - Talle ${p.talla}`, // Acción recomendada: Descripción
+                    description: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${subtotal.toLocaleString('es-AR')}`, // Acción recomendada: Descripción
                     category_id: 'fashion', // Acción recomendada: Categoría
                     quantity: Number(p.cantidad), // Acción recomendada: Cantidad
                     unit_price: Number(p.precio), // Acción recomendada: Precio
                     currency_id: 'ARS'
+
                 })),
                 payer: {
                     email: comprador.email, // Acción obligatoria: Email
