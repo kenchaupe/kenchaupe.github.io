@@ -94,9 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnAgregar = productoContenedor.querySelector('.agregar-carrito');
         const precioEtiqueta = productoContenedor.querySelector('.precio');
         
-        // El secreto 1: Convertimos el ID a número estricto
-        const idTexto = btnAgregar.getAttribute('data-id');
-        const idNumero = parseInt(idTexto); 
+       // El secreto 1: Usamos el ID como texto (String)
+        const idFinal = btnAgregar.getAttribute('data-id').trim();
         
         const talla = productoContenedor.querySelector('.chip.selected')?.getAttribute('data-valor');
         const color = productoContenedor.querySelector('.swatch.selected')?.getAttribute('data-valor');
@@ -110,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await _supabase
             .from('productos')
             .select('stock, precio')
-            .eq('id', idNumero)
+            .eq('id', idFinal)
             .single();
 
         if (error || !data) {
