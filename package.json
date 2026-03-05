@@ -1,7 +1,0 @@
-{
-  "name": "gruken-shop",
-  "version": "1.0.0",
-  "dependencies": {
-    "mercadopago": "^2.0.11"
-  }
-}
