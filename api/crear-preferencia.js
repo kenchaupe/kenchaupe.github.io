@@ -14,16 +14,16 @@ export default async function handler(req, res) {
         const result = await preference.create({
             body: {
                 items: items.map(p => ({
-                    title: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla}`,
+                    id: p.id || 'prod-001', // Es mejor incluir un ID
+                    title: `${p.titulo} | ${p.color} | ${p.talla}`,
                     quantity: Number(p.cantidad),
                     unit_price: Number(p.precio),
-                    currency_id: 'ARS'
+                    currency_id: 'ARS',
+                    category_id: 'fashion', // Ayuda a que MP no sospeche de la venta
+                    description: 'Prenda de confección Gruken'
                 })),
-                // CONFIGURACIÓN DE MERCADO ENVÍOS
                 shipments: {
-                    mode: "me2", // "me2" es Mercado Envíos estándar
-                    local_pickup: true, // Ponelo en true si querés que puedan retirar por tu taller
-                    dimensions: "30x20x10,500" // Opcional: alto x ancho x largo (cm) y peso (gramos)
+                    mode: "me2" 
                 },
                 back_urls: {
                     success: "https://www.gruken.com/success.html",
@@ -31,6 +31,8 @@ export default async function handler(req, res) {
                     pending: "https://www.gruken.com/pending.html"
                 },
                 auto_return: "approved",
+                statement_descriptor: "GRUKEN SHOP", // Como aparecerá en el resumen de la tarjeta
+                binary_mode: true // Solo acepta pagos aprobados o rechazados (evita los "pendientes")
             }
         });
 
