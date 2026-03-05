@@ -8,6 +8,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANO
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Método no permitido');
 
+    
     const { body, query } = req;
     const id = body.data?.id || query.id;
     const topic = body.type || query.topic;
