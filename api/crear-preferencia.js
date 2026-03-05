@@ -20,8 +20,6 @@ export default async function handler(req, res) {
                     title: p.titulo, // Acción recomendada: Nombre del item
                     description: `${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad}`, // Acción recomendada: Descripción
                     category_id: 'fashion', // Acción recomendada: Categoría
-                    Color: ${p.color}
-                    Talle: ${p.talla}
                     quantity: Number(p.cantidad), // Acción recomendada: Cantidad
                     unit_price: Number(p.precio), // Acción recomendada: Precio
                     currency_id: 'ARS'
