@@ -40,8 +40,8 @@
         /* RESPONSIVO PARA CELULARES */
         @media (max-width: 768px) {
             thead { display: none; }
-            tr { display: block; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; padding: 10px; }
-            td { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; align-items: center; }
+            tr { display: block; border: 2px solid #333333; margin-bottom: 10px; border-radius: 8px; padding: 10px; }
+            td { display: flex; justify-content: space-between; border-bottom: 1px dashed #a5a5a5; align-items: center; }
             td::before { content: attr(data-label); font-weight: bold; color: #555; }
             .form-grid { grid-template-columns: 1fr; }
             /* Ocultamos los encabezados de la tabla original */
@@ -581,11 +581,11 @@ input[type="file"] {
             let html = `<table>
                 <thead>
                     <tr>
-                        <th>Venta N°</th>
+                        <th>N° Venta</th>
                         <th>Fecha y Hora</th>
                         <th>Cliente</th>
                         <th>Dirección y C.P.</th>
-                        <th>Productos (Cant. y Detalle)</th>
+                        <th>Productos</th>
                         <th>Forma de Pago</th>
                         <th>Total</th>
                     </tr>
@@ -602,10 +602,15 @@ data.forEach((v) => {
             // Se procesa la columna 'articulos' que enviaste desde Supabase
             let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
             if (Array.isArray(prods)) {
-                detalleProd = prods.map(p => 
-                    `<b>${p.cantidad}x</b> ${p.titulo} <br>
-                     <small>(Talle: ${p.talla || '-'} | Color: ${p.color || '-'})</small>`
-                ).join('<hr style="margin:5px 0; border-top:1px solid #ddd;">');
+               // SOLUCIÓN: Envolvemos todos los productos en una "caja" vertical
+                detalleProd = `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; width: 100%;">` + 
+                    prods.map(p => 
+                        `<div style="text-align: right; width: 100%;">
+                            <b>${p.cantidad}Unid </b> ${p.titulo} 
+                            <br> <small>Talle: ${p.talla || '-'} | Color: ${p.color || '-'}</small>
+                        </div>`
+                    ).join('<hr style="width: 100%; margin: 2px 0; border: none; border-top: 1px dashed rgba(255,255,255,0.4);">') + 
+                `</div>`;
             } else {
                 detalleProd = v.articulos;
             }
@@ -622,11 +627,11 @@ data.forEach((v) => {
                 let pago = v.forma_pago || v.metodo_pago || 'No especificada';
 
                 html += `<tr>
-                    <td data-label="Venta N° :">#${v.id}</td>
+                    <td data-label="N° Venta :">#${v.id}</td>
                     <td data-label="Fecha y Hora :">${fechaHora}</td>
                     <td data-label="Cliente :"><strong>${nombreCompleto}</strong></td>
                     <td data-label="Dirección :">${direccionCompleta}</td>
-                    <td data-label="Productos :">${detalleProd}</td>
+                    <td data-label="Productos:">${detalleProd}</td>
                     <td data-label="Forma de Pago :"><em>${pago}</em></td>
                     <td data-label="Total :"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
                 </tr>`;
@@ -655,7 +660,7 @@ data.forEach((v) => {
         }
 
                 return {
-                    "Venta N°": v.id,
+                    "N° Venta": v.id,
                     "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A',
                     "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'),
                     "Dirección": v.direccion || 'No especificada',
