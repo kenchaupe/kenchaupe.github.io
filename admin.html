@@ -212,6 +212,13 @@ input[type="file"] {
         </div>
 
      <div id="vista-agregar" class="view-section">
+        <label for="prod-files" class="custom-file-upload">
+    <i class="fas fa-camera"></i> Seleccionar Fotos del Producto
+</label>
+<input type="file" id="prod-files" multiple accept="image/*" onchange="manejarSeleccionFotos(this)">
+<input type="text" id="prod-img" class="form-input" placeholder="Las URLs se generarán solas..." readonly style="display: none;">
+
+    <div id="preview-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;"></div>
             <h3 style="margin-top:0;"><i class="fas fa-plus-circle"></i> Datos del Producto</h3>
             <div class="form-grid">
                 <div><label><b>ART :</b></label><input type="text" id="prod-id" class="form-input" placeholder="Ej: 1"></div>
@@ -220,16 +227,8 @@ input[type="file"] {
                 <div><label><b>Colores :</b></label><input type="text" id="prod-colores" class="form-input" placeholder="Ej: Rosa, Negro, Blanco"></div>
                 <div><label><b>Precio ($) :</b></label><input type="number" id="prod-precio" class="form-input" placeholder="5000"></div>
                <div style="grid-column: 1 / -1;">
-    <label for="prod-files" class="custom-file-upload">
-    <i class="fas fa-camera"></i> Seleccionar Fotos del Producto
-</label>
-<input type="file" id="prod-files" multiple accept="image/*" onchange="manejarSeleccionFotos(this)">
-    
-    <div id="preview-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;"></div>
-    
-    <input type="text" id="prod-img" class="form-input" placeholder="Las URLs se generarán solas..." readonly>
 </div>
-                
+
                 <div style="grid-column: 1 / -1; margin-top: 10px;">
                     <button type="button" onclick="generarVariantes()" class="btn-save" style="background: #17a2b8;"><i class="fas fa-cogs"></i> AGREGAR STOCK DISPONIBLE</button>
                 </div>
