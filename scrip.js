@@ -417,10 +417,76 @@ async function inicializarStockTienda() {
                     if (precioSpan) precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
 
                     const coloresHex = {
-                        'rosa': '#F791A6', 'beige': '#F5F5DC', 'denim': '#1560BD',
-                        'topo': '#8B8589', 'blanco': '#FFFFFF', 'negro': '#000000',
-                        'azul': '#007bff', 'verde': '#28a745', 'rojo': '#dc3545', 
-                        'gris': '#6c757d', 'amarillo': '#ffc107', 'celeste': '#17a2b8'
+                     'canela': '#D2691E',
+                     'blanco': '#FFFFFF',
+                     'negro': '#000000',
+                     'gris': '#808080',
+                     'gris claro': '#D3D3D3',
+                     'gris oscuro': '#A9A9A9',
+                     'melange': '#B5B5B5',
+                     'plata': '#C0C0C0',
+                     'plomo': '#666666',
+                      
+                       // 🟤 Tonalidades Tierra, Nude y Cálidos
+                     'beige': '#F5F5DC',
+                     'crudo': '#F2EFE9',
+                     'arena': '#F4A460',
+                     'camel': '#C19A6B',
+                     'topo': '#8B8589',
+                     'marron': '#8B4513',
+                     'chocolate': '#D2691E',
+                     'terracota': '#E2725B',
+                     'tostado': '#D2B48C',
+                     'habano': '#593e26',
+
+                       // 🔴 Rojos y Rosados
+                     'rojo': '#FF0000',
+                     'bordo': '#800000',
+                     'granate': '#800000',
+                     'coral': '#FF7F50',
+                     'salmon': '#FA8072',
+                     'rosa': '#FFC0CB',
+                     'rosa bebe': '#F4C2C2',
+                     'rosa chicle': '#FF69B4',
+                     'rosa viejo': '#C08081',
+                     'fucsia': '#FF00FF',
+                     'magenta': '#FF00FF',
+
+                       // 🔵 Azules y Celestes
+                     'azul': '#0000FF',
+                     'azul marino': '#000080',
+                     'azul francia': '#318CE7',
+                     'celeste': '#87CEEB',
+                     'celeste bebe': '#BFEFFF',
+                     'denim': '#1560BD',
+                     'indigo': '#4B0082',
+                     'turquesa': '#40E0D0',
+                     'aqua': '#00FFFF',
+
+                      // 🟢 Verdes
+                     'verde': '#008000',
+                     'verde militar': '#4B5320',
+                     'verde oliva': '#808000',
+                     'esmeralda': '#50C878',
+                     'menta': '#98FF98',
+                     'musgo': '#8A9A5B',
+                     'lima': '#BFFF00',
+                     'pistacho': '#93C572',
+                      'cobre': '#B87333',
+                      // 🟡 Amarillos y Naranjas
+                     'amarillo': '#FFFF00',
+                     'amarillo patito': '#FFFF99',
+                     'mostaza': '#FFDB58',
+                     'naranja': '#FFA500',
+                     'ocre': '#CC7722',
+                     'dorado': '#FFD700',
+                      'durazno': '#FFDAB9',
+                     'melange oscuro': '#5A5A5A',
+                     'violeta': '#EE82EE',
+                     'purpura': '#800080',
+                     'lila': '#C8A2C8',
+                     'lavanda': '#E6E6FA',
+                     'ciruela': '#DDA0DD'
                     };
 
                     const tallesStr = String(datosBD.talles || "Único");
@@ -659,3 +725,34 @@ async function cerrarYSalirInventario() {
         console.error("Error al cerrar sesión:", error.message);
     }
 }
+
+// 🔍 LÓGICA DEL BUSCADOR DE PRODUCTOS
+document.addEventListener('DOMContentLoaded', () => {
+    const inputBuscador = document.getElementById('buscador-productos');
+
+    if (inputBuscador) {
+        inputBuscador.addEventListener('input', function(e) {
+            // Pasamos lo que el usuario escribe a minúsculas
+            const terminoDeBusqueda = e.target.value.toLowerCase().trim();
+            
+            // Seleccionamos todos los productos (las "cajas")
+            const productosEnPantalla = document.querySelectorAll('.contenedor-items .item');
+
+            productosEnPantalla.forEach(producto => {
+                const tituloElemento = producto.querySelector('.product-txt h3');
+                
+                // Verificamos que el producto tenga un título (para no afectar a la plantilla oculta)
+                if (tituloElemento && tituloElemento.textContent.trim() !== '') {
+                    const nombreProducto = tituloElemento.textContent.toLowerCase();
+                    
+                    // Si el nombre incluye lo que se buscó, lo mostramos. Si no, lo ocultamos.
+                    if (nombreProducto.includes(terminoDeBusqueda)) {
+                        producto.style.display = ''; // Vuelve a su estado original (visible)
+                    } else {
+                        producto.style.display = 'none'; // Se oculta
+                    }
+                }
+            });
+        });
+    }
+});
