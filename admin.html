@@ -50,17 +50,16 @@
         }
 
         /* Convertimos cada fila en una "caja" o tarjeta */
-        #tabla-ventas td {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* Cambiado a flex-start para que el texto largo quede bien alineado arriba */
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    text-align: right;
-    flex-wrap: wrap; /* NUEVO: Permite que el contenido baje de línea si no entra */
-    word-break: break-word; /* NUEVO: Evita que textos larguísimos rompan el ancho */
-    gap: 10px; /* NUEVO: Da un pequeño espacio entre el título y el valor */
-}
+        #tabla-ventas tr {
+            display: block;
+            background-color: #87CEEB; /* Color Celeste */
+            color: white !important;   /* Letras blancas */
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
         /* Estilo para cada celda de la fila */
         #tabla-ventas td {
             display: flex;
@@ -579,7 +578,7 @@ input[type="file"] {
             // Guardamos las ventas en una variable global para el Excel
             window.ventasGlobal = data; 
 
-            let html = `<table>
+            let html = `<table id="tabla-ventas">
                 <thead>
                     <tr>
                         <th>N° Venta</th>
