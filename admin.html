@@ -596,7 +596,7 @@ input[type="file"] {
                 <tbody>`;
            // Busca esta parte dentro de cargarVentas en admin.html
 data.forEach((v) => {
-    let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A';
+    let fechaHora = v.created_at ? new Date(v.created_at).toLocaleString('es-AR', { hour12: false }) : 'N/A';
     
     // CAMBIO AQUÍ: Usamos v.articulos en lugar de v.productos
     let detalleProd = "Sin detalles";
