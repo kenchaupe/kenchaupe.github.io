@@ -61,15 +61,18 @@
         }
 
         /* Estilo para cada celda de la fila */
-        #tabla-ventas td {
-            display: flex;
-            justify-content: space-between; /* Empuja el texto automático a la derecha */
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Línea divisoria suave */
-            text-align: right; /* Alineación a la derecha para el contenido */
-        }
-
+       /* Estilo para cada celda de la fila */
+#tabla-ventas td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Cambiado a flex-start para que el texto largo quede bien alineado arriba */
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: right;
+    flex-wrap: wrap; /* NUEVO: Permite que el contenido baje de línea si no entra */
+    word-break: break-word; /* NUEVO: Evita que textos larguísimos rompan el ancho */
+    gap: 10px; /* NUEVO: Da un pequeño espacio entre el título y el valor */
+}
         /* Quitar la línea al último elemento de la caja */
         #tabla-ventas td:last-child {
             border-bottom: none;
@@ -578,7 +581,7 @@ input[type="file"] {
             // Guardamos las ventas en una variable global para el Excel
             window.ventasGlobal = data; 
 
-            let html = `<table>
+            let html = `<table id="tabla-ventas">
                 <thead>
                     <tr>
                         <th>N° Venta</th>
@@ -603,14 +606,15 @@ data.forEach((v) => {
             let prods = typeof v.articulos === 'string' ? JSON.parse(v.articulos) : v.articulos;
             if (Array.isArray(prods)) {
                // SOLUCIÓN: Envolvemos todos los productos en una "caja" vertical
-                detalleProd = `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; width: 100%;">` + 
-                    prods.map(p => 
-                        `<div style="text-align: right; width: 100%;">
-                            <b>${p.cantidad}Unid </b> ${p.titulo} 
-                            <br> <small>Talle: ${p.talla || '-'} | Color: ${p.color || '-'}</small>
-                        </div>`
-                    ).join('<hr style="width: 100%; margin: 2px 0; border: none; border-top: 1px dashed rgba(255,255,255,0.4);">') + 
-                `</div>`;
+              // SOLUCIÓN: Envolvemos todos los productos en una "caja" vertical sin forzar el ancho al 100%
+detalleProd = `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">` + 
+    prods.map(p => 
+        `<div style="text-align: right;">
+            <b>${p.cantidad}Unid </b> ${p.titulo} 
+            <br> <small>Talle: ${p.talla || '-'} | Color: ${p.color || '-'}</small>
+        </div>`
+    ).join('<hr style="width: 100%; margin: 2px 0; border: none; border-top: 1px dashed rgba(255,255,255,0.4);">') + 
+`</div>`;
             } else {
                 detalleProd = v.articulos;
             }
