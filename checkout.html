@@ -314,18 +314,16 @@
             }
         }
 
-        document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
+      document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const metodoTexto = "Mercado Pago"; // Forzamos el método de pago
+            const metodoTexto = "Mercado Pago"; 
             const nombre = document.querySelector('#nombre').value.trim();
-            
             const direccionCalle = document.querySelector('#direccion').value.trim();
             const localidad = document.querySelector('#localidad').value.trim();
             const cp = document.querySelector('#cp').value.trim();
             const provinciaSelect = document.querySelector('#provincia');
             const provinciaTexto = provinciaSelect.options[provinciaSelect.selectedIndex].text;
-            
             const codArea = document.querySelector('#cod-area').value.trim();
             const celular = document.querySelector('#celular').value.trim();
             const telefonoCompleto = codArea + " " + celular;
@@ -336,13 +334,13 @@
             btn.disabled = true;
             btn.innerHTML = "Procesando...";
 
-            // 1. REGISTRAMOS VENTA
-            await registrarVenta(nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado);
-            
-            // 2. ACTUALIZAMOS STOCK
-            await actualizarStockEnBaseDeDatos();
-            
-            // 3. EJECUTAMOS MERCADO PAGO
+            // 1. GUARDAMOS LOS DATOS TEMPORALMENTE (Para usarlos cuando vuelva de MercadoPago)
+            const datosVenta = {
+                nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado
+            };
+            localStorage.setItem('datos_venta_gruken', JSON.stringify(datosVenta));
+
+            // 2. EJECUTAMOS MERCADO PAGO (Sin guardar en la base de datos todavía)
             ejecutarMercadoPago();
         });
 
