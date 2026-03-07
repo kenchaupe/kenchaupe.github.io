@@ -253,7 +253,7 @@ async function actualizarStockEnBaseDeDatos() {
             const telefonoCompleto = codArea + " " + celular;
             
             // UNIMOS TODO EN UN SOLO TEXTO PARA SUPABASE Y WHATSAPP
-            const direccionCompleta = `${direccionCalle}, ${localidad}, ${provinciaTexto} (C.P: ${cp}) - Tel: ${telefonoCompleto}`;
+            const direccionCompletaWhatsApp = `${direccionCalle}, ${localidad}, ${provinciaTexto} (C.P: ${cp}) - Tel: ${telefonoCompleto}`;
             
             const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
 
@@ -262,14 +262,16 @@ async function actualizarStockEnBaseDeDatos() {
             btn.disabled = true;
             btn.innerHTML = "Procesando pedido...";
 
-            // 1. REGISTRAMOS LA VENTA
-            await registrarVenta(nombre, direccionCompleta, metodoTexto, totalCalculado);
+         
+
+            // 1. REGISTRAMOS LA VENTA MANDANDO LOS DATOS ORDENADOS
+            await registrarVenta(nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado);
             
             // 2. ACTUALIZAMOS EL STOCK EN SUPABASE
             await actualizarStockEnBaseDeDatos();
             
             if (metodoSelect.value === "WhatsApp") {
-                enviarPorWhatsApp(nombre, direccionCompleta, metodoTexto, totalCalculado);
+                enviarPorWhatsApp(nombre, direccionCompletaWhatsApp, metodoTexto, totalCalculado);
             } else {
                 ejecutarMercadoPago();
             }
@@ -300,15 +302,20 @@ async function actualizarStockEnBaseDeDatos() {
             window.location.href = "index.html"; 
         }
         
-        async function registrarVenta(nombre, direccion, metodo, totalVenta) {
+                    // ACTUALIZAMOS LA FUNCIÓN PARA QUE RECIBA CADA COLUMNA
+        async function registrarVenta(nombre, direccion, localidad, provincia, cp, celular, metodo, totalVenta) {
             const { error } = await _supabase
                 .from('ventas')
                 .insert([{
                     cliente: nombre,
                     direccion: direccion,
+                    localidad: localidad,
+                    provincia: provincia,
+                    codigo_postal: cp,
+                    celular: celular,
                     metodo_pago: metodo,
                     total: totalVenta,
-                    articulos: carrito // Guardamos todo el array de productos
+                    articulos: carrito
                 }]);
 
             if (error) console.error("Error al registrar venta:", error);

@@ -585,8 +585,8 @@ input[type="file"] {
                     <tr>
                         <th>N° Venta</th>
                         <th>Fecha y Hora</th>
-                        <th>Cliente</th>
-                        <th>Dirección y C.P.</th>
+                        <th>Cliente / Celular</th>
+                        <th>Dirección Completa</th>
                         <th>Productos</th>
                         <th>Forma de Pago</th>
                         <th>Total</th>
@@ -624,16 +624,25 @@ detalleProd = `<div style="display: flex; flex-direction: column; align-items: f
     // El resto del código sigue igual...
 
                 // Asegurar los nombres de las columnas (ajusta esto si en tu BD se llaman diferente)
+                // Armamos el cliente con su número abajo
                 let nombreCompleto = (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo');
-                let direccionCompleta = `${v.direccion || 'Sin calle'} - CP: ${v.codigo_postal || v.cp || 'N/A'}`;
+                let telefonoCelular = v.celular ? `<br><small style="color:#007bff;">📞 ${v.celular}</small>` : '';
+                
+                // Armamos la dirección ordenada en 3 renglones
+                let direccionCompleta = `
+                    <b>${v.direccion || 'Sin calle'}</b> <br>
+                    <small>${v.localidad || '-'}, ${v.provincia || '-'}</small> <br>
+                    <small>C.P: ${v.codigo_postal || v.cp || 'N/A'}</small>
+                `;
+                
                 let pago = v.forma_pago || v.metodo_pago || 'No especificada';
 
                 html += `<tr>
                     <td data-label="N° Venta :">#${v.id}</td>
                     <td data-label="Fecha y Hora :">${fechaHora}</td>
-                    <td data-label="Cliente :"><strong>${nombreCompleto}</strong></td>
+                    <td data-label="Cliente :"><strong>${nombreCompleto}</strong> ${telefonoCelular}</td>
                     <td data-label="Dirección :">${direccionCompleta}</td>
-                    <td data-label="Productos:">${detalleProd}</td>
+                    <td data-label="Productos :">${detalleProd}</td>
                     <td data-label="Forma de Pago :"><em>${pago}</em></td>
                     <td data-label="Total :"><strong>$${(v.total || 0).toLocaleString('es-AR')}</strong></td>
                 </tr>`;
@@ -665,7 +674,10 @@ detalleProd = `<div style="display: flex; flex-direction: column; align-items: f
                     "N° Venta": v.id,
                     "Fecha y Hora": v.created_at ? new Date(v.created_at).toLocaleString('es-AR') : 'N/A',
                     "Nombre y Apellido": (v.nombre || v.apellido) ? `${v.nombre || ''} ${v.apellido || ''}`.trim() : (v.cliente || 'Anónimo'),
-                    "Dirección": v.direccion || 'No especificada',
+                    "Celular": v.celular || 'N/A',
+                    "Provincia": v.provincia || 'N/A',
+                    "Localidad": v.localidad || 'N/A',
+                    "Dirección (Calle)": v.direccion || 'No especificada',
                     "Código Postal": v.codigo_postal || v.cp || 'N/A',
                     "Productos (Cant y Detalle)": detalleProdExcel,
                     "Forma de Pago": v.forma_pago || v.metodo_pago || 'N/A',
