@@ -4,50 +4,153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar Compra - Gruken</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     
     <style>
-        .checkout-container { max-width: 800px; margin: 50px auto; padding: 20px; font-family: Arial, sans-serif; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        .resumen-pedido { background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #eee; }
-        .resumen-pedido h3 { margin-top: 0; color: #333; }
-        .resumen-pedido ul { list-style: none; padding: 0; }
-        .resumen-pedido li { margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        /* ESTILOS MODERNIZADOS */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            margin: 0;
+            padding: 10px;
+        }
         
-        .btn-confirmar { 
-            background-color: #25d366; 
+        .checkout-container { 
+            max-width: 600px; /* Un poco más angosto para que se vea como una tarjeta elegante */
+            margin: 40px auto; 
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+        }
+
+        @media (max-width: 768px) {
+            .checkout-container { 
+                margin: 10px auto; 
+                padding: 20px; 
+            }
+        }
+
+        h1, h2, h3 { color: #111; }
+        
+        .resumen-pedido { 
+            background: #f8fcfb; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            border: 1px solid #e0eaea; 
+        }
+        
+        .resumen-pedido h3 { margin-top: 0; font-size: 1.2em; }
+        .resumen-pedido ul { list-style: none; padding: 0; margin: 0; }
+        .resumen-pedido li { 
+            margin-bottom: 10px; 
+            border-bottom: 1px dashed #ddd; 
+            padding-bottom: 10px; 
+            font-size: 0.95em;
+            color: #555;
+        }
+        .resumen-pedido li:last-child { border-bottom: none; }
+        
+        .total-destacado {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #000;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        /* Estilos del Formulario */
+        .form-group { margin-bottom: 18px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+            font-size: 0.9em;
+            color: #444;
+        }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1px solid #d1d9e6; 
+            border-radius: 10px; 
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+            box-sizing: border-box;
+            background-color: #fafbfc;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #009ee3;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 158, 227, 0.1);
+        }
+
+        /* Botón Mercado Pago Moderno */
+        .btn-mp { 
+            background-color: #009ee3; 
             color: white; 
-            padding: 15px 20px; 
+            padding: 16px 20px; 
             border: none; 
             width: 100%; 
             cursor: pointer; 
             font-size: 1.1em; 
-            font-weight: bold; 
-            border-radius: 5px;
-            transition: background 0.3s;
+            font-weight: 600; 
+            border-radius: 10px;
+            transition: background 0.3s, transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 158, 227, 0.3);
         }
-        .btn-confirmar:hover { opacity: 0.9; }
-        .btn-confirmar:disabled { background-color: #ccc; cursor: not-allowed; }
-        .btn-mp { background-color: #009ee3; } 
-        #walletPoint { margin-top: 15px; }
+        .btn-mp:hover { 
+            background-color: #007eb5; 
+            transform: translateY(-2px);
+        }
+        .btn-mp:disabled { 
+            background-color: #a0a0a0; 
+            cursor: not-allowed; 
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .pago-seguro {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="checkout-container">
-        <h1>Finalizar Compra</h1>
+        
+        <h1 style="text-align: center; margin-top: 0; font-size: 1.8em;">Finalizar Compra</h1>
         
         <div class="resumen-pedido" id="resumen-final">
             </div>
-         <h1>Datos de Envio</h1>
-        <form id="formulario-pedido">
+         
+        <h2 onclick="toggleDatosEnvio()" style="text-align: center; cursor: pointer; background: #111; color: white; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 1.2em; font-weight: 500; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+            📍 Cargar Datos de Envío <span id="flecha-envio">▼</span>
+        </h2>
+
+        <form id="formulario-pedido" style="display: none; padding-top: 25px;">
+            
             <div class="form-group">
                 <label>Nombre y apellido / Razón social:</label>
-                <input type="text" id="nombre" required placeholder="Ej: Ruben .G">
+                <input type="text" id="nombre" required placeholder="Ej: Maria Gonzalez">
             </div>
-             <div class="form-group">
+            
+            <div class="form-group">
                 <label>Provincia:</label>
                 <select id="provincia" required>
                     <option value="">- Selecciona tu provincia -</option>
@@ -77,47 +180,49 @@
                     <option value="T">TUCUMAN</option>
                 </select>
             </div>
-            <div class="form-group" style="display: flex; gap: 10px;">
+            
+            <div class="form-group" style="display: flex; gap: 15px;">
                 <div style="flex: 2;">
                     <label>Localidad:</label>
                     <input type="text" id="localidad" required placeholder="Ej: Temperley">
                 </div>
                 <div style="flex: 1;">
-                    <label>C.P. (CPA):</label>
-                    <input type="text" id="cp" required placeholder="Ej: 1862">
+                    <label>C.P.:</label>
+                    <input type="text" id="cp" required placeholder="Ej: 1834">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Dirección de Entrega (Calle, Altura, Piso y Dpto):</label>
-                <input type="text" id="direccion" required placeholder="Ej: av.rivadavia 123">
-            </div>
-            <div class="form-group">
-                  <label>Correo Electronico:</label>
-                  <input type="email" id="email" required placeholder="Ej: nombre.123@hotmail.com">
-             </div>
             
-            <div class="form-group" style="display: flex; gap: 10px;">
+            <div class="form-group">
+                <label>Dirección (Calle, Altura, Piso y Dpto):</label>
+                <input type="text" id="direccion" required placeholder="Ej: Av. Rivadavia 123">
+            </div>
+            
+            <div class="form-group">
+                <label>Correo Electrónico:</label>
+                <input type="email" id="email" required placeholder="Ej: nombre@correo.com">
+            </div>
+            
+            <div class="form-group" style="display: flex; gap: 15px;">
                 <div style="flex: 1;">
                     <label>Cód. Área:</label>
-                    <input type="number" id="cod-area" required placeholder="Sin 0 (Ej: 11)">
+                    <input type="number" id="cod-area" required placeholder="Sin 0">
                 </div>
                 <div style="flex: 2;">
                     <label>Celular:</label>
-                    <input type="number" id="celular" required placeholder="Sin 15 (Ej: 30103905)">
+                    <input type="number" id="celular" required placeholder="Sin 15">
                 </div>
             </div>
-                       
-            <div class="form-group">
-                <label>Método de Pago:</label>
-                <select id="pago" onchange="actualizarBoton()">
-                    <option value="WhatsApp">Pago en efectivo / Retiro en persona</option>
-                    <option value="MercadoPago">Tarjeta de Crédito / Débito (Mercado Pago)</option>
-                </select>
+            
+            <div style="text-align: center; margin-top: 35px; margin-bottom: 10px;">
+                <button type="submit" id="boton-accion" class="btn-mp">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Pagar con Mercado Pago
+                </button>
+                <div class="pago-seguro">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#009ee3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Pago seguro y encriptado
+                </div>
             </div>
-
-            <button type="submit" id="boton-accion" class="btn-confirmar">
-                Enviar Pedido por WhatsApp
-            </button>
 
             <div id="walletPoint"></div>
         </form>
@@ -127,7 +232,7 @@
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-                      // PASO 1: CAMBIAR PUBLIC KEY DE MERCADOPAGO.
+        
         const mp = new MercadoPago('APP_USR-790c84f2-956e-4fc8-ab25-bbaed5aea23b', {
             locale: 'es-AR'
         });
@@ -140,10 +245,24 @@
             renderizarResumen();
         });
 
+        // FUNCION DEL ACORDEON (MOSTRAR/OCULTAR)
+        function toggleDatosEnvio() {
+            const formulario = document.getElementById('formulario-pedido');
+            const flecha = document.getElementById('flecha-envio');
+            
+            if (formulario.style.display === 'none') {
+                formulario.style.display = 'block';
+                flecha.innerHTML = '▲';
+            } else {
+                formulario.style.display = 'none';
+                flecha.innerHTML = '▼';
+            }
+        }
+
         function renderizarResumen() {
             if(carrito.length === 0) {
-                resumenDiv.innerHTML = "<p>Tu carrito está vacío. <a href='index.html'>Volver a la tienda</a></p>";
-                document.querySelector('#boton-accion').disabled = true;
+                resumenDiv.innerHTML = "<p style='text-align:center;'>Tu carrito está vacío. <br><br><a href='index.html' style='color:#009ee3; text-decoration:none; font-weight:bold;'>Volver a la tienda</a></p>";
+                document.querySelector('.btn-mp').disabled = true;
                 return;
             }
 
@@ -151,97 +270,56 @@
             let html = `<h3>Detalle de tu compra:</h3><ul>`;
             carrito.forEach(p => {
                 const subtotal = parseInt(p.precio) * p.cantidad;
-                html += `<li>- ${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${subtotal.toLocaleString('es-AR')}</li>`;
+                html += `<li><b>${p.cantidad}x</b> ${p.titulo} <br><small>Color: ${p.color} | Talle: ${p.talla}</small> <span style="float:right;">$${subtotal.toLocaleString('es-AR')}</span></li>`;
                 total += subtotal;
             });
-            html += `</ul><p style="font-size: 1.2em;"><strong>TOTAL: $${total.toLocaleString('es-AR')}</strong></p>`;
+            html += `</ul><div class="total-destacado">TOTAL: $${total.toLocaleString('es-AR')}</div>`;
             resumenDiv.innerHTML = html;
         }
 
-        function actualizarBoton() {
-            const metodo = document.querySelector('#pago').value;
-            const btn = document.querySelector('#boton-accion');
-            
-            if(metodo === "MercadoPago") {
-                btn.innerHTML = "Pagar con Mercado Pago";
-                btn.classList.add('btn-mp');
-            } else {
-                btn.innerHTML = "Enviar Pedido por WhatsApp";
-                btn.classList.remove('btn-mp');
-            }
-        }
-async function actualizarStockEnBaseDeDatos() {
-    for (const p of carrito) {
-        // Aseguramos los datos que vienen del carrito
-        const p_id = p.id.trim(); 
-        const p_talle = p.talla.trim(); 
-        const p_color = p.color.trim();
-        const p_cantidad = Number(p.cantidad);
+        async function actualizarStockEnBaseDeDatos() {
+            for (const p of carrito) {
+                const p_id = p.id.trim(); 
+                const p_talle = p.talla.trim(); 
+                const p_color = p.color.trim();
+                const p_cantidad = Number(p.cantidad);
 
-        try {
-            // PASO 1: Descontar de la tabla de VARIANTES (productos_variantes)
-            // CAMBIO CLAVE: Usamos .eq en lugar de .ilike para los IDs
-            const { data: variantes, error: varError } = await _supabase
-                .from('productos_variantes')
-                .select('id, stock')
-                .eq('producto_id', p_id) 
-                .ilike('talle', p_talle)
-                .ilike('color', p_color);
+                try {
+                    const { data: variantes, error: varError } = await _supabase
+                        .from('productos_variantes')
+                        .select('id, stock')
+                        .eq('producto_id', p_id) 
+                        .ilike('talle', p_talle)
+                        .ilike('color', p_color);
 
-            if (varError) {
-                console.error(`Error buscando variante de ${p.titulo}:`, varError);
-            } else if (variantes && variantes.length > 0) {
-                const variante = variantes[0]; 
-                const nuevoStockVariante = variante.stock - p_cantidad;
-                
-                // CAMBIO CLAVE: Capturamos el error al intentar actualizar
-                const { error: errorUpdateVar } = await _supabase
-                    .from('productos_variantes')
-                    .update({ stock: nuevoStockVariante })
-                    .eq('id', variante.id);
-                    
-                if (errorUpdateVar) {
-                    console.error("Supabase rechazó actualizar la variante (¿Falta permiso RLS?):", errorUpdateVar);
+                    if (!varError && variantes && variantes.length > 0) {
+                        const variante = variantes[0]; 
+                        const nuevoStockVariante = variante.stock - p_cantidad;
+                        await _supabase.from('productos_variantes').update({ stock: nuevoStockVariante }).eq('id', variante.id);
+                    }
+
+                    const { data: producto, error: prodError } = await _supabase
+                        .from('productos')
+                        .select('id, stock')
+                        .eq('id', p_id);
+
+                    if (!prodError && producto && producto.length > 0) {
+                        const prodPrincipal = producto[0];
+                        const nuevoStockPrincipal = prodPrincipal.stock - p_cantidad;
+                        await _supabase.from('productos').update({ stock: nuevoStockPrincipal }).eq('id', prodPrincipal.id);
+                    }
+                } catch (error) {
+                    console.error(`Error de stock:`, error);
                 }
             }
-
-            // PASO 2: Descontar de la tabla PRINCIPAL (productos)
-            const { data: producto, error: prodError } = await _supabase
-                .from('productos')
-                .select('id, stock')
-                .eq('id', p_id); // CAMBIO CLAVE: .eq en lugar de .ilike
-
-            if (prodError) {
-                console.error(`Error buscando producto principal ${p.titulo}:`, prodError);
-            } else if (producto && producto.length > 0) {
-                const prodPrincipal = producto[0];
-                const nuevoStockPrincipal = prodPrincipal.stock - p_cantidad;
-                
-                const { error: errorUpdateProd } = await _supabase
-                    .from('productos')
-                    .update({ stock: nuevoStockPrincipal })
-                    .eq('id', prodPrincipal.id);
-                    
-                if (errorUpdateProd) {
-                    console.error("Supabase rechazó actualizar el producto principal:", errorUpdateProd);
-                } else {
-                    console.log(`✅ Stock descontado exitosamente en BD para: ${p.titulo}`);
-                }
-            }
-
-        } catch (error) {
-            console.error(`Error crítico en la función para ${p.titulo}:`, error);
         }
-    }
-}
-       document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
+
+        document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const metodoSelect = document.querySelector('#pago');
-            const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
+            const metodoTexto = "Mercado Pago"; // Forzamos el método de pago
             const nombre = document.querySelector('#nombre').value.trim();
             
-            // CAPTURAMOS TODOS LOS CAMPOS NUEVOS
             const direccionCalle = document.querySelector('#direccion').value.trim();
             const localidad = document.querySelector('#localidad').value.trim();
             const cp = document.querySelector('#cp').value.trim();
@@ -252,57 +330,22 @@ async function actualizarStockEnBaseDeDatos() {
             const celular = document.querySelector('#celular').value.trim();
             const telefonoCompleto = codArea + " " + celular;
             
-            // UNIMOS TODO EN UN SOLO TEXTO PARA SUPABASE Y WHATSAPP
-            const direccionCompletaWhatsApp = `${direccionCalle}, ${localidad}, ${provinciaTexto} (C.P: ${cp}) - Tel: ${telefonoCompleto}`;
-            
             const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
 
-            // Bloquear botón para evitar clics dobles
             const btn = document.querySelector('#boton-accion');
             btn.disabled = true;
-            btn.innerHTML = "Procesando pedido...";
+            btn.innerHTML = "Procesando...";
 
-         
-
-            // 1. REGISTRAMOS LA VENTA MANDANDO LOS DATOS ORDENADOS
+            // 1. REGISTRAMOS VENTA
             await registrarVenta(nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado);
             
-            // 2. ACTUALIZAMOS EL STOCK EN SUPABASE
+            // 2. ACTUALIZAMOS STOCK
             await actualizarStockEnBaseDeDatos();
             
-            if (metodoSelect.value === "WhatsApp") {
-                enviarPorWhatsApp(nombre, direccionCompletaWhatsApp, metodoTexto, totalCalculado);
-            } else {
-                ejecutarMercadoPago();
-            }
+            // 3. EJECUTAMOS MERCADO PAGO
+            ejecutarMercadoPago();
         });
 
-        // CORRECCIÓN: Recibir el total calculado como parámetro
-        function enviarPorWhatsApp(nombre, direccion, metodo, totalCalc) {
-            let mensaje = `*Hola Gruken! Este es mi pedido:*\n`;
-            mensaje += `*Nombre:* ${nombre}\n`;
-            mensaje += `*Dirección:* ${direccion}\n`;
-            mensaje += `*Metodo de pago:* ${metodo}\n\n`;
-            mensaje += `*Productos:*\n`;
-            
-            carrito.forEach(p => {
-                mensaje += `- ${p.titulo} | Color: ${p.color} | Talle: ${p.talla} | Cantidad: ${p.cantidad} | $${(parseInt(p.precio) * p.cantidad).toLocaleString('es-AR')}\n`;
-            });
-            
-            mensaje += `\n*TOTAL: $${totalCalc.toLocaleString('es-AR')}*`;
-
-            const url = `https://api.whatsapp.com/send?phone=5491130103905&text=${encodeURIComponent(mensaje)}`;
-            
-            // Abrir WhatsApp
-            window.open(url, '_blank');
-            
-            // Limpiar el carrito DESPUÉS de enviar con éxito
-            localStorage.removeItem('carrito_gruken');
-            alert("¡Pedido enviado! Muchas gracias.");
-            window.location.href = "index.html"; 
-        }
-        
-                    // ACTUALIZAMOS LA FUNCIÓN PARA QUE RECIBA CADA COLUMNA
         async function registrarVenta(nombre, direccion, localidad, provincia, cp, celular, metodo, totalVenta) {
             const { error } = await _supabase
                 .from('ventas')
@@ -321,30 +364,26 @@ async function actualizarStockEnBaseDeDatos() {
             if (error) console.error("Error al registrar venta:", error);
         }
 
-      async function ejecutarMercadoPago() {
+        async function ejecutarMercadoPago() {
             const btn = document.querySelector('#boton-accion');
             const nombreFull = document.querySelector('#nombre').value.split(' ');
             const emailVal = document.querySelector('#email').value;
-            btn.innerHTML = "Conectando...";
-            btn.disabled = true;
+            btn.innerHTML = "Conectando con Mercado Pago...";
 
             const compradorInfo = {
               email: emailVal,
               nombre: nombreFull[0] || "Cliente",
-              apellido: nombreFull[1] || "Gruken" // Cambiar Nombre
+              apellido: nombreFull[1] || "Gruken" 
             };
 
             try {
-                // Volvemos a apuntar a tu carpeta local/Vercel
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items: carrito, comprador: compradorInfo })
                 });
 
-                if (!response.ok) throw new Error("Error en el servidor al conectar con Mercado Pago");
+                if (!response.ok) throw new Error("Error conectando con Mercado Pago");
 
                 const data = await response.json();
                 if (data.id) {
@@ -355,9 +394,8 @@ async function actualizarStockEnBaseDeDatos() {
                 }
             } catch (error) {
                 alert("Hubo un problema: " + error.message);
-            } finally {
                 btn.disabled = false;
-                btn.innerHTML = "Pagar con Mercado Pago";
+                btn.innerHTML = "Reintentar Pago";
             }
         }
     </script>
