@@ -37,24 +37,76 @@
 </head>
 <body>
     <div class="checkout-container">
-        <h1>Finalizar Pedido</h1>
+        <h1>Finalizar Compra</h1>
         
         <div class="resumen-pedido" id="resumen-final">
             </div>
-        
+         <h1>Datos de Envio</h1>
         <form id="formulario-pedido">
             <div class="form-group">
-                <label>Nombre Completo:</label>
+                <label>Nombre y apellido / Razón social:</label>
                 <input type="text" id="nombre" required placeholder="Ej: Ruben .G">
             </div>
-            <div class="form-group">
-                  <label>Email:</label>
-                  <input type="email" id="email" required placeholder="Ej: ruben@gmail.com">
-             </div>
-            <div class="form-group">
-                <label>Dirección de Entrega:</label>
-                <input type="text" id="direccion" required placeholder="Ej: av.rivadavia 123 - buenos aires">
+             <div class="form-group">
+                <label>Provincia:</label>
+                <select id="provincia" required>
+                    <option value="">- Selecciona tu provincia -</option>
+                    <option value="B">BUENOS AIRES</option>
+                    <option value="C">CAPITAL FEDERAL</option>
+                    <option value="K">CATAMARCA</option>
+                    <option value="H">CHACO</option>
+                    <option value="U">CHUBUT</option>
+                    <option value="X">CORDOBA</option>
+                    <option value="W">CORRIENTES</option>
+                    <option value="E">ENTRE RIOS</option>
+                    <option value="P">FORMOSA</option>
+                    <option value="Y">JUJUY</option>
+                    <option value="L">LA PAMPA</option>
+                    <option value="F">LA RIOJA</option>
+                    <option value="M">MENDOZA</option>
+                    <option value="N">MISIONES</option>
+                    <option value="Q">NEUQUEN</option>
+                    <option value="R">RIO NEGRO</option>
+                    <option value="A">SALTA</option>
+                    <option value="J">SAN JUAN</option>
+                    <option value="D">SAN LUIS</option>
+                    <option value="Z">SANTA CRUZ</option>
+                    <option value="S">SANTA FE</option>
+                    <option value="G">SANTIAGO DEL ESTERO</option>
+                    <option value="V">TIERRA DEL FUEGO</option>
+                    <option value="T">TUCUMAN</option>
+                </select>
             </div>
+            <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 2;">
+                    <label>Localidad:</label>
+                    <input type="text" id="localidad" required placeholder="Ej: Temperley">
+                </div>
+                <div style="flex: 1;">
+                    <label>C.P. (CPA):</label>
+                    <input type="text" id="cp" required placeholder="Ej: 1862">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Dirección de Entrega (Calle, Altura, Piso y Dpto):</label>
+                <input type="text" id="direccion" required placeholder="Ej: av.rivadavia 123">
+            </div>
+            <div class="form-group">
+                  <label>Correo Electronico:</label>
+                  <input type="email" id="email" required placeholder="Ej: nombre.123@hotmail.com">
+             </div>
+            
+            <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Cód. Área:</label>
+                    <input type="number" id="cod-area" required placeholder="Sin 0 (Ej: 11)">
+                </div>
+                <div style="flex: 2;">
+                    <label>Celular:</label>
+                    <input type="number" id="celular" required placeholder="Sin 15 (Ej: 30103905)">
+                </div>
+            </div>
+                       
             <div class="form-group">
                 <label>Método de Pago:</label>
                 <select id="pago" onchange="actualizarBoton()">
@@ -182,15 +234,27 @@ async function actualizarStockEnBaseDeDatos() {
         }
     }
 }
-        document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
+       document.querySelector('#formulario-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const metodoSelect = document.querySelector('#pago');
             const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
-            const nombre = document.querySelector('#nombre').value;
-            const direccion = document.querySelector('#direccion').value;
+            const nombre = document.querySelector('#nombre').value.trim();
             
-            // CORRECCIÓN: Usar la variable "carrito" (no articulosCarrito)
+            // CAPTURAMOS TODOS LOS CAMPOS NUEVOS
+            const direccionCalle = document.querySelector('#direccion').value.trim();
+            const localidad = document.querySelector('#localidad').value.trim();
+            const cp = document.querySelector('#cp').value.trim();
+            const provinciaSelect = document.querySelector('#provincia');
+            const provinciaTexto = provinciaSelect.options[provinciaSelect.selectedIndex].text;
+            
+            const codArea = document.querySelector('#cod-area').value.trim();
+            const celular = document.querySelector('#celular').value.trim();
+            const telefonoCompleto = codArea + " " + celular;
+            
+            // UNIMOS TODO EN UN SOLO TEXTO PARA SUPABASE Y WHATSAPP
+            const direccionCompleta = `${direccionCalle}, ${localidad}, ${provinciaTexto} (C.P: ${cp}) - Tel: ${telefonoCompleto}`;
+            
             const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
 
             // Bloquear botón para evitar clics dobles
@@ -199,13 +263,13 @@ async function actualizarStockEnBaseDeDatos() {
             btn.innerHTML = "Procesando pedido...";
 
             // 1. REGISTRAMOS LA VENTA
-            await registrarVenta(nombre, direccion, metodoTexto, totalCalculado);
+            await registrarVenta(nombre, direccionCompleta, metodoTexto, totalCalculado);
             
             // 2. ACTUALIZAMOS EL STOCK EN SUPABASE
             await actualizarStockEnBaseDeDatos();
             
             if (metodoSelect.value === "WhatsApp") {
-                enviarPorWhatsApp(nombre, direccion, metodoTexto, totalCalculado);
+                enviarPorWhatsApp(nombre, direccionCompleta, metodoTexto, totalCalculado);
             } else {
                 ejecutarMercadoPago();
             }
