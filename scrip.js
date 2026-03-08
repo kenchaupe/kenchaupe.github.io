@@ -828,80 +828,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ==========================================
-// LÓGICA DE LA RULETA DE PREMIOS
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const modalRuleta = document.getElementById('modal-ruleta');
-    const btnCerrarRuleta = document.getElementById('btn-cerrar-ruleta');
-    const btnGirar = document.getElementById('btn-girar-ruleta');
-    const ruleta = document.getElementById('ruleta-giratoria');
-    const mensajePremio = document.getElementById('mensaje-premio');
-
-    // Revisamos si el cliente ya jugó o cerró la ruleta antes
-    const ruletaJugada = localStorage.getItem('gruken_ruleta_jugada');
-
-    // 1. Mostrar la ruleta a los 4 segundos si no ha jugado
-    if (modalRuleta && !ruletaJugada) {
-        setTimeout(() => {
-            modalRuleta.classList.remove('modal-ruleta-oculta');
-            modalRuleta.classList.add('modal-ruleta-activa');
-        }, 4000);
-    }
-
-    // 2. Acción para cerrar la ruleta
-    if (btnCerrarRuleta) {
-        btnCerrarRuleta.addEventListener('click', () => {
-            modalRuleta.classList.remove('modal-ruleta-activa');
-            modalRuleta.classList.add('modal-ruleta-oculta');
-            localStorage.setItem('gruken_ruleta_jugada', 'true'); // Recordamos que la cerró
-        });
-    }
-
-    // 3. Acción al presionar "GIRAR AHORA"
+// 3. Acción al presionar "GIRAR AHORA" (TRUCADA)
     if (btnGirar) {
-        let gradosActuales = 0;
-
         btnGirar.addEventListener('click', () => {
-            // Desactivamos el botón para que no haga trampa clickeando muchas veces
             btnGirar.disabled = true;
             btnGirar.style.opacity = '0.5';
-            mensajePremio.textContent = "¡Girando!...";
+            mensajePremio.textContent = "¡Mucha suerte!...";
 
-            // Calculamos un giro aleatorio (entre 5 y 10 vueltas completas + un pico aleatorio)
-            const girosExtra = Math.floor(Math.random() * 5) + 5; 
-            const gradosAleatorios = Math.floor(Math.random() * 360);
-            gradosActuales += (girosExtra * 360) + gradosAleatorios;
+            // 1. Configuramos los premios y elegimos cuáles están permitidos (true) y prohibidos (false)
+            const premios = [
+                { texto: "¡25% OFF!", permitido: false },
+                { texto: "¡Sigue participando!", permitido: true },
+                { texto: "¡30% OFF!", permitido: false },
+                { texto: "¡10% OFF!", permitido: true },
+                { texto: "¡Sigue participando!", permitido: true },
+                { texto: "¡15% OFF!", permitido: true },
+                { texto: "¡Envío Gratis!", permitido: true },
+                { texto: "¡20% OFF!", permitido: false }
+            ];
 
-            // Hacemos girar la rueda con CSS
-            ruleta.style.transform = `rotate(${gradosActuales}deg)`;
+            // 2. Filtramos solo los que sí queremos que salgan
+            const permitidos = [];
+            premios.forEach((premio, index) => {
+                if (premio.permitido) permitidos.push({ index: index, texto: premio.texto });
+            });
 
-            // 4. Esperamos 4 segundos a que termine de girar para dar el premio
+            // 3. Elegimos uno al azar SOLO entre los permitidos
+            const ganador = permitidos[Math.floor(Math.random() * permitidos.length)];
+
+            // 4. Calculamos matemáticamente dónde debe frenar la rueda
+            // Cada porción mide 45 grados. Calculamos el centro de la porción ganadora.
+            const gradosPorcion = (ganador.index * 45) + 22.5; 
+            const gradosParada = 360 - gradosPorcion;
+            
+            // Le agregamos un poco de aleatoriedad (+ o - 10 grados) para que no frene en el centro exacto y se vea natural
+            const variacionVisual = Math.floor(Math.random() * 20) - 10;
+            
+            // Le sumamos entre 6 y 10 vueltas completas de pura animación
+            const girosDeAnimacion = (Math.floor(Math.random() * 5) + 6) * 360;
+
+            // Aplicamos el giro exacto a la rueda
+            const giroTotal = girosDeAnimacion + gradosParada + variacionVisual;
+            ruleta.style.transform = `rotate(${giroTotal}deg)`;
+
+            // 5. A los 4 segundos (cuando termina de girar), mostramos el premio
             setTimeout(() => {
-                // Averiguamos en qué color cayó según los grados
-                const posicionFinal = gradosActuales % 360;
-                let premio = "";
+                mensajePremio.textContent = ganador.texto;
+                localStorage.setItem('gruken_ruleta_jugada', 'true'); // Guardamos que ya jugó
 
-                // Nota: Los grados van en sentido horario invertido para el cálculo
-                if (posicionFinal >= 0 && posicionFinal < 60) premio = "¡Ganaste Envío Gratis!";
-                else if (posicionFinal >= 60 && posicionFinal < 120) premio = "¡Sigue participando!";
-                else if (posicionFinal >= 120 && posicionFinal < 180) premio = "¡10% de Descuento!";
-                else if (posicionFinal >= 180 && posicionFinal < 240) premio = "¡Un regalo sorpresa!";
-                else if (posicionFinal >= 240 && posicionFinal < 300) premio = "¡5% de Descuento!";
-                else premio = "¡15% de Descuento!";
-
-                mensajePremio.textContent = premio;
-                
-                // Guardamos en memoria que ya jugó
-                localStorage.setItem('gruken_ruleta_jugada', 'true');
-
-                // Opcional: Cerrar sola después de 4 segundos de ver el premio
+                // Opcional: Cerrar a los 5 segundos de ver el premio
                 setTimeout(() => {
                     modalRuleta.classList.remove('modal-ruleta-activa');
                     modalRuleta.classList.add('modal-ruleta-oculta');
-                }, 4000);
+                }, 5000);
 
-            }, 4000); // Mismo tiempo que dura la transición CSS
+            }, 4000); 
         });
     }
-});
