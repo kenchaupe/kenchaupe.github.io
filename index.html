@@ -368,28 +368,34 @@
             </div>
         </div>
     </footer>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="scrip.js"></script>
-
+    
     <div id="modal-ruleta" class="modal-ruleta-oculta">
     <div class="contenido-ruleta">
         <button id="btn-cerrar-ruleta" class="cerrar-ruleta">X</button>
-        <h2 style="margin-bottom: 5px; font-size: 24px;">¡Gira y Gana!</h2>
-        <p style="font-size: 14px; margin-bottom: 20px; color: #555;">Gira la ruleta para llevarte un regalo sorpresa en tu compra de hoy.</p>
+        <h2 style="margin-bottom: 5px; font-size: 24px; color: #000;">¡Premios Gruken!</h2>
+        <p style="font-size: 14px; margin-bottom: 20px; color: #555;">Gira la ruleta para llevarte un regalo en tu compra de hoy.</p>
         
         <div class="ruleta-contenedor">
             <div class="puntero-ruleta">▼</div>
             <div id="ruleta-giratoria" class="ruleta-giratoria">
-    <div class="opcion" style="--i:1;"><span>25% OFF</span></div>
-    <div class="opcion" style="--i:2;"><span>Sigue participando</span></div>
-    <div class="opcion" style="--i:3;"><span>30% OFF</span></div>
-    <div class="opcion" style="--i:4;"><span>10% OFF</span></div>
-    <div class="opcion" style="--i:5;"><span>Sigue participando</span></div>
-    <div class="opcion" style="--i:6;"><span>15% OFF</span></div>
-    <div class="opcion" style="--i:7;"><span>Envío Gratis</span></div>
-    <div class="opcion" style="--i:8;"><span>20% OFF</span></div>
-</div>
+                <div class="opcion" style="--i:1;"><span>25% OFF</span></div>
+                <div class="opcion" style="--i:2;"><span>Envío Gratis</span></div>
+                <div class="opcion" style="--i:3;"><span>30% OFF</span></div>
+                <div class="opcion" style="--i:4;"><span>10% OFF</span></div>
+                <div class="opcion" style="--i:5;"><span>Envío Gratis</span></div>
+                <div class="opcion" style="--i:6;"><span>15% OFF</span></div>
+                <div class="opcion" style="--i:7;"><span>Envío Gratis</span></div>
+                <div class="opcion" style="--i:8;"><span>20% OFF</span></div>
+                <div class="linea-separadora" style="transform: rotate(45deg);"></div>
+                <div class="linea-separadora" style="transform: rotate(90deg);"></div>
+                <div class="linea-separadora" style="transform: rotate(135deg);"></div>
+                <div class="linea-separadora" style="transform: rotate(180deg);"></div>
+            </div>
         </div>
+        
         
         <button id="btn-girar-ruleta" class="btn-girar">GIRAR AHORA</button>
         <p id="mensaje-premio" style="margin-top: 15px; font-weight: bold; font-size: 18px; color: #d32f2f; min-height: 25px;"></p>

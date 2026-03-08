@@ -1492,48 +1492,307 @@ th, td {
     transform: scale(1.1);
 }
 
-/* La rueda dividida en 8 colores (puedes cambiar los colores #hex si quieres) */
+/* ========================================== */
+/* ESTILOS DE LA RULETA DE PREMIOS */
+/* ========================================== */
+.modal-ruleta-oculta {
+    display: none !important; 
+}
+
+/* Fondo oscuro que cubre toda la pantalla obligatoriamente */
+.modal-ruleta-activa {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999999; /* Máxima prioridad */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
+}
+
+.cerrar-ruleta {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #888;
+}
+
+.puntero-ruleta {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+    color: #000;
+    z-index: 10;
+    text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+}
+.opcion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(calc(45deg * (var(--i) - 1) + 22.5deg));
+}
+
+.opcion span {
+    position: absolute;
+    top: 18px; 
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+    width: 65px;
+    line-height: 1.1;
+    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+    z-index: 2;
+    
+}
+.btn-girar:active {
+    transform: scale(0.95);
+}
+/* ========================================== */
+/* EFECTOS DE MOVIMIENTO Y VIDA PARA LA RULETA */
+/* ========================================== */
+
+/* 1. Animaciones (El motor del movimiento) */
+@keyframes entradaPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes latidoBoton {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 15px 5px rgba(0, 0, 0, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+@keyframes flotarRuleta {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+}
+
+/* 2. Reemplaza tu .contenido-ruleta actual por este: */
+.contenido-ruleta {
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    font-family: 'Poppins', sans-serif;
+    /* Agregamos el rebote al entrar */
+    animation: entradaPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 3. Reemplaza tu .ruleta-contenedor actual por este: */
+.ruleta-contenedor {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 0 auto 20px auto;
+    /* Agregamos el flote suave infinito */
+    animation: flotarRuleta 3s ease-in-out infinite;
+}
+
+/* 4. Reemplaza tu .btn-girar actual por este: */
+.btn-girar {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    /* Agregamos el latido infinito para invitar al clic */
+    animation: latidoBoton 1.5s infinite;
+}
+
+.btn-girar:active {
+    transform: scale(0.95);
+}
+/* ========================================== */
+/* ANIMACIONES DEL PUNTERO DE LA RULETA       */
+/* ========================================== */
+
+/* 1. Salto doble cuando NO se hace nada (Llama la atención) */
+@keyframes saltitoPuntero {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    10% { transform: translateX(-50%) rotate(-15deg); }
+    20% { transform: translateX(-50%) rotate(0deg); }
+    30% { transform: translateX(-50%) rotate(-10deg); }
+    40% { transform: translateX(-50%) rotate(0deg); }
+    /* Del 40% al 100% se queda quieto esperando */
+}
+
+/* 2. Golpeteo del puntero contra los premios */
+@keyframes golpePuntero {
+    0% { transform: translateX(-50%) rotate(0deg); }
+    50% { transform: translateX(-50%) rotate(-25deg); } 
+    100% { transform: translateX(-50%) rotate(0deg); }
+}
+
+.puntero-ruleta {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%) rotate(0deg);
+    font-size: 30px;
+    color: #000;
+    z-index: 10;
+    text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+    transform-origin: top center;
+}
+
+.puntero-girando {
+    /* Golpeteo rápido (rueda a toda velocidad) */
+    animation: golpePuntero 0.08s infinite !important; 
+}
+
+.puntero-lento {
+    /* Golpeteo en cámara lenta (suspenso final) */
+    animation: golpePuntero 0.4s infinite !important; 
+}
+
+/* Esta clase se encenderá cuando esté esperando */
+.puntero-esperando {
+    animation: saltoEspera 2.5s infinite;
+}
+/* El salto llamativo de cuando nadie hace nada */
+@keyframes saltoEspera {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    5% { transform: translateX(-50%) rotate(-18deg); }
+    10% { transform: translateX(-50%) rotate(10deg); }
+    15% { transform: translateX(-50%) rotate(-5deg); }
+    20% { transform: translateX(-50%) rotate(0deg); }
+}
+
+/* ========================================== */
+/* ANIMACIÓN DEL PUNTERO EN ESPERA            */
+/* ========================================== */
+
+@keyframes saltitosImpacientes {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    5% { transform: translateX(-50%) rotate(-25deg); } 
+    10% { transform: translateX(-50%) rotate(15deg); }  
+    15% { transform: translateX(-50%) rotate(-10deg); } 
+    20% { transform: translateX(-50%) rotate(0deg); }   
+}
+
+.puntero-ruleta {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%) rotate(0deg);
+    font-size: 30px;
+    color: #000;
+    z-index: 10;
+    text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+    /* Aseguramos que gire desde arriba */
+    transform-origin: top center !important; 
+    -webkit-text-stroke: 1px #ffffff;
+}
+
+.puntero-esperando {
+    /* Esta es la orden que lo hace saltar */
+    animation: saltitosImpacientes 2.5s infinite !important; 
+}
+
 .ruleta-giratoria {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 5px solid #000;
+    border: 5px solid #fff;
     position: relative;
     overflow: hidden;
     background: conic-gradient(
-        #ff4444 0deg 45deg,      /* 1: 25% OFF */
-        #333333 45deg 90deg,     /* 2: Sigue participando */
-        #ffbb33 90deg 135deg,    /* 3: 30% OFF */
-        #00C851 135deg 180deg,   /* 4: 10% OFF */
-        #ff4444 180deg 225deg,   /* 5: Sigue participando */
-        #333333 225deg 270deg,   /* 6: 15% OFF */
-        #ffbb33 270deg 315deg,   /* 7: Envío Gratis */
-        #00C851 315deg 360deg    /* 8: 20% OFF */
+        hsl(0, 0%, 0%) 0deg 45deg,
+        #ff0000 45deg 90deg,
+        hsl(56, 100%, 50%) 90deg 135deg,
+        #000000 135deg 180deg,
+        #ff0000 180deg 225deg,
+        #000000 225deg 270deg,
+        #ff0000 270deg 315deg,
+        hsl(56, 100%, 50%) 315deg 360deg
     );
-    transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
+    
+    /* --- SOMBRAS OSCURAS --- */
+    box-shadow: 
+        0 10px 30px rgba(0,0,0,0.5),      /* Sombra hacia afuera (cae sobre el fondo) */
+        inset 0 0 40px rgba(0,0,0,0.4);   /* Sombra hacia adentro (da profundidad a los colores) */
+    
+    z-index: 1;
 }
 
-/* Acomoda cada texto en su porción */
-.opcion {
+/* Estas son las barras físicas que no se deforman */
+.linea-separadora {
     position: absolute;
-    width: 50%;
-    height: 50%;
-    transform-origin: bottom right;
-    transform: rotate(calc(45deg * (var(--i) - 1)));
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 15px; 
+    top: 0;
+    left: 50%;
+    width: 2px; /* Grosor exacto de la línea */
+    height: 100%;
+    background-color: #ffffff; /* Color blanco puro */
+    transform-origin: center;
+    z-index: 1; /* Por debajo del texto y el logo, pero sobre los colores */
 }
 
-/* Da estilo a las letras para que resalten */
-.opcion span {
-    transform: rotate(22.5deg); 
-    font-size: 11px;
-    font-weight: 800;
-    color: #fff;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
-    text-align: center;
-    width: 65px;
-    line-height: 1.1;
+/* Ajuste del logo para que tape la unión de las barras */
+.ruleta-giratoria::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px; 
+    height: 90px;
+    background-image: url('images/gruicon.png');
+    background-size: cover;
+    background-position: center;
+    background-color: #fff;
+    border: 2px solid #fff; 
+    border-radius: 50%;
+    z-index: 10; /* Siempre arriba de todo */
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+/* ========================================== */
+/* CONFETI MANUAL (SIN LIBRERÍAS)             */
+/* ========================================== */
+.confeti-pieza {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px; /* Empiezan arriba de la pantalla */
+    z-index: 100000;
+    pointer-events: none;
+    border-radius: 2px;
+    animation: lluvia-confeti 3s linear forwards;
+}
+
+@keyframes lluvia-confeti {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
 }

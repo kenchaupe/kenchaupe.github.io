@@ -827,61 +827,156 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+// ==========================================
+// MOTOR PROPIO DE CONFETI PARA GRUKEN
+// ==========================================
+function lanzarCelebracion() {
+    const duracion = 3 * 1000;
+    const final = Date.now() + duracion;
 
-// 3. Acción al presionar "GIRAR AHORA" (TRUCADA)
+    const intervalo = setInterval(function() {
+        const tiempoRestante = final - Date.now();
+
+        if (tiempoRestante <= 0) {
+            return clearInterval(intervalo);
+        }
+
+        const particleCount = 50 * (tiempoRestante / duracion);
+        
+        // Lanzamos confeti desde dos puntos (izquierda y derecha)
+        confetti(Object.assign({}, { 
+            particleCount, 
+            spread: 70, 
+            origin: { x: 0.1, y: 0.5 },
+            colors: ['#ff4444', '#ffffff', '#ffbb33'] 
+        }));
+        confetti(Object.assign({}, { 
+            particleCount, 
+            spread: 70, 
+            origin: { x: 0.9, y: 0.5 },
+            colors: ['#00C851', '#ffffff', '#333333'] 
+        }));
+    }, 250);
+}
+// ==========================================
+// MOTOR FÍSICO DE LA RULETA (CÁMARA LENTA EXTREMA)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const modalRuleta = document.getElementById('modal-ruleta');
+    const btnCerrarRuleta = document.getElementById('btn-cerrar-ruleta');
+    const btnGirar = document.getElementById('btn-girar-ruleta');
+    const ruleta = document.getElementById('ruleta-giratoria');
+    const mensajePremio = document.getElementById('mensaje-premio');
+    const puntero = document.querySelector('.puntero-ruleta');
+
+    const ruletaJugada = localStorage.getItem('gruken_ruleta_jugada');
+
+    // Salto de espera inicial
+    if (puntero) puntero.classList.add('puntero-esperando');
+
+    if (modalRuleta && !ruletaJugada) {
+        setTimeout(() => {
+            modalRuleta.classList.remove('modal-ruleta-oculta');
+            modalRuleta.classList.add('modal-ruleta-activa');
+        }, 14000); // 14000 milisegundos = 14 segundos
+    }
+
+    if (btnCerrarRuleta) {
+        btnCerrarRuleta.addEventListener('click', () => {
+            modalRuleta.classList.remove('modal-ruleta-activa');
+            modalRuleta.classList.add('modal-ruleta-oculta');
+            localStorage.setItem('gruken_ruleta_jugada', 'true');
+        });
+    }
+
+    // --- LA MAGIA DE LA CÁMARA LENTA ---
+    // Esta curva hace que consuma casi todo el tiempo en el último 2% del giro
+    function frenoCamaraLenta(t) {
+        return 1 - Math.pow(1 - t, 3.5); 
+    }
+
     if (btnGirar) {
         btnGirar.addEventListener('click', () => {
             btnGirar.disabled = true;
             btnGirar.style.opacity = '0.5';
             mensajePremio.textContent = "¡Mucha suerte!...";
+            
+            if (puntero) puntero.classList.remove('puntero-esperando');
 
-            // 1. Configuramos los premios y elegimos cuáles están permitidos (true) y prohibidos (false)
             const premios = [
                 { texto: "¡25% OFF!", permitido: false },
-                { texto: "¡Sigue participando!", permitido: true },
+                { texto: "¡Envío Gratis", permitido: true },
                 { texto: "¡30% OFF!", permitido: false },
                 { texto: "¡10% OFF!", permitido: true },
-                { texto: "¡Sigue participando!", permitido: true },
+                { texto: "¡Envío Gratis!", permitido: true },
                 { texto: "¡15% OFF!", permitido: true },
                 { texto: "¡Envío Gratis!", permitido: true },
                 { texto: "¡20% OFF!", permitido: false }
             ];
 
-            // 2. Filtramos solo los que sí queremos que salgan
             const permitidos = [];
             premios.forEach((premio, index) => {
                 if (premio.permitido) permitidos.push({ index: index, texto: premio.texto });
             });
 
-            // 3. Elegimos uno al azar SOLO entre los permitidos
             const ganador = permitidos[Math.floor(Math.random() * permitidos.length)];
 
-            // 4. Calculamos matemáticamente dónde debe frenar la rueda
-            // Cada porción mide 45 grados. Calculamos el centro de la porción ganadora.
             const gradosPorcion = (ganador.index * 45) + 22.5; 
             const gradosParada = 360 - gradosPorcion;
-            
-            // Le agregamos un poco de aleatoriedad (+ o - 10 grados) para que no frene en el centro exacto y se vea natural
             const variacionVisual = Math.floor(Math.random() * 20) - 10;
             
-            // Le sumamos entre 6 y 10 vueltas completas de pura animación
-            const girosDeAnimacion = (Math.floor(Math.random() * 5) + 6) * 360;
-
-            // Aplicamos el giro exacto a la rueda
+            // Damos entre 10 y 14 vueltas para acumular mucha inercia inicial
+            const girosDeAnimacion = (Math.floor(Math.random() * 5) + 10) * 360; 
             const giroTotal = girosDeAnimacion + gradosParada + variacionVisual;
-            ruleta.style.transform = `rotate(${giroTotal}deg)`;
 
-            // 5. A los 4 segundos (cuando termina de girar), mostramos el premio
-            setTimeout(() => {
-                mensajePremio.textContent = ganador.texto;
-                localStorage.setItem('gruken_ruleta_jugada', 'true'); // Guardamos que ya jugó
+            let tiempoInicio = null;
+            // Extendemos el tiempo a 8.5 segundos para disfrutar el suspenso
+            const duracionGiro = 8500; 
+            let ultimoSectorPasado = 0;
 
-                // Opcional: Cerrar a los 5 segundos de ver el premio
-                setTimeout(() => {
-                    modalRuleta.classList.remove('modal-ruleta-activa');
-                    modalRuleta.classList.add('modal-ruleta-oculta');
-                }, 5000);
+            function animarFrames(tiempoActual) {
+                if (!tiempoInicio) tiempoInicio = tiempoActual;
+                let tiempoTranscurrido = tiempoActual - tiempoInicio;
+                
+                let progreso = Math.min(tiempoTranscurrido / duracionGiro, 1);
+                let progresoFrenado = frenoCamaraLenta(progreso);
+                let gradosMilisegundo = giroTotal * progresoFrenado;
+                
+                ruleta.style.transform = `rotate(${gradosMilisegundo}deg)`;
 
-            }, 4000); 
+                let sectorActual = Math.floor(gradosMilisegundo / 45);
+                
+                if (sectorActual !== ultimoSectorPasado) {
+                    ultimoSectorPasado = sectorActual;
+                    
+                    puntero.style.transform = 'translateX(-50%) rotate(-35deg)';
+                    
+                    // Sincronizamos el "cansancio" del puntero con la rueda
+                    let velocidadRetorno = 30; // Arranca rapidísimo
+                    if (progreso > 0.6) velocidadRetorno = 80;   // Empieza a frenar
+                    if (progreso > 0.8) velocidadRetorno = 200;  // Lento
+                    if (progreso > 0.9) velocidadRetorno = 450;  // Cámara lenta
+                    if (progreso > 0.95) velocidadRetorno = 800; // Agónico final
+
+                    setTimeout(() => {
+                        puntero.style.transform = 'translateX(-50%) rotate(0deg)';
+                    }, velocidadRetorno);
+                }
+
+                if (progreso < 1) {
+                    requestAnimationFrame(animarFrames);
+                } else {
+                    mensajePremio.textContent = ganador.texto;
+                    localStorage.setItem('gruken_ruleta_jugada', 'true');
+                    
+                    setTimeout(() => {
+                        modalRuleta.classList.remove('modal-ruleta-activa');
+                        modalRuleta.classList.add('modal-ruleta-oculta');
+                    }, 5000);
+                }
+            }
+
+            requestAnimationFrame(animarFrames);
         });
     }
+});
