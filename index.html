@@ -370,6 +370,23 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="scrip.js"></script>
+
+    <div id="modal-ruleta" class="modal-ruleta-oculta">
+    <div class="contenido-ruleta">
+        <button id="btn-cerrar-ruleta" class="cerrar-ruleta">X</button>
+        <h2 style="margin-bottom: 5px; font-size: 24px;">¡Gira y Gana!</h2>
+        <p style="font-size: 14px; margin-bottom: 20px; color: #555;">Gira la ruleta para llevarte un regalo sorpresa en tu compra de hoy.</p>
+        
+        <div class="ruleta-contenedor">
+            <div class="puntero-ruleta">▼</div>
+            <div id="ruleta-giratoria" class="ruleta-giratoria">
+                </div>
+        </div>
+        
+        <button id="btn-girar-ruleta" class="btn-girar">GIRAR AHORA</button>
+        <p id="mensaje-premio" style="margin-top: 15px; font-weight: bold; font-size: 18px; color: #d32f2f; min-height: 25px;"></p>
+    </div>
+</div>
    
      <div id="pwa-install-banner" style="display: none; position: fixed; bottom: 95px; left: 20px; right: 20px; background: #000; color: #fff; padding: 15px; border-radius: 12px; z-index: 9999; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif;">
     <div style="display: flex; align-items: center; gap: 10px;">

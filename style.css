@@ -1491,3 +1491,108 @@ th, td {
 .color-swatches .swatch:hover {
     transform: scale(1.1);
 }
+
+/* ========================================== */
+/* ESTILOS DE LA RULETA DE PREMIOS */
+/* ========================================== */
+
+/* Fondo oscuro que tapa toda la pantalla */
+.modal-ruleta-oculta {
+    display: none; 
+}
+
+.modal-ruleta-activa {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Fondo oscuro transparente */
+    z-index: 10000; /* Por encima de todo */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
+}
+
+/* El cuadro blanco del centro */
+.contenido-ruleta {
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Botón de cerrar la X */
+.cerrar-ruleta {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #888;
+}
+
+/* Contenedor del reloj/ruleta */
+.ruleta-contenedor {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    margin: 0 auto 20px auto;
+}
+
+/* El puntero que marca el premio */
+.puntero-ruleta {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 30px;
+    color: #000;
+    z-index: 10;
+}
+
+/* La rueda de colores */
+.ruleta-giratoria {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 5px solid #000;
+    /* Dibujamos las porciones de colores de la rueda */
+    background: conic-gradient(
+        #ff4444 0deg 60deg,
+        #ffbb33 60deg 120deg,
+        #00C851 120deg 180deg,
+        #33b5e5 180deg 240deg,
+        #aa66cc 240deg 300deg,
+        #ff8800 300deg 360deg
+    );
+    /* Esta transición es la que hace el efecto de girar suavemente */
+    transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+/* Botón principal */
+.btn-girar {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.2s;
+}
+
+.btn-girar:active {
+    transform: scale(0.95);
+}
