@@ -769,7 +769,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// 2. LÓGICA DEL BANNER (ESPERANDO A QUE CARGUE LA PÁGINA)
+// 2. LÓGICA DEL BANNER (CON MEMORIA DE INSTALACIÓN)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     let eventoDeInstalacion;
@@ -777,14 +777,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnInstalar = document.getElementById('btn-instalar');
     const btnCerrar = document.getElementById('btn-cerrar-pwa');
 
+    // 1. Revisamos la memoria y el modo de pantalla
+    const yaInstalado = localStorage.getItem('gruken_app_instalada');
+    const bannerCerrado = localStorage.getItem('gruken_banner_cerrado');
+    // Detecta si la web ya se está abriendo como aplicación desde el celular
+    const esModoApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
     // Capturamos el permiso de instalación nativo
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         eventoDeInstalacion = e;
     });
 
-    // Ahora sí, esperamos 3 segundos y mostramos tu diseño
-    if (bannerInstalacion) {
+    // 2. Solo mostramos el cartel a los 3 segundos si: 
+    // NO está instalado, NO lo cerraron antes, y NO lo están viendo desde la app
+    if (bannerInstalacion && !yaInstalado && !bannerCerrado && !esModoApp) {
         setTimeout(() => {
             bannerInstalacion.style.display = 'flex';
         }, 3000);
@@ -794,6 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnInstalar) {
         btnInstalar.addEventListener('click', async () => {
             bannerInstalacion.style.display = 'none';
+            
+            // Guardamos en la memoria que ya eligió instalar
+            localStorage.setItem('gruken_app_instalada', 'true');
+
             if (eventoDeInstalacion) {
                 eventoDeInstalacion.prompt();
                 const resultado = await eventoDeInstalacion.userChoice;
@@ -809,6 +820,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCerrar.addEventListener('click', () => {
             if (bannerInstalacion) {
                 bannerInstalacion.style.display = 'none';
+                
+                // Guardamos en la memoria que cerró el cartel para no volver a mostrarlo
+                localStorage.setItem('gruken_banner_cerrado', 'true');
             }
         });
     }
