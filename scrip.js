@@ -758,53 +758,58 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// LÓGICA DE INSTALACIÓN DE LA APLICACIÓN (PWA)
+// 1. REGISTRO DEL SERVICE WORKER
 // ==========================================
-
-// 1. Registrar el Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(registro => console.log('Service Worker registrado con éxito'))
-            .catch(error => console.log('Error al registrar el Service Worker:', error));
+            .then(reg => console.log('Service Worker registrado'))
+            .catch(err => console.log('Error SW:', err));
     });
 }
 
-// 2. Controlar la notificación manual
-let eventoDeInstalacion;
-const bannerInstalacion = document.getElementById('pwa-install-banner');
-const btnInstalar = document.getElementById('btn-instalar');
+// ==========================================
+// 2. LÓGICA DEL BANNER (ESPERANDO A QUE CARGUE LA PÁGINA)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    let eventoDeInstalacion;
+    const bannerInstalacion = document.getElementById('pwa-install-banner');
+    const btnInstalar = document.getElementById('btn-instalar');
+    const btnCerrar = document.getElementById('btn-cerrar-pwa');
 
-// El navegador dispara este evento cuando la app está lista para instalarse
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenimos que el navegador muestre su notificación por defecto
-    e.preventDefault();
-    
-    // Guardamos el evento para usarlo cuando el usuario haga clic
-    eventoDeInstalacion = e;
-    
-    // Mostramos tu banner negro cambiando el 'display: none' a 'flex'
+    // Capturamos el permiso de instalación nativo
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        eventoDeInstalacion = e;
+    });
+
+    // Ahora sí, esperamos 3 segundos y mostramos tu diseño
     if (bannerInstalacion) {
-        bannerInstalacion.style.display = 'flex';
+        setTimeout(() => {
+            bannerInstalacion.style.display = 'flex';
+        }, 3000);
+    }
+
+    // Acción al tocar "Instalar"
+    if (btnInstalar) {
+        btnInstalar.addEventListener('click', async () => {
+            bannerInstalacion.style.display = 'none';
+            if (eventoDeInstalacion) {
+                eventoDeInstalacion.prompt();
+                const resultado = await eventoDeInstalacion.userChoice;
+                eventoDeInstalacion = null;
+            } else {
+                alert("Para instalar la app de Gruken:\n\n1. Toca los 3 puntitos del navegador.\n2. Selecciona 'Agregar a la pantalla principal' o 'Instalar aplicación'.");
+            }
+        });
+    }
+
+    // Acción al tocar la "X"
+    if (btnCerrar) {
+        btnCerrar.addEventListener('click', () => {
+            if (bannerInstalacion) {
+                bannerInstalacion.style.display = 'none';
+            }
+        });
     }
 });
-
-// 3. Qué pasa cuando el usuario hace clic en "Instalar"
-if (btnInstalar) {
-    btnInstalar.addEventListener('click', async () => {
-        if (eventoDeInstalacion) {
-            // Ocultamos tu banner
-            bannerInstalacion.style.display = 'none';
-            
-            // Mostramos la ventana de instalación nativa del celular
-            eventoDeInstalacion.prompt();
-            
-            // Esperamos a ver qué elige el usuario
-            const resultado = await eventoDeInstalacion.userChoice;
-            console.log(`El usuario eligió: ${resultado.outcome}`);
-            
-            // Limpiamos la variable
-            eventoDeInstalacion = null;
-        }
-    });
-}
