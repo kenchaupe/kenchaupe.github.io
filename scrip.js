@@ -756,3 +756,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==========================================
+// LÓGICA DE INSTALACIÓN DE LA APLICACIÓN (PWA)
+// ==========================================
+
+// 1. Registrar el Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registro => console.log('Service Worker registrado con éxito'))
+            .catch(error => console.log('Error al registrar el Service Worker:', error));
+    });
+}
+
+// 2. Controlar la notificación manual
+let eventoDeInstalacion;
+const bannerInstalacion = document.getElementById('pwa-install-banner');
+const btnInstalar = document.getElementById('btn-instalar');
+
+// El navegador dispara este evento cuando la app está lista para instalarse
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevenimos que el navegador muestre su notificación por defecto
+    e.preventDefault();
+    
+    // Guardamos el evento para usarlo cuando el usuario haga clic
+    eventoDeInstalacion = e;
+    
+    // Mostramos tu banner negro cambiando el 'display: none' a 'flex'
+    if (bannerInstalacion) {
+        bannerInstalacion.style.display = 'flex';
+    }
+});
+
+// 3. Qué pasa cuando el usuario hace clic en "Instalar"
+if (btnInstalar) {
+    btnInstalar.addEventListener('click', async () => {
+        if (eventoDeInstalacion) {
+            // Ocultamos tu banner
+            bannerInstalacion.style.display = 'none';
+            
+            // Mostramos la ventana de instalación nativa del celular
+            eventoDeInstalacion.prompt();
+            
+            // Esperamos a ver qué elige el usuario
+            const resultado = await eventoDeInstalacion.userChoice;
+            console.log(`El usuario eligió: ${resultado.outcome}`);
+            
+            // Limpiamos la variable
+            eventoDeInstalacion = null;
+        }
+    });
+}

@@ -186,16 +186,6 @@ th, td {
     color: #ffffff;
     border-radius: 5px;
 }
-
-
-.ofert {
-    padding: 100%
-    display: flex;
-    justify-content: space-between;
-        /* oculto lo que queda fuera del .contenedor */
-    contain: paint;
-}
-
 .ofert-1 {
     display: flex;
     align-items: center;
@@ -539,6 +529,9 @@ th, td {
 .footer-content {
     display: flex;
     justify-content: space-between;
+    max-width: 1100px; /* Define un ancho máximo para agrupar el contenido en el centro */
+    margin: 0 auto;    /* Esta es la regla clave que centra el footer de forma exacta */
+    padding: 0 40px;   /* Agrega un margen interno para que no choque con los bordes del monitor */
 }
 
 
