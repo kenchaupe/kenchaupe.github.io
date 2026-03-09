@@ -36,7 +36,30 @@
         th { background: #333; color: white; }
         .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
         .btn-delete:hover { background: #c82333; }
-        
+        /* ================================================= */
+/* ESTANDARIZACIÓN DE BOTONES (TODAS LAS VENTANAS)   */
+/* ================================================= */
+
+/* 1. Botones de Acción (Guardar, Excel, Seleccionar Fotos, etc.) */
+.btn-save, 
+.custom-file-upload, 
+[onclick*="descargarExcel"],
+.btn-delete {
+    height: 48px !important;      /* Altura uniforme */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 20px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box !important;
+    text-align: center;
+    gap: 10px; /* Espacio entre icono y texto */
+}
         /* RESPONSIVO PARA CELULARES */
         @media (max-width: 768px) {
             thead { display: none; }
@@ -48,6 +71,36 @@
         #tabla-ventas thead {
             display: none;
         }
+
+
+
+        /* En celular, todos los botones de acción van al 100% de ancho */
+    .btn-save, 
+    .custom-file-upload, 
+    [onclick*="descargarExcel"],
+    .btn-delete,
+    [onclick^="cargarParaEditar"] {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+    }
+
+    /* Los botones de la barra superior (Tabs) mantienen su altura pero no el ancho */
+    .tab-btn {
+        height: 42px !important;
+        padding: 0 15px !important;
+        font-size: 13px !important;
+        flex-shrink: 0;
+    }
+
+
+/* 3. Efecto visual al presionar (Feedback táctil) */
+.btn-save:active, .custom-file-upload:active, .tab-btn:active {
+    transform: scale(0.96);
+    filter: brightness(0.9);
+}
+
+
 
         /* Convertimos cada fila en una "caja" o tarjeta */
         #tabla-ventas tr {
