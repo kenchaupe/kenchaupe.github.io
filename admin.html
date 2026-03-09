@@ -13,51 +13,8 @@
         .container { max-width: 1200px; margin: auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
         /* BARRA SUPERIOR DE PESTAÑAS */
-       /* BARRA SUPERIOR SLIDER (ESTILO APP NATIVA) */
-        .top-bar { 
-            display: flex; 
-            gap: 8px; /* Espacio pequeño y prolijo entre botones */
-            border-bottom: 2px solid #eee; 
-            padding: 10px 5px; 
-            margin-bottom: 15px; 
-            
-            /* LA MAGIA: Todo en una línea sin saltos */
-            flex-wrap: nowrap;      
-            overflow-x: auto;       /* Permite deslizar de costado */
-            -webkit-overflow-scrolling: touch; /* Movimiento suave en celulares */
-            
-            /* Ocultar la barra de scroll visualmente */
-            scrollbar-width: none;  
-        }
-
-        .top-bar::-webkit-scrollbar {
-            display: none; /* Oculta el scroll en Chrome y Safari */
-        }
-        .tab-btn { 
-            background: #f1f1f1; 
-            border: 1px solid #ddd;
-            padding: 8px 16px; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            color: #444; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-            font-size: 13px; /* Tamaño ideal para móvil */
-            
-            /* ESTO EVITA EL DESORDEN */
-            flex-shrink: 0;      /* Impide que el botón se aplaste */
-            white-space: nowrap; /* Impide que el texto se parta en dos */
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn.active {
-            background: #333;
-            color: #fff;
-            border-color: #333;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
+        .top-bar { display: flex; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: #eee; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; color: #555; display: flex; align-items: center; gap: 8px; }
         .tab-btn:hover { background: #ddd; }
         .tab-btn.active { background: #333; color: white; }
         .tab-btn-add { background: #007bff; color: white; }
