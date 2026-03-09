@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function carritoHTML() {
+   function carritoHTML() {
         if (!carrito) return;
         carrito.innerHTML = '';
         let total = 0;
@@ -253,9 +253,55 @@ document.addEventListener('DOMContentLoaded', () => {
             count += p.cantidad;
         });
 
+        // ==========================================
+        // LÓGICA DE DESCUENTOS MÁGICA
+        // ==========================================
+        let cupon = localStorage.getItem('gruken_cupon') || "";
+        let descuento = 0;
+        let textoDescuento = "";
+
+        // Revisamos qué cupón tiene guardado
+        if (cupon === "GRUKEN15") { descuento = 0.15; textoDescuento = "15% OFF"; }
+        else if (cupon === "GRUKEN10") { descuento = 0.10; textoDescuento = "10% OFF"; }
+        else if (cupon === "ENVIOFREE") { textoDescuento = "Envío Gratis"; }
+
+        // Calculamos la resta
+        let montoDescuento = total * descuento;
+        let totalFinal = total - montoDescuento;
+
         if (contadorProductos) contadorProductos.innerText = count;
-        if (totalPagar) totalPagar.innerText = total.toLocaleString('es-AR');
+        
+        if (totalPagar) {
+            // Actualizamos el número final
+            totalPagar.innerText = totalFinal.toLocaleString('es-AR');
+            
+            // Creamos un cartel visual de descuento justo arriba del total
+            let divDescuento = document.getElementById('cartel-descuento-carrito');
+            if (!divDescuento) {
+                divDescuento = document.createElement('div');
+                divDescuento.id = 'cartel-descuento-carrito';
+                divDescuento.style.marginBottom = '5px';
+                divDescuento.style.textAlign = 'right';
+                // Lo metemos justo antes de la línea del Total
+                totalPagar.parentElement.parentElement.insertBefore(divDescuento, totalPagar.parentElement);
+            }
+
+            // Mostramos los textos según el premio
+            if (descuento > 0) {
+                divDescuento.innerHTML = `
+                    <span style="color: #2e7d32; font-size: 15px; font-weight: bold;">🎁 Cupón aplicado (${textoDescuento}): -$${montoDescuento.toLocaleString('es-AR')}</span><br>
+                    <span style="font-size: 13px; color: #888; text-decoration: line-through;">Subtotal sin descuento: $${total.toLocaleString('es-AR')}</span>
+                `;
+            } else if (textoDescuento === "Envío Gratis") {
+                divDescuento.innerHTML = `<span style="color: #2e7d32; font-size: 15px; font-weight: bold;">🚚 ¡Envío Gratis Activado!</span>`;
+            } else {
+                divDescuento.innerHTML = ""; // Se oculta si no tiene premios
+            }
+        }
+
+        // Guardamos las cosas en memoria
         localStorage.setItem('carrito_gruken', JSON.stringify(articulosCarrito));
+        localStorage.setItem('gruken_total_final', totalFinal); // Clave para llevar el precio final al Checkout
     }
 
     function mostrarNotificacion(nombre) {
@@ -895,14 +941,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return 1 - Math.pow(1 - t, 3.5); 
     }
 
-    if (btnGirar) {
+   if (btnGirar) {
         btnGirar.addEventListener('click', () => {
+            // 1. VALIDAR CORREO ANTES DE GIRAR
+            const emailInput = document.getElementById('email-ruleta');
+            const mensajeError = document.getElementById('mensaje-error-ruleta');
+            const correoUsuario = emailInput ? emailInput.value.trim() : '';
+
+            // Si el correo está vacío o no tiene @, frenamos la ruleta
+            if (!correoUsuario || !correoUsuario.includes('@')) {
+                if (mensajeError) mensajeError.style.display = 'block';
+                return; 
+            }
+            
+            // Si está bien, ocultamos error y bloqueamos la casilla
+            if (mensajeError) mensajeError.style.display = 'none';
+            if (emailInput) {
+                emailInput.disabled = true;
+                emailInput.style.opacity = '0.5';
+            }
+
             btnGirar.disabled = true;
             btnGirar.style.opacity = '0.5';
             mensajePremio.textContent = "¡Mucha suerte!...";
             
             if (puntero) puntero.classList.remove('puntero-esperando');
-
+           // =========================================
+            // CARGA DE SONIDOS
+            // =========================================
+            const sonidoTick = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+            sonidoTick.volume = 0.3;
+            const sonidoFestejo = new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3');
+            sonidoFestejo.volume = 0.8;
+            // =========================================
             const premios = [
                 { texto: "¡25% OFF!", permitido: false },
                 { texto: "¡Envío Gratis", permitido: true },
@@ -916,11 +987,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const permitidos = [];
             premios.forEach((premio, index) => {
-                if (premio.permitido) permitidos.push({ index: index, texto: premio.texto });
+                if (premio.permitido) permitidos.push({ index: index, texto: premio.texto }); 
             });
-
             const ganador = permitidos[Math.floor(Math.random() * permitidos.length)];
-
             const gradosPorcion = (ganador.index * 45) + 22.5; 
             const gradosParada = 360 - gradosPorcion;
             const variacionVisual = Math.floor(Math.random() * 20) - 10;
@@ -946,9 +1015,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let sectorActual = Math.floor(gradosMilisegundo / 45);
                 
-                if (sectorActual !== ultimoSectorPasado) {
+              if (sectorActual !== ultimoSectorPasado) {
                     ultimoSectorPasado = sectorActual;
                     
+                    // =========================================
+                    // REPRODUCIR TICK SIN DESCARGAR DE NUEVO
+                    // =========================================
+                    sonidoTick.currentTime = 0; // Lo rebobinamos al segundo cero para que suene rápido
+                    sonidoTick.play().catch(() => {});
+                    // =========================================
+
                     puntero.style.transform = 'translateX(-50%) rotate(-35deg)';
                     
                     // Sincronizamos el "cansancio" del puntero con la rueda
@@ -963,16 +1039,130 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, velocidadRetorno);
                 }
 
-                if (progreso < 1) {
+         if (progreso < 1) {
                     requestAnimationFrame(animarFrames);
                 } else {
-                    mensajePremio.textContent = ganador.texto;
-                    localStorage.setItem('gruken_ruleta_jugada', 'true');
+                    // =========================================
+                    // TARJETA BLACK & GOLD SOBRE LA RULETA
+                    // =========================================
                     
+                    // 1. SONIDO DE FIESTA
+                    const audioVictoria = new Audio('https://soundbible.com/mp3/Kids%20Cheering-SoundBible.com-681813822.mp3');
+                    audioVictoria.volume = 1.0;
+                    audioVictoria.play().catch(() => {});
+
+                    // 2. BUSCAMOS EL CÓDIGO DE DESCUENTO
+                  // 2. BUSCAMOS EL CÓDIGO DE DESCUENTO
+                    let codigoDescuento = "";
+                    if (ganador.texto.includes("15% OFF")) codigoDescuento = "GRUKEN15";
+                    else if (ganador.texto.includes("10% OFF")) codigoDescuento = "GRUKEN10";
+                    else if (ganador.texto.includes("Envío Gratis")) codigoDescuento = "ENVIOFREE";
+
+                    // === NUEVO: GUARDAR CUPÓN AUTOMÁTICAMENTE ===
+                    if (codigoDescuento !== "") {
+                        localStorage.setItem('gruken_cupon', codigoDescuento); // Se lo guarda en su celular
+                        if (typeof carritoHTML === "function") carritoHTML(); // Actualiza el carrito al instante
+                    }
+
+                    // Estilos CSS de la Tarjeta VIP Flotante
+                    const estiloTarjetaPremium = `
+                        <style>
+                            @keyframes revelarPremium {
+                                0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8) rotateX(20deg); }
+                                100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotateX(0deg); }
+                            }
+                            .tarjeta-premium {
+                                position: absolute; /* Esto hace que flote exactamente ENCIMA de la ruleta */
+                                top: 45%;
+                                left: 50%;
+                                width: 85%;
+                                max-width: 340px;
+                                background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+                                border: 2px solid #D4AF37; /* Borde Dorado */
+                                border-radius: 16px;
+                                box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(212, 175, 55, 0.3);
+                                padding: 35px 20px;
+                                text-align: center;
+                                color: #fff;
+                                z-index: 2000; /* Para que tape todo lo demás */
+                                animation: revelarPremium 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+                                font-family: 'Poppins', sans-serif;
+                            }
+                            .tarjeta-premium h3 {
+                                font-family: 'Oswald', sans-serif;
+                                text-transform: uppercase;
+                                font-size: 28px;
+                                margin: 0 0 10px 0;
+                                letter-spacing: 3px;
+                                /* Letras color Oro con brillo */
+                                background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                            }
+                            .tarjeta-premium .codigo-gold {
+                                background: rgba(212, 175, 55, 0.08);
+                                border: 1px dashed #D4AF37;
+                                color: #FCF6BA;
+                                padding: 12px;
+                                font-size: 24px;
+                                font-weight: 600;
+                                letter-spacing: 5px;
+                                margin-top: 15px;
+                                border-radius: 8px;
+                                user-select: all;
+                            }
+                        </style>
+                    `;
+
+                    // Mostrar la tarjeta
+                    if (codigoDescuento !== "") {
+                        mensajePremio.innerHTML = estiloTarjetaPremium + `
+                            <div class="tarjeta-premium">
+                                <h3>VIP REWARD</h3>
+                                <p style="color: #999; font-size: 13px; text-transform: uppercase; margin:0 0 5px 0; letter-spacing: 1px;">Has desbloqueado:</p>
+                                <div style="font-size: 26px; font-weight: bold; color: #fff; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${ganador.texto}</div>
+                                <p style="color: #777; font-size: 11px; text-transform: uppercase; margin:0; letter-spacing: 2px;">Tu código exclusivo:</p>
+                                <div class="codigo-gold" title="Copia tu código">${codigoDescuento}</div>
+                            </div>
+                        `;
+                        if (typeof lanzarCelebracion === "function") lanzarCelebracion(); 
+                    } else {
+                        mensajePremio.innerHTML = estiloTarjetaPremium + `
+                            <div class="tarjeta-premium">
+                                <h3>VIP REWARD</h3>
+                                <p style="color: #999; font-size: 13px; text-transform: uppercase; margin:0 0 5px 0; letter-spacing: 1px;">Has ganado:</p>
+                                <div style="font-size: 28px; font-weight: bold; color: #fff; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${ganador.texto}</div>
+                                <p style="color: #D4AF37; font-size: 16px; margin-top: 15px; font-weight: 600;">¡Felicidades!</p>
+                            </div>
+                        `;
+                        if (typeof lanzarCelebracion === "function") lanzarCelebracion();
+                    }
+
+                    // 3. GUARDAR CORREO, PREMIO Y FECHA EN SUPABASE
+                    localStorage.setItem('gruken_ruleta_jugada', 'true');
+                    const emailInput = document.getElementById('email-ruleta');
+                    const correoFinal = emailInput ? emailInput.value.trim() : '';
+                    
+                    const guardarEnBD = async () => {
+                        if (typeof _supabase !== 'undefined') {
+                            await _supabase.from('premios_ruleta').insert([{ 
+                                contacto: correoFinal, 
+                                premio: ganador.texto,
+                                created_at: new Date().toISOString() 
+                            }]);
+                        }
+                    };
+                    guardarEnBD();
+
+                    // 4. OCULTAR RULETA A LOS 10 SEGUNDOS (le damos un poco más de tiempo para que copie el código)
                     setTimeout(() => {
-                        modalRuleta.classList.remove('modal-ruleta-activa');
-                        modalRuleta.classList.add('modal-ruleta-oculta');
-                    }, 5000);
+                        const modal = document.getElementById('modal-ruleta') || document.querySelector('.modal-ruleta');
+                        if (modal) {
+                            modal.classList.remove('modal-ruleta-activa');
+                            modal.classList.add('modal-ruleta-oculta');
+                            setTimeout(() => modal.style.display = 'none', 500);
+                        }
+                    }, 10000);
                 }
             }
 

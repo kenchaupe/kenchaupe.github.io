@@ -103,7 +103,36 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     animation: zoomIn 0.2s ease;
 }
+/* ESTILO DORADO PARA TARJETAS DE RULETA (MÓVIL) */
+        #tabla-premios-ruleta tr {
+            display: block;
+            background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C) !important;
+            color: #000 !important;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(170, 119, 28, 0.4);
+            border: 1px solid #7a5d1a;
+        }
 
+        #tabla-premios-ruleta td::before {
+            color: #4a3707 !important; /* Etiquetas en marrón oscuro para que contrasten con el oro */
+        }
+/* Estilo para arrastrar fotos */
+.preview-wrapper {
+    cursor: grab;
+    transition: transform 0.2s ease;
+}
+
+.preview-wrapper:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.preview-wrapper.drag-over {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+}
 @keyframes zoomIn {
     from { transform: scale(0.5); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
@@ -185,6 +214,7 @@ input[type="file"] {
             <button class="tab-btn active" onclick="cambiarPestana('vista-inventario', this)"><i class="fas fa-box"></i> Mi Inventario</button>
             <button class="tab-btn tab-btn-add" onclick="cambiarPestana('vista-agregar', this)"><i class="fas fa-plus"></i> Agregar Producto</button>
             <button class="tab-btn" onclick="cambiarPestana('vista-ventas', this)"><i class="fas fa-chart-line"></i> Ventas</button>
+            <button class="tab-btn" onclick="cambiarPestana('vista-ruleta', this)"><i class="fas fa-ticket-alt"></i> Premios Ruleta</button>
             <button class="tab-btn" onclick="cambiarPestana('vista-configuracion', this)"><i class="fas fa-cog"></i> Configuración</button>
         </div>
 
@@ -245,6 +275,15 @@ input[type="file"] {
             </button>
             <div style="overflow-x: auto;">
                 <div id="tabla-historial-ventas">Cargando ventas...</div>
+            </div>
+        </div>
+        <div id="vista-ruleta" class="view-section">
+            <h3 style="margin-top:0;"><i class="fas fa-gift"></i> Registro de Premios (Ruleta)</h3>
+            <button onclick="descargarExcelRuleta()" class="btn-save" style="background: #D4AF37; color: black; margin-bottom: 15px; width: auto; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #000;">
+                <i class="fas fa-file-excel"></i> Descargar Excel de Premios
+            </button>
+            <div style="overflow-x: auto;">
+                <div id="tabla-premios-ruleta">Cargando registros de la ruleta...</div>
             </div>
         </div>
 
@@ -308,6 +347,7 @@ input[type="file"] {
                 document.getElementById('pantalla-login').style.display = 'none';
                 cargarInventarioUnificado();
                 cargarVentas();
+                cargarPremiosRuleta();
                 cargarConfiguracion();
             }
         }
@@ -318,6 +358,7 @@ input[type="file"] {
                     document.getElementById('pantalla-login').style.display = 'none';
                     cargarInventarioUnificado();
                     cargarVentas();
+                    cargarPremiosRuleta();
                     cargarConfiguracion();
                 }
             });
@@ -429,11 +470,13 @@ input[type="file"] {
       // -----------------------------------------------------------------
         // NUEVO: FUNCIÓN PARA GENERAR LOS INPUTS DE STOCK POR VARIANTE
         // -----------------------------------------------------------------
-        function generarVariantes() {
-            // Leemos los talles y colores y los separamos por las comas
-            const talles = document.getElementById('prod-talles').value.split(',').map(t => t.trim()).filter(t => t !== '');
-            const colores = document.getElementById('prod-colores').value.split(',').map(c => c.trim()).filter(c => c !== '');
+         function generarVariantes() {
+            // Convertimos todo a minúsculas y quitamos espacios al capturar
+            const talles = document.getElementById('prod-talles').value.toLowerCase().split(',').map(t => t.trim()).filter(t => t !== '');
+            const colores = document.getElementById('prod-colores').value.toLowerCase().split(',').map(c => c.trim()).filter(c => c !== '');
+            
             const contenedor = document.getElementById('contenedor-variantes');
+            // ... (el resto de la función sigue igual)
             
             if(talles.length === 0 || colores.length === 0) {
                 alert("Por favor, ingresa al menos un talle y un color separados por coma antes de generar las variantes.");
@@ -733,26 +776,50 @@ async function subirArchivoDirecto(input, idDestino) {
     }
 }
 
-// 3. LA CORRECCIÓN CLAVE: Función de guardado integrada
-async function guardarProductoUnificado(evento) {
-    if (evento) evento.preventDefault();
+// -----------------------------------------------------------------
+        // ACTUALIZADO: GUARDAR PRODUCTO CON VERIFICACIÓN DE ID DUPLICADO
+        // -----------------------------------------------------------------
+        async function guardarProductoUnificado(evento) {
+            if (evento) evento.preventDefault();
 
-    const idTexto = document.getElementById('prod-id').value;
-    if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+            const idInput = document.getElementById('prod-id');
+            const idTexto = idInput.value.trim();
 
-    const imgInput = document.getElementById('prod-img');
-    
-    // --- NUEVO: Subir fotos desde la LISTA TEMPORAL ---
-    if (listaFotosTemporal.length > 0) {
-        console.log("Subiendo imágenes...");
-        let urls = [];
-        for (let i = 0; i < listaFotosTemporal.length; i++) {
-            const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
-            if (url) urls.push(url);
-        }
-        // Unimos las nuevas URLs con las que ya existieran (si estás editando)
-        imgInput.value = urls.join(', ');
-    }
+            if (!idTexto) { alert("¡Por favor, escribe un ID para el producto!"); return; }
+
+            // === BLOQUE NUEVO: VERIFICADOR DE DUPLICADOS ===
+            // Solo verificamos si el campo ID está habilitado (lo que significa que es un producto NUEVO)
+            if (!idInput.disabled) {
+                const { data: existe, error: errorCheck } = await _supabase
+                    .from('productos')
+                    .select('id')
+                    .eq('id', idTexto)
+                    .maybeSingle();
+
+                if (existe) {
+                    alert(`⚠️ ERROR: El (ART) "${idTexto}" ya existe en tu inventario.\n\nPor favor, utiliza un número diferente o busca el producto existente para editarlo.`);
+                    idInput.style.border = "2px solid red";
+                    idInput.focus();
+                    return; // Detiene el proceso de guardado
+                }
+                idInput.style.border = "1px solid #ddd"; // Limpia el error si pasa
+            }
+            // ===============================================
+
+            const imgInput = document.getElementById('prod-img');
+            
+            // --- Subir fotos desde la LISTA TEMPORAL (Esto sigue igual) ---
+            if (listaFotosTemporal.length > 0) {
+                console.log("Subiendo imágenes...");
+                let urls = [];
+                for (let i = 0; i < listaFotosTemporal.length; i++) {
+                    const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
+                    if (url) urls.push(url);
+                }
+                imgInput.value = urls.join(', ');
+            }
+            
+            // ... (el resto de tu código de variantes y guardado sigue igual debajo)
 
     const inputsVariantes = document.querySelectorAll('.input-variante-stock');
     if (inputsVariantes.length === 0) {
@@ -773,15 +840,16 @@ async function guardarProductoUnificado(evento) {
         });
     });
 
-    const productoGuardar = {
-        id: idTexto,
-        nombre: document.getElementById('prod-nombre').value,
-        talles: document.getElementById('prod-talles').value,
-        colores: document.getElementById('prod-colores').value,
-        stock: stockTotal,
-        precio: parseFloat(document.getElementById('prod-precio').value) || 0,
-        imagen: imgInput.value // Aquí ya tiene las URLs subidas
-    };
+   const productoGuardar = {
+                id: idTexto,
+                nombre: document.getElementById('prod-nombre').value,
+                // Forzamos minúsculas aquí también por seguridad
+                talles: document.getElementById('prod-talles').value.toLowerCase(),
+                colores: document.getElementById('prod-colores').value.toLowerCase(),
+                stock: stockTotal,
+                precio: parseFloat(document.getElementById('prod-precio').value) || 0,
+                imagen: imgInput.value
+            };
 
     // Guardar en Supabase
     const { error: errorProd } = await _supabase.from('productos').upsert(productoGuardar);
@@ -815,11 +883,23 @@ function manejarSeleccionFotos(input) {
 function actualizarVistaPrevia() {
     const contenedor = document.getElementById('preview-container');
     contenedor.innerHTML = ''; 
+    
     listaFotosTemporal.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = function(e) {
             const div = document.createElement('div');
             div.classList.add('preview-wrapper');
+            div.setAttribute('draggable', 'true'); // Hacemos que se pueda arrastrar
+            
+            // Eventos de Arrastrar
+            div.ondragstart = (event) => event.dataTransfer.setData('index', index);
+            div.ondragover = (event) => event.preventDefault();
+            div.ondrop = (event) => {
+                event.preventDefault();
+                const fromIndex = event.dataTransfer.getData('index');
+                reordenarFotos(parseInt(fromIndex), index);
+            };
+
             div.innerHTML = `
                 <img src="${e.target.result}" class="img-preview-item">
                 <button type="button" class="btn-remove-img" onclick="quitarFoto(${index})">
@@ -831,11 +911,80 @@ function actualizarVistaPrevia() {
         reader.readAsDataURL(file);
     });
 }
+function reordenarFotos(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+
+    // Cortamos la foto de su posición original y la metemos en la nueva
+    const fotoMovida = listaFotosTemporal.splice(fromIndex, 1)[0];
+    listaFotosTemporal.splice(toIndex, 0, fotoMovida);
+
+    // Refrescamos la vista para ver el nuevo orden
+    actualizarVistaPrevia();
+}
 
 function quitarFoto(index) {
     listaFotosTemporal.splice(index, 1); 
     actualizarVistaPrevia(); 
 }
+     // --- LÓGICA DE LA RULETA (ADMIN) ---
+        async function cargarPremiosRuleta() {
+            const { data, error } = await _supabase.from('premios_ruleta').select('*').order('created_at', { ascending: false });
+            const divRuleta = document.getElementById('tabla-premios-ruleta');
+            
+            if (error || !data || data.length === 0) {
+                divRuleta.innerHTML = "<p>Nadie ha jugado a la ruleta aún.</p>"; 
+                window.ruletaGlobal = [];
+                return;
+            }
+            
+            window.ruletaGlobal = data; 
+
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Contacto (Email)</th>
+                        <th>Premio Ganado</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            data.forEach((p) => {
+                let fecha = p.created_at ? new Date(p.created_at).toLocaleString('es-AR') : 'N/A';
+                // Estilo VIP para la celda de premio
+                let estiloPremio = p.premio.includes("OFF") ? 'color: #2e7d32; font-weight: bold;' : 'color: #111;';
+
+                html += `<tr>
+                    <td data-label="Fecha :">${fecha}</td>
+                    <td data-label="Contacto :"><strong>${p.contacto}</strong></td>
+                    <td data-label="Premio :"><span style="${estiloPremio}">✨ ${p.premio}</span></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            divRuleta.innerHTML = html;
+        }
+
+        function descargarExcelRuleta() {
+            if (!window.ruletaGlobal || window.ruletaGlobal.length === 0) {
+                alert("No hay datos para descargar");
+                return;
+            }
+
+            const datosExcel = window.ruletaGlobal.map(p => {
+                return {
+                    "Fecha y Hora": p.created_at ? new Date(p.created_at).toLocaleString('es-AR') : 'N/A',
+                    "Email del Cliente": p.contacto,
+                    "Premio": p.premio
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Premios Ruleta");
+            
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, `Premios_Ruleta_Gruken_${fechaHoy}.xlsx`);
+        }
     </script>
 </body>
 </html>

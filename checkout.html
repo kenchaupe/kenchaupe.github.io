@@ -245,7 +245,7 @@
             renderizarResumen();
         });
 
-        // FUNCION DEL ACORDEON (MOSTRAR/OCULTAR)
+        // FUNCION DEL ACORDEON CON AUTO-SCROLL
         function toggleDatosEnvio() {
             const formulario = document.getElementById('formulario-pedido');
             const flecha = document.getElementById('flecha-envio');
@@ -253,13 +253,20 @@
             if (formulario.style.display === 'none') {
                 formulario.style.display = 'block';
                 flecha.innerHTML = '▲';
+
+                // --- ESTA ES LA MAGIA DEL SCROLL ---
+                // Esperamos un milisegundo a que el formulario aparezca y movemos la pantalla
+                setTimeout(() => {
+                    formulario.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
             } else {
                 formulario.style.display = 'none';
                 flecha.innerHTML = '▼';
             }
         }
 
-        function renderizarResumen() {
+       function renderizarResumen() {
             if(carrito.length === 0) {
                 resumenDiv.innerHTML = "<p style='text-align:center;'>Tu carrito está vacío. <br><br><a href='index.html' style='color:#009ee3; text-decoration:none; font-weight:bold;'>Volver a la tienda</a></p>";
                 document.querySelector('.btn-mp').disabled = true;
@@ -267,13 +274,61 @@
             }
 
             total = 0;
-            let html = `<h3>Detalle de tu compra:</h3><ul>`;
+            let html = `<h3 style="margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Detalle de tu compra:</h3><ul>`;
+            
             carrito.forEach(p => {
                 const subtotal = parseInt(p.precio) * p.cantidad;
-                html += `<li><b>${p.cantidad}x</b> ${p.titulo} <br><small>Color: ${p.color} | Talle: ${p.talla}</small> <span style="float:right;">$${subtotal.toLocaleString('es-AR')}</span></li>`;
+                html += `<li>
+                            <b>${p.cantidad}x</b> ${p.titulo} 
+                            <br><small style="color: #666;">Color: ${p.color} | Talle: ${p.talla}</small> 
+                            <span style="float:right; font-weight: 500;">$${subtotal.toLocaleString('es-AR')}</span>
+                         </li>`;
                 total += subtotal;
             });
-            html += `</ul><div class="total-destacado">TOTAL: $${total.toLocaleString('es-AR')}</div>`;
+
+            // ==========================================
+            // CÁLCULO DE DESCUENTO PARA EL RESUMEN
+            // ==========================================
+            let cupon = localStorage.getItem('gruken_cupon') || "";
+            let descuentoPorcentaje = 0;
+            let textoCupon = "";
+
+            if (cupon === "GRUKEN15") { descuentoPorcentaje = 0.15; textoCupon = "15% OFF"; }
+            else if (cupon === "GRUKEN10") { descuentoPorcentaje = 0.10; textoCupon = "10% OFF"; }
+            else if (cupon === "ENVIOFREE") { textoCupon = "Envío Gratis"; }
+
+            let montoDescuento = total * descuentoPorcentaje;
+            let totalConDescuento = total - montoDescuento;
+
+            // Si hay un cupón de porcentaje, agregamos la fila de descuento
+            if (descuentoPorcentaje > 0) {
+                html += `
+                    <li style="border-bottom: none; margin-top: 15px; color: #2e7d32; font-weight: 600; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px dashed #2e7d32;">
+                        🎁 Cupón Ruleta (${textoCupon})
+                        <span style="float:right;">-$${montoDescuento.toLocaleString('es-AR')}</span>
+                    </li>
+                `;
+            } else if (textoCupon === "Envío Gratis") {
+                html += `
+                    <li style="border-bottom: none; margin-top: 15px; color: #2e7d32; font-weight: 600; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px dashed #2e7d32;">
+                        🚚 Beneficio Ruleta: Envío Gratis
+                        <span style="float:right;">¡Bonificado!</span>
+                    </li>
+                `;
+            }
+
+            html += `</ul>`;
+            
+            // Línea de Total Final
+            html += `
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #111;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 1.1em; font-weight: 500;">Total a pagar:</span>
+                        <span style="font-size: 1.5em; font-weight: 700; color: #111;">$${totalConDescuento.toLocaleString('es-AR')}</span>
+                    </div>
+                </div>
+            `;
+
             resumenDiv.innerHTML = html;
         }
 
