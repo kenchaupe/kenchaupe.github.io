@@ -25,15 +25,79 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contenedorCarrito) contenedorCarrito.addEventListener('click', eliminarProducto);
 
     if (btnComprar) {
-        btnComprar.addEventListener('click', (e) => {
+        btnComprar.addEventListener('click', async (e) => {
             e.preventDefault();
+            
             if (articulosCarrito.length === 0) {
                 alert("Tu carrito está vacío");
                 return;
             }
-            window.location.href = 'checkout.html';
+
+            // Bloqueamos el botón para que no clickeen dos veces
+            btnComprar.disabled = true;
+            const textoOriginal = btnComprar.innerText;
+            btnComprar.innerText = "Verificando stock...";
+
+            try {
+                let hayErrores = false;
+                let mensajesError = [];
+
+                // Recorremos el carrito
+                for (let i = 0; i < articulosCarrito.length; i++) {
+                    const p = articulosCarrito[i];
+                    
+                    // Buscamos la variante en minúsculas (importante por lo que hicimos antes)
+                    const talleBusqueda = p.talla.toLowerCase().trim();
+                    const colorBusqueda = p.color.toLowerCase().trim();
+
+                    const { data: variante, error } = await _supabase
+                        .from('productos_variantes')
+                        .select('stock')
+                        .eq('producto_id', p.id)
+                        .ilike('talle', talleBusqueda)
+                        .ilike('color', colorBusqueda)
+                        .maybeSingle();
+
+                    if (error) throw error;
+
+                    if (!variante) {
+                        hayErrores = true;
+                        mensajesError.push(`❌ El producto "${p.titulo}" (${p.color}) ya no existe.`);
+                        articulosCarrito.splice(i, 1);
+                        i--;
+                    } else if (variante.stock < p.cantidad) {
+                        hayErrores = true;
+                        if (variante.stock <= 0) {
+                            mensajesError.push(`❌ Se agotó el stock de "${p.titulo}" (${p.color}).`);
+                            articulosCarrito.splice(i, 1);
+                            i--;
+                        } else {
+                            mensajesError.push(`⚠️ Solo quedan ${variante.stock} unidades de "${p.titulo}".`);
+                            articulosCarrito[i].cantidad = variante.stock;
+                        }
+                    }
+                }
+
+                if (hayErrores) {
+                    alert(mensajesError.join('\n'));
+                    carritoHTML(); // Refrescamos el carrito visualmente
+                    btnComprar.disabled = false;
+                    btnComprar.innerText = textoOriginal;
+                    return;
+                }
+
+                // Si todo está OK, vamos al checkout
+                window.location.href = 'checkout.html';
+
+            } catch (err) {
+                console.error("Error en validación:", err);
+                alert("Hubo un error al verificar el stock. Por favor intenta de nuevo.");
+                btnComprar.disabled = false;
+                btnComprar.innerText = textoOriginal;
+            }
         });
     }
+ 
 
     // --- LÓGICA DE MÚSICA ---
     const audio = document.getElementById('musica-fondo');

@@ -118,20 +118,22 @@
         #tabla-premios-ruleta td::before {
             color: #4a3707 !important; /* Etiquetas en marrón oscuro para que contrasten con el oro */
         }
-/* Estilo para arrastrar fotos */
+/* Estilo para mover fotos en celular */
 .preview-wrapper {
+    position: relative;
+    touch-action: none; /* Bloquea el scroll del celu mientras arrastras la foto */
+    user-select: none;
     cursor: grab;
-    transition: transform 0.2s ease;
 }
 
-.preview-wrapper:active {
-    cursor: grabbing;
-    transform: scale(1.05);
+.preview-wrapper img {
+    pointer-events: none; /* Evita que el navegador intente "guardar imagen" al tocarla */
 }
 
-.preview-wrapper.drag-over {
-    border: 2px dashed #007bff;
-    border-radius: 8px;
+/* Efecto cuando una foto se está moviendo */
+.sortable-ghost {
+    opacity: 0.4;
+    transform: scale(0.8);
 }
 @keyframes zoomIn {
     from { transform: scale(0.5); opacity: 0; }
@@ -880,6 +882,8 @@ function manejarSeleccionFotos(input) {
     input.value = ""; 
 }
 
+let draggingIndex = null;
+
 function actualizarVistaPrevia() {
     const contenedor = document.getElementById('preview-container');
     contenedor.innerHTML = ''; 
@@ -889,16 +893,34 @@ function actualizarVistaPrevia() {
         reader.onload = function(e) {
             const div = document.createElement('div');
             div.classList.add('preview-wrapper');
-            div.setAttribute('draggable', 'true'); // Hacemos que se pueda arrastrar
-            
-            // Eventos de Arrastrar
-            div.ondragstart = (event) => event.dataTransfer.setData('index', index);
-            div.ondragover = (event) => event.preventDefault();
-            div.ondrop = (event) => {
-                event.preventDefault();
-                const fromIndex = event.dataTransfer.getData('index');
-                reordenarFotos(parseInt(fromIndex), index);
-            };
+            div.dataset.index = index;
+
+            // --- EVENTOS PARA CELULAR (TOUCH) ---
+            div.addEventListener('touchstart', (e) => {
+                draggingIndex = index;
+                div.classList.add('sortable-ghost');
+            }, {passive: true});
+
+            div.addEventListener('touchend', (e) => {
+                div.classList.remove('sortable-ghost');
+                
+                // Detectamos sobre qué foto soltaste el dedo
+                const touch = e.changedTouches[0];
+                const elementoBajoDedo = document.elementFromPoint(touch.clientX, touch.clientY);
+                const wrapperDestino = elementoBajoDedo ? elementoBajoDedo.closest('.preview-wrapper') : null;
+
+                if (wrapperDestino && wrapperDestino.dataset.index !== undefined) {
+                    const toIndex = parseInt(wrapperDestino.dataset.index);
+                    reordenarFotos(draggingIndex, toIndex);
+                }
+            });
+
+            // --- EVENTOS PARA PC (MOUSE) ---
+            div.setAttribute('draggable', 'true');
+            div.ondragstart = () => { draggingIndex = index; div.classList.add('sortable-ghost'); };
+            div.ondragover = (e) => e.preventDefault();
+            div.ondrop = () => reordenarFotos(draggingIndex, index);
+            div.ondragend = () => div.classList.remove('sortable-ghost');
 
             div.innerHTML = `
                 <img src="${e.target.result}" class="img-preview-item">
@@ -911,14 +933,15 @@ function actualizarVistaPrevia() {
         reader.readAsDataURL(file);
     });
 }
-function reordenarFotos(fromIndex, toIndex) {
-    if (fromIndex === toIndex) return;
 
-    // Cortamos la foto de su posición original y la metemos en la nueva
+function reordenarFotos(fromIndex, toIndex) {
+    if (fromIndex === null || fromIndex === toIndex) return;
+
+    // Movemos la foto en el array
     const fotoMovida = listaFotosTemporal.splice(fromIndex, 1)[0];
     listaFotosTemporal.splice(toIndex, 0, fotoMovida);
 
-    // Refrescamos la vista para ver el nuevo orden
+    draggingIndex = null;
     actualizarVistaPrevia();
 }
 
