@@ -1003,20 +1003,32 @@ function actualizarVistaPrevia() {
                 div.classList.add('sortable-ghost');
             }, {passive: true});
 
-            div.addEventListener('touchend', (e) => {
+           div.addEventListener('touchend', (e) => {
+                // 1. Quitamos el efecto visual
                 div.classList.remove('sortable-ghost');
+                
+                // 2. EL TRUCO NINJA: Escondemos la foto un milisegundo
+                div.style.visibility = 'hidden'; 
+                
+                // 3. Leemos qué elemento está exactamente debajo del dedo
                 const touch = e.changedTouches[0];
-                // Buscamos qué elemento hay debajo del dedo al soltar
                 const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // 4. Volvemos a mostrar la foto al instante (ni te darás cuenta)
+                div.style.visibility = 'visible'; 
+
+                // 5. Buscamos si soltamos sobre otra foto válida
                 const target = el ? el.closest('.preview-wrapper') : null;
 
                 if (target && target.dataset.index !== undefined) {
                     const toIndex = parseInt(target.dataset.index);
-                    if (draggingIndex !== toIndex) {
-                        // REORDENAR ARRAY REAL
+                    
+                    // Si la soltamos en un lugar diferente al que estaba...
+                    if (draggingIndex !== null && draggingIndex !== toIndex) {
+                        // Movemos la foto en el orden real
                         const elemento = listaFotosTemporal.splice(draggingIndex, 1)[0];
                         listaFotosTemporal.splice(toIndex, 0, elemento);
-                        actualizarVistaPrevia();
+                        actualizarVistaPrevia(); // Refrescamos la pantalla
                     }
                 }
                 draggingIndex = null;
