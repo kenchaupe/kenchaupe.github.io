@@ -988,53 +988,53 @@ function actualizarVistaPrevia() {
     const contenedor = document.getElementById('preview-container');
     contenedor.innerHTML = ''; 
     
+    // Recorremos las fotos en orden estricto
     listaFotosTemporal.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const div = document.createElement('div');
-            div.classList.add('preview-wrapper');
-            
-            // Si tocaste esta foto, la pintamos de azul para avisarte
-            if (fotoSeleccionadaParaCambio === index) {
-                div.classList.add('seleccionada-para-cambio');
-            }
-
-            // --- LÓGICA DE TOQUE (Tap-to-Swap) ---
-            div.onclick = () => {
-                if (fotoSeleccionadaParaCambio === null) {
-                    // Seleccionamos la primera foto
-                    fotoSeleccionadaParaCambio = index;
-                    actualizarVistaPrevia(); 
-                } else {
-                    // Tocamos la segunda foto: ¡Hacemos el cambio!
-                    if (fotoSeleccionadaParaCambio !== index) {
-                        const temp = listaFotosTemporal[fotoSeleccionadaParaCambio];
-                        listaFotosTemporal[fotoSeleccionadaParaCambio] = listaFotosTemporal[index];
-                        listaFotosTemporal[index] = temp;
-                    }
-                    // Soltamos la selección
-                    fotoSeleccionadaParaCambio = null;
-                    actualizarVistaPrevia(); 
-                }
-            };
-
-            div.innerHTML = `
-                <img src="${e.target.result}" class="img-preview-item" style="pointer-events: none;">
-                ${index === 0 ? '<div class="badge-portada">⭐ PORTADA</div>' : ''}
-                <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); quitarFoto(${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            contenedor.appendChild(div);
+        const div = document.createElement('div');
+        div.classList.add('preview-wrapper');
+        
+        // Si tocaste esta foto, la pintamos de azul para avisarte
+        if (fotoSeleccionadaParaCambio === index) {
+            div.classList.add('seleccionada-para-cambio');
         }
-        reader.readAsDataURL(file);
+
+        // --- LÓGICA DE TOQUE (Tap-to-Swap) ---
+        div.onclick = () => {
+            if (fotoSeleccionadaParaCambio === null) {
+                // Seleccionamos la primera foto
+                fotoSeleccionadaParaCambio = index;
+                actualizarVistaPrevia(); 
+            } else {
+                // Tocamos la segunda foto: ¡Hacemos el cambio!
+                if (fotoSeleccionadaParaCambio !== index) {
+                    const temp = listaFotosTemporal[fotoSeleccionadaParaCambio];
+                    listaFotosTemporal[fotoSeleccionadaParaCambio] = listaFotosTemporal[index];
+                    listaFotosTemporal[index] = temp;
+                }
+                // Soltamos la selección
+                fotoSeleccionadaParaCambio = null;
+                actualizarVistaPrevia(); 
+            }
+        };
+
+        // LA MAGIA AQUÍ: Creamos una URL instantánea en lugar de leer el archivo lento
+        const imageUrl = URL.createObjectURL(file);
+
+        div.innerHTML = `
+            <img src="${imageUrl}" class="img-preview-item" style="pointer-events: none;">
+            ${index === 0 ? '<div class="badge-portada">⭐ PORTADA</div>' : ''}
+            <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); quitarFoto(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        contenedor.appendChild(div); // Se agrega en el orden EXACTO siempre
     });
 }
 
-// Función para eliminar fotos si te equivocas (faltaba en tu código)
+// Función para eliminar fotos si te equivocas
 function quitarFoto(index) {
     listaFotosTemporal.splice(index, 1);
-    if (fotoSeleccionadaParaCambio === index) fotoSeleccionadaParaCambio = null; // Limpia si borras la seleccionada
+    if (fotoSeleccionadaParaCambio === index) fotoSeleccionadaParaCambio = null; 
     actualizarVistaPrevia();
 }
 
