@@ -147,12 +147,13 @@
         }
 
         /* Miniaturas de vista previa */
+/* Miniaturas de vista previa (Corregido) */
 .img-preview-item {
     width: 70px;
     height: 70px;
     object-fit: cover;
     border-radius: 8px;
-    border: 2px solid #007bff;
+    border: 1px solid #ddd; /* Borde gris suave por defecto */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     animation: zoomIn 0.2s ease;
 }
@@ -231,28 +232,6 @@
 .sortable-ghost {
     opacity: 0.4;
     transform: scale(0.8);
-}
-/* Etiqueta de Foto Principal */
-.preview-wrapper:first-child::after {
-    content: "PORTADA";
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    background: #D4AF37; /* Dorado */
-    color: black;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    z-index: 5;
-}
-
-/* Efecto visual al mover en celu */
-.sortable-ghost {
-    opacity: 0.3;
-    transform: scale(0.9);
-    border: 2px solid #D4AF37;
 }
 @keyframes zoomIn {
     from { transform: scale(0.5); opacity: 0; }
@@ -993,6 +972,16 @@ async function subirArchivoDirecto(input, idDestino) {
     cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]);
 }
 
+// 4. Lógica de vista previa (SIN CAMBIOS)
+let listaFotosTemporal = []; 
+
+function manejarSeleccionFotos(input) {
+    const nuevosArchivos = Array.from(input.files);
+    listaFotosTemporal = [...listaFotosTemporal, ...nuevosArchivos];
+    actualizarVistaPrevia();
+    input.value = ""; 
+}
+
 let fotoSeleccionadaParaCambio = null; // Memoria para saber qué foto tocaste
 
 function actualizarVistaPrevia() {
@@ -1005,32 +994,30 @@ function actualizarVistaPrevia() {
             const div = document.createElement('div');
             div.classList.add('preview-wrapper');
             
-            // Si esta es la foto que tocaste primero, le ponemos el borde azul
+            // Si tocaste esta foto, la pintamos de azul para avisarte
             if (fotoSeleccionadaParaCambio === index) {
                 div.classList.add('seleccionada-para-cambio');
             }
 
-            // --- LÓGICA DE TOQUE (Toca una, Toca otra) ---
+            // --- LÓGICA DE TOQUE (Tap-to-Swap) ---
             div.onclick = () => {
                 if (fotoSeleccionadaParaCambio === null) {
-                    // Paso 1: Tocas la primera foto (se selecciona)
+                    // Seleccionamos la primera foto
                     fotoSeleccionadaParaCambio = index;
-                    actualizarVistaPrevia(); // Refresca para mostrar el borde azul
+                    actualizarVistaPrevia(); 
                 } else {
-                    // Paso 2: Tocas el destino
+                    // Tocamos la segunda foto: ¡Hacemos el cambio!
                     if (fotoSeleccionadaParaCambio !== index) {
-                        // Magia: Intercambiamos las posiciones en el array
                         const temp = listaFotosTemporal[fotoSeleccionadaParaCambio];
                         listaFotosTemporal[fotoSeleccionadaParaCambio] = listaFotosTemporal[index];
                         listaFotosTemporal[index] = temp;
                     }
                     // Soltamos la selección
                     fotoSeleccionadaParaCambio = null;
-                    actualizarVistaPrevia(); // Refresca con el nuevo orden
+                    actualizarVistaPrevia(); 
                 }
             };
 
-            // Dibujamos la imagen, la etiqueta de portada y el botón borrar
             div.innerHTML = `
                 <img src="${e.target.result}" class="img-preview-item" style="pointer-events: none;">
                 ${index === 0 ? '<div class="badge-portada">⭐ PORTADA</div>' : ''}
@@ -1044,6 +1031,12 @@ function actualizarVistaPrevia() {
     });
 }
 
+// Función para eliminar fotos si te equivocas (faltaba en tu código)
+function quitarFoto(index) {
+    listaFotosTemporal.splice(index, 1);
+    if (fotoSeleccionadaParaCambio === index) fotoSeleccionadaParaCambio = null; // Limpia si borras la seleccionada
+    actualizarVistaPrevia();
+}
 
      // --- LÓGICA DE LA RULETA (ADMIN) ---
         async function cargarPremiosRuleta() {
