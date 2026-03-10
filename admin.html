@@ -993,16 +993,6 @@ async function subirArchivoDirecto(input, idDestino) {
     cambiarPestana('vista-inventario', document.querySelectorAll('.tab-btn')[0]);
 }
 
-// 4. Lógica de vista previa (SIN CAMBIOS)
-let listaFotosTemporal = []; 
-
-function manejarSeleccionFotos(input) {
-    const nuevosArchivos = Array.from(input.files);
-    listaFotosTemporal = [...listaFotosTemporal, ...nuevosArchivos];
-    actualizarVistaPrevia();
-    input.value = ""; 
-}
-
 let fotoSeleccionadaParaCambio = null; // Memoria para saber qué foto tocaste
 
 function actualizarVistaPrevia() {
@@ -1053,6 +1043,7 @@ function actualizarVistaPrevia() {
         reader.readAsDataURL(file);
     });
 }
+
 
      // --- LÓGICA DE LA RULETA (ADMIN) ---
         async function cargarPremiosRuleta() {
