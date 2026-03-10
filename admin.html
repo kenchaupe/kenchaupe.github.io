@@ -198,11 +198,31 @@
 /* Estilo para mover fotos en celular */
 .preview-wrapper {
     position: relative;
-    touch-action: none; /* Bloquea el scroll del celu mientras arrastras la foto */
-    user-select: none;
-    cursor: grab;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    border-radius: 8px;
 }
-
+.seleccionada-para-cambio {
+    border: 3px solid #007bff !important;
+    transform: scale(0.92);
+    opacity: 0.8;
+    box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+}
+/* Etiqueta clara para la foto principal */
+.badge-portada {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #D4AF37;
+    color: black;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 4px;
+    z-index: 5;
+    pointer-events: none; /* Evita que el toque se trabe aquí */
+}
 .preview-wrapper img {
     pointer-events: none; /* Evita que el navegador intente "guardar imagen" al tocarla */
 }
@@ -983,7 +1003,7 @@ function manejarSeleccionFotos(input) {
     input.value = ""; 
 }
 
-let draggingIndex = null;
+let fotoSeleccionadaParaCambio = null; // Memoria para saber qué foto tocaste
 
 function actualizarVistaPrevia() {
     const contenedor = document.getElementById('preview-container');
@@ -994,59 +1014,37 @@ function actualizarVistaPrevia() {
         reader.onload = function(e) {
             const div = document.createElement('div');
             div.classList.add('preview-wrapper');
-            div.dataset.index = index;
-            div.setAttribute('draggable', 'true');
+            
+            // Si esta es la foto que tocaste primero, le ponemos el borde azul
+            if (fotoSeleccionadaParaCambio === index) {
+                div.classList.add('seleccionada-para-cambio');
+            }
 
-            // --- LÓGICA PARA CELULAR (TOUCH) ---
-            div.addEventListener('touchstart', (e) => {
-                draggingIndex = index;
-                div.classList.add('sortable-ghost');
-            }, {passive: true});
-
-           div.addEventListener('touchend', (e) => {
-                // 1. Quitamos el efecto visual
-                div.classList.remove('sortable-ghost');
-                
-                // 2. EL TRUCO NINJA: Escondemos la foto un milisegundo
-                div.style.visibility = 'hidden'; 
-                
-                // 3. Leemos qué elemento está exactamente debajo del dedo
-                const touch = e.changedTouches[0];
-                const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                
-                // 4. Volvemos a mostrar la foto al instante (ni te darás cuenta)
-                div.style.visibility = 'visible'; 
-
-                // 5. Buscamos si soltamos sobre otra foto válida
-                const target = el ? el.closest('.preview-wrapper') : null;
-
-                if (target && target.dataset.index !== undefined) {
-                    const toIndex = parseInt(target.dataset.index);
-                    
-                    // Si la soltamos en un lugar diferente al que estaba...
-                    if (draggingIndex !== null && draggingIndex !== toIndex) {
-                        // Movemos la foto en el orden real
-                        const elemento = listaFotosTemporal.splice(draggingIndex, 1)[0];
-                        listaFotosTemporal.splice(toIndex, 0, elemento);
-                        actualizarVistaPrevia(); // Refrescamos la pantalla
+            // --- LÓGICA DE TOQUE (Toca una, Toca otra) ---
+            div.onclick = () => {
+                if (fotoSeleccionadaParaCambio === null) {
+                    // Paso 1: Tocas la primera foto (se selecciona)
+                    fotoSeleccionadaParaCambio = index;
+                    actualizarVistaPrevia(); // Refresca para mostrar el borde azul
+                } else {
+                    // Paso 2: Tocas el destino
+                    if (fotoSeleccionadaParaCambio !== index) {
+                        // Magia: Intercambiamos las posiciones en el array
+                        const temp = listaFotosTemporal[fotoSeleccionadaParaCambio];
+                        listaFotosTemporal[fotoSeleccionadaParaCambio] = listaFotosTemporal[index];
+                        listaFotosTemporal[index] = temp;
                     }
+                    // Soltamos la selección
+                    fotoSeleccionadaParaCambio = null;
+                    actualizarVistaPrevia(); // Refresca con el nuevo orden
                 }
-                draggingIndex = null;
-            });
-
-            // --- LÓGICA PARA PC (MOUSE) ---
-            div.ondragstart = () => { draggingIndex = index; div.classList.add('sortable-ghost'); };
-            div.ondragover = (ev) => ev.preventDefault();
-            div.ondrop = () => {
-                const elemento = listaFotosTemporal.splice(draggingIndex, 1)[0];
-                listaFotosTemporal.splice(index, 0, elemento);
-                actualizarVistaPrevia();
             };
-            div.ondragend = () => div.classList.remove('sortable-ghost');
 
+            // Dibujamos la imagen, la etiqueta de portada y el botón borrar
             div.innerHTML = `
                 <img src="${e.target.result}" class="img-preview-item" style="pointer-events: none;">
-                <button type="button" class="btn-remove-img" onclick="quitarFoto(${index})">
+                ${index === 0 ? '<div class="badge-portada">⭐ PORTADA</div>' : ''}
+                <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); quitarFoto(${index})">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -1055,7 +1053,6 @@ function actualizarVistaPrevia() {
         reader.readAsDataURL(file);
     });
 }
-
 
      // --- LÓGICA DE LA RULETA (ADMIN) ---
         async function cargarPremiosRuleta() {
