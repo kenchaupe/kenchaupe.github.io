@@ -909,18 +909,20 @@ async function subirArchivoDirecto(input, idDestino) {
 
             const imgInput = document.getElementById('prod-img');
             
-            // --- Subir fotos desde la LISTA TEMPORAL (Esto sigue igual) ---
-            if (listaFotosTemporal.length > 0) {
-                console.log("Subiendo imágenes...");
-                let urls = [];
-                for (let i = 0; i < listaFotosTemporal.length; i++) {
-                    const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
-                    if (url) urls.push(url);
-                }
-                imgInput.value = urls.join(', ');
+            // --- SUBIDA DE FOTOS RESPETANDO EL ORDEN ---
+    if (listaFotosTemporal.length > 0) {
+        let urls = [];
+        // Usamos un bucle for tradicional para garantizar que se respete el índice
+        for (let i = 0; i < listaFotosTemporal.length; i++) {
+            const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
+            if (url) {
+                urls.push(url);
+                console.log(`Foto ${i+1} subida con éxito`);
             }
-            
-            // ... (el resto de tu código de variantes y guardado sigue igual debajo)
+        }
+        // Guardamos las URLs separadas por coma en el input oculto
+        imgInput.value = urls.join(', ');
+    }
 
     const inputsVariantes = document.querySelectorAll('.input-variante-stock');
     if (inputsVariantes.length === 0) {
@@ -1042,20 +1044,6 @@ function actualizarVistaPrevia() {
     });
 }
 
-// --- SUBIDA DE FOTOS RESPETANDO EL ORDEN ---
-    if (listaFotosTemporal.length > 0) {
-        let urls = [];
-        // Usamos un bucle for tradicional para garantizar que se respete el índice
-        for (let i = 0; i < listaFotosTemporal.length; i++) {
-            const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
-            if (url) {
-                urls.push(url);
-                console.log(`Foto ${i+1} subida con éxito`);
-            }
-        }
-        // Guardamos las URLs separadas por coma en el input oculto
-        imgInput.value = urls.join(', ');
-    }
 
      // --- LÓGICA DE LA RULETA (ADMIN) ---
         async function cargarPremiosRuleta() {
