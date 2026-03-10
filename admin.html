@@ -212,6 +212,28 @@
     opacity: 0.4;
     transform: scale(0.8);
 }
+/* Etiqueta de Foto Principal */
+.preview-wrapper:first-child::after {
+    content: "PORTADA";
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #D4AF37; /* Dorado */
+    color: black;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 5;
+}
+
+/* Efecto visual al mover en celu */
+.sortable-ghost {
+    opacity: 0.3;
+    transform: scale(0.9);
+    border: 2px solid #D4AF37;
+}
 @keyframes zoomIn {
     from { transform: scale(0.5); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
@@ -971,8 +993,9 @@ function actualizarVistaPrevia() {
             const div = document.createElement('div');
             div.classList.add('preview-wrapper');
             div.dataset.index = index;
+            div.setAttribute('draggable', 'true');
 
-            // --- EVENTOS PARA CELULAR (TOUCH) ---
+            // --- LÓGICA PARA CELULAR (TOUCH) ---
             div.addEventListener('touchstart', (e) => {
                 draggingIndex = index;
                 div.classList.add('sortable-ghost');
@@ -980,27 +1003,35 @@ function actualizarVistaPrevia() {
 
             div.addEventListener('touchend', (e) => {
                 div.classList.remove('sortable-ghost');
-                
-                // Detectamos sobre qué foto soltaste el dedo
                 const touch = e.changedTouches[0];
-                const elementoBajoDedo = document.elementFromPoint(touch.clientX, touch.clientY);
-                const wrapperDestino = elementoBajoDedo ? elementoBajoDedo.closest('.preview-wrapper') : null;
+                // Buscamos qué elemento hay debajo del dedo al soltar
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                const target = el ? el.closest('.preview-wrapper') : null;
 
-                if (wrapperDestino && wrapperDestino.dataset.index !== undefined) {
-                    const toIndex = parseInt(wrapperDestino.dataset.index);
-                    reordenarFotos(draggingIndex, toIndex);
+                if (target && target.dataset.index !== undefined) {
+                    const toIndex = parseInt(target.dataset.index);
+                    if (draggingIndex !== toIndex) {
+                        // REORDENAR ARRAY REAL
+                        const elemento = listaFotosTemporal.splice(draggingIndex, 1)[0];
+                        listaFotosTemporal.splice(toIndex, 0, elemento);
+                        actualizarVistaPrevia();
+                    }
                 }
+                draggingIndex = null;
             });
 
-            // --- EVENTOS PARA PC (MOUSE) ---
-            div.setAttribute('draggable', 'true');
+            // --- LÓGICA PARA PC (MOUSE) ---
             div.ondragstart = () => { draggingIndex = index; div.classList.add('sortable-ghost'); };
-            div.ondragover = (e) => e.preventDefault();
-            div.ondrop = () => reordenarFotos(draggingIndex, index);
+            div.ondragover = (ev) => ev.preventDefault();
+            div.ondrop = () => {
+                const elemento = listaFotosTemporal.splice(draggingIndex, 1)[0];
+                listaFotosTemporal.splice(index, 0, elemento);
+                actualizarVistaPrevia();
+            };
             div.ondragend = () => div.classList.remove('sortable-ghost');
 
             div.innerHTML = `
-                <img src="${e.target.result}" class="img-preview-item">
+                <img src="${e.target.result}" class="img-preview-item" style="pointer-events: none;">
                 <button type="button" class="btn-remove-img" onclick="quitarFoto(${index})">
                     <i class="fas fa-times"></i>
                 </button>
@@ -1011,21 +1042,21 @@ function actualizarVistaPrevia() {
     });
 }
 
-function reordenarFotos(fromIndex, toIndex) {
-    if (fromIndex === null || fromIndex === toIndex) return;
+// --- SUBIDA DE FOTOS RESPETANDO EL ORDEN ---
+    if (listaFotosTemporal.length > 0) {
+        let urls = [];
+        // Usamos un bucle for tradicional para garantizar que se respete el índice
+        for (let i = 0; i < listaFotosTemporal.length; i++) {
+            const url = await subirImagenASupabase(listaFotosTemporal[i], 'inventario');
+            if (url) {
+                urls.push(url);
+                console.log(`Foto ${i+1} subida con éxito`);
+            }
+        }
+        // Guardamos las URLs separadas por coma en el input oculto
+        imgInput.value = urls.join(', ');
+    }
 
-    // Movemos la foto en el array
-    const fotoMovida = listaFotosTemporal.splice(fromIndex, 1)[0];
-    listaFotosTemporal.splice(toIndex, 0, fotoMovida);
-
-    draggingIndex = null;
-    actualizarVistaPrevia();
-}
-
-function quitarFoto(index) {
-    listaFotosTemporal.splice(index, 1); 
-    actualizarVistaPrevia(); 
-}
      // --- LÓGICA DE LA RULETA (ADMIN) ---
         async function cargarPremiosRuleta() {
             const { data, error } = await _supabase.from('premios_ruleta').select('*').order('created_at', { ascending: false });
