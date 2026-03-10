@@ -975,11 +975,76 @@ async function subirArchivoDirecto(input, idDestino) {
 // 4. Lógica de vista previa (SIN CAMBIOS)
 let listaFotosTemporal = []; 
 
-function manejarSeleccionFotos(input) {
-    const nuevosArchivos = Array.from(input.files);
-    listaFotosTemporal = [...listaFotosTemporal, ...nuevosArchivos];
+// --- OPTIMIZADOR HD DE IMÁGENES ---
+async function optimizarImagen(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Tamaño ideal HD para e-commerce (muy nítido, carga rápido)
+                const MAX_WIDTH = 1080;
+                const MAX_HEIGHT = 1080;
+                let width = img.width;
+                let height = img.height;
+
+                // Calculamos la proporción para no deformar la ropa
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height *= MAX_WIDTH / width));
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width = Math.round((width *= MAX_HEIGHT / height));
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Transformamos a JPEG con calidad 85% (Balance perfecto HD/Peso)
+                canvas.toBlob((blob) => {
+                    const nuevoArchivo = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(nuevoArchivo);
+                }, 'image/jpeg', 0.85); 
+            };
+        };
+    });
+}
+
+// --- MANEJAR Y OPTIMIZAR FOTOS AL SELECCIONAR ---
+async function manejarSeleccionFotos(input) {
+    const archivos = Array.from(input.files);
+    if (archivos.length === 0) return;
+
+    // Cambiamos el botón para avisarte que está trabajando
+    const labelLabel = input.previousElementSibling;
+    const textoOriginal = labelLabel.innerHTML;
+    labelLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizando HD...';
+    labelLabel.style.pointerEvents = 'none'; // Evita que toques dos veces
+
+    // Optimizamos una por una antes de meterlas a la lista
+    for (let i = 0; i < archivos.length; i++) {
+        const archivoOptimizado = await optimizarImagen(archivos[i]);
+        listaFotosTemporal.push(archivoOptimizado);
+    }
+
     actualizarVistaPrevia();
+    
+    // Restauramos el botón a la normalidad
     input.value = ""; 
+    labelLabel.innerHTML = textoOriginal;
+    labelLabel.style.pointerEvents = 'auto';
 }
 
 let fotoSeleccionadaParaCambio = null; // Memoria para saber qué foto tocaste
@@ -1022,7 +1087,7 @@ function actualizarVistaPrevia() {
 
         div.innerHTML = `
             <img src="${imageUrl}" class="img-preview-item" style="pointer-events: none;">
-            ${index === 0 ? '<div class="badge-portada">⭐ PORTADA</div>' : ''}
+            ${index === 0 ? '<div class="badge-portada">PORTADA</div>' : ''}
             <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); quitarFoto(${index})">
                 <i class="fas fa-times"></i>
             </button>
