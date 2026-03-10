@@ -1235,37 +1235,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- LÓGICA DE REGALO PARA CLIENTES RECURRENTES ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Le damos 3 segundos al cliente para que vea la página antes de mostrarle la sorpresa
-        setTimeout(verificarClienteFrecuente, 3000); 
-    });
-
-    function verificarClienteFrecuente() {
-        // Leemos la memoria del navegador
-        let visitas = parseInt(localStorage.getItem('gruken_visitas')) || 0;
-        const promoVistaHoy = localStorage.getItem('gruken_promo_fecha');
-        const fechaDeHoy = new Date().toLocaleDateString(); // Ej: "10/03/2026"
-
-        // Sumamos 1 a las visitas siempre que entra
-        visitas++;
-        localStorage.setItem('gruken_visitas', visitas);
-
-        // REGLA 1: Si es su primera visita, NO mostramos nada (no molestamos).
-        if (visitas === 1) return;
-
-        // REGLA 2: Si ya vio la promo hoy mismo, NO la mostramos de nuevo.
-        if (promoVistaHoy === fechaDeHoy) return;
-
-        // Si pasó las reglas (es cliente recurrente y no la vio hoy), ¡Mostramos el regalo!
-        const popup = document.getElementById('popup-fidelidad');
-        if (popup) {
-            popup.style.display = 'flex';
-            // Guardamos la fecha para que no lo vuelva a ver hasta mañana
-            localStorage.setItem('gruken_promo_fecha', fechaDeHoy);
-        }
-    }
-
-    function cerrarPopupFidelidad() {
-        document.getElementById('popup-fidelidad').style.display = 'none';
-    }
