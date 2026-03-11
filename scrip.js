@@ -429,12 +429,18 @@ async function inicializarStockTienda() {
                         htmlImagenes = `<img src="${imagenesArray[0].trim()}" alt="${prodBD.nombre}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;">`;
                     }
 
+                    // ---> MAGIA MATEMÁTICA (Congelada por producto) <---
+                    let idValor = String(prodBD.id).charCodeAt(0) + String(prodBD.nombre).length;
+                    let ventasFijas = ((idValor * 73) % 3350) + 150;
+                    let textoVentas = ventasFijas >= 1000 ? (ventasFijas / 1000).toFixed(1).replace('.0', '') + 'k' : ventasFijas;
+                    let textoUltimas = (idValor % 3) === 0 ? '<div style="color: #e63946; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⏳ Últimas unidades</div>' : '';
+
                     // 2. DIBUJAMOS LA TARJETA
                     nuevaTarjeta.innerHTML = `
                         ${htmlImagenes}
                         <div class="product-txt">
                             <h3>${prodBD.nombre}</h3>
-                            ${generarResenasAleatorias()}
+                            ${generarResenasAleatorias(prodBD.id)}
                             
                             <div class="selector-contenedor">
                                 <span class="label-titulo">Cantidad:</span>
@@ -447,8 +453,10 @@ async function inicializarStockTienda() {
                             
                             <div class="precio-contenedor">
                                 <span class="precio">$${(prodBD.precio || 0).toLocaleString('es-AR')}</span>
-                                <span class="cantidad-ventas"> 🔥 ¡Nuevo!</span>
+                                <span class="cantidad-ventas"> 🔥 +${textoVentas} ventas</span>
                             </div>
+                            
+                            ${textoUltimas}
                             
                             <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="${prodBD.id}">Agregar al carrito</a>
                         </div>
@@ -773,32 +781,74 @@ async function aplicarConfiguracionWeb() {
         if (linkYouTube) linkYouTube.href = data.youtube;
     }
 }
-function generarResenasAleatorias() {
-    // Listas de datos para combinar
-    const nombres = ["Jessica M.", "Juan G.", "Pedro S.", "Maria L.", "Ana G.", "Juan P.", "Lucía M.", "Carlos R.", "Marta S.", "Roberto F.", "Camila T.", "Gastón B."];
+function generarResenasAleatorias(idProducto) {
+    // --- MAGIA MATEMÁTICA DEFINITIVA (Dispersión extrema) ---
+    let valorBase = 0;
+    let textoId = String(idProducto || "gruken");
+    
+    for (let i = 0; i < textoId.length; i++) {
+        // Sumamos el valor de cada letra/número
+        valorBase += textoId.charCodeAt(i) * (i + 1);
+    }
+    // Multiplicamos por un número primo grande para separar IDs consecutivos (ej: el 1 del 2)
+    valorBase = valorBase * 8743; 
+    
+    let contadorAzar = 0;
+    function azarFijo() {
+        contadorAzar++;
+        // Usamos trigonometría: salta de forma caótica pero siempre da el mismo resultado para el mismo ID
+        let x = Math.sin(valorBase + contadorAzar) * 10000;
+        return x - Math.floor(x);
+    }
+    // --------------------------------------------------------
+
+    // Listas de datos para combinar (TU DISEÑO INTACTO)
+   const nombres = [
+        // Tus nombres anteriores + algunos nuevos
+        "Jessica M.", "Juan G.", "Pedro S.", "Maria L.", "Ana G.", "Juan P.", 
+        "Lucía M.", "Carlos R.", "Marta S.", "Roberto F.", "Camila T.", "Gastón B.",
+        "Sofía R.", "Diego T.", "Valentina C.", "Martín L.", "Florencia B.", 
+        "Eduardo M.", "Natalia R.", "Sergio L.", "Mariana V.", "Pablo D.",
+        "Andrea C.", "Javier F.", "Laura P.", "Gonzalo S.", "Silvia N."
+    ];
     const comentarios = [
+        // Reseñas clásicas y entusiastas
         "Excelente tela.", 
         "Me encantó el talle.", 
         "Llegó muy rápido.", 
         "Muy buena atención.", 
         "Excelente calidad, muy recomendado.", 
-        "El envío fue muy rápido.", 
         "Me encantó el producto, talle perfecto.", 
         "La tela es de primera.", 
-        "Atención al cliente de 10.", 
-        "Volveré a comprar sin duda."
+        "Volveré a comprar sin duda.",
+        "El algodón es súper suave, ideal para mi bebé.",
+        "Hermoso diseño, tal cual se ve en la foto.",
+        "Súper abrigadito para el invierno.",
+        "Muy prolijas las costuras y las terminaciones.",
+        
+        // --- NUEVAS: Reseñas Neutras y Directas ---
+        "Todo correcto, llegó a tiempo.",
+        "El producto es tal cual la descripción.",
+        "Buena relación calidad-precio.",
+        "Cumple con lo esperado.",
+        "Llegó bien embalado y en condiciones.",
+        "El pedido llegó dentro del plazo establecido.",
+        "Es exactamente lo que pedí.",
+        "Talle correcto, sin problemas.",
+        "Todo en orden con la compra.",
+        "Satisfecha con el producto."
     ];
 
-    // Genera una puntuación aleatoria entre 4.7 y 5.0
-    const puntuacion = (Math.random() * (5.0 - 4.7) + 4.7).toFixed(1);
+    // VOLVEMOS A TU RANGO ESTRELLA: Solo entre 4.7 y 5.0
+    const puntuacion = (azarFijo() * (5.0 - 4.7) + 4.7).toFixed(1);
     
-    // Elige entre 4 y 6 reseñas aleatorias por producto
-    const cantResenas = Math.floor(Math.random() * 3) + 4; 
+    // Entre 4 y 6 reseñas por prenda
+    const cantResenas = Math.floor(azarFijo() * 3) + 4; 
     let listaHTML = '';
 
     for (let i = 0; i < cantResenas; i++) {
-        const nom = nombres[Math.floor(Math.random() * nombres.length)];
-        const com = comentarios[Math.floor(Math.random() * comentarios.length)];
+        const nom = nombres[Math.floor(azarFijo() * nombres.length)];
+        const com = comentarios[Math.floor(azarFijo() * comentarios.length)];
         listaHTML += `<p>⭐ "${com}" - <strong>${nom}</strong></p>`;
     }
 
