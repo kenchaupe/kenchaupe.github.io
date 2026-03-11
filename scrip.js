@@ -463,6 +463,7 @@ async function inicializarStockTienda() {
                     `;
                     
                     contenedorPrincipal.appendChild(nuevaTarjeta);
+                    
 
                     // 3. ACTIVAMOS EL SLIDER SI HAY MÁS DE 1 IMAGEN
                     if (imagenesArray.length > 1) {
@@ -662,6 +663,11 @@ async function inicializarStockTienda() {
                 btn.style.backgroundColor = sinStock ? "#ff0000" : "";
             }
         });
+        // ==========================================
+        // 🚀 ¡AQUÍ PEGA LA LÍNEA!
+        // ==========================================
+        iniciarNotificacionesVenta(data); 
+        // ==========================================
 
     } catch (error) {
         console.error("Error:", error);
@@ -1285,3 +1291,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function iniciarNotificacionesVenta(productos) {
+    if (!productos || productos.length === 0) return;
+
+    // 1. Creamos el elemento en el HTML
+    const divNotif = document.createElement('div');
+    divNotif.className = 'notificacion-compra';
+    document.body.appendChild(divNotif);
+
+    const nombres = ["Florencia", "Matias", "Agustina", "Juan", "Romina", "Lucas", "Valeria", "Gaston", "Paula", "Diego"];
+    const ciudades = ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "Salta", "Neuquén"];
+
+    // 2. Función para mostrar una notificación
+    const mostrarSiguienteVenta = () => {
+        // Elegimos datos al azar
+        const producto = productos[Math.floor(Math.random() * productos.length)];
+        const nombre = nombres[Math.floor(Math.random() * nombres.length)];
+        const ciudad = ciudades[Math.floor(Math.random() * ciudades.length)];
+        const tiempo = Math.floor(Math.random() * 50) + 10; // Entre 10 y 60 min
+
+        // Armamos el contenido
+       // Armamos el contenido ultra moderno
+        divNotif.innerHTML = `
+            <img src="${producto.imagen.split(',')[0]}" class="img-notif">
+            <div class="texto-notif">
+                <strong>${nombre}</strong> compró <strong>${producto.nombre}</strong><br>
+                <span class="tiempo-notif">
+                    <span class="punto-vivo"></span> Hace ${tiempo} min. desde ${ciudad}
+                </span>
+            </div>
+        `;
+
+        // Aparece
+        divNotif.classList.add('activa');
+
+        // Desaparece después de 6 segundos
+        setTimeout(() => {
+            divNotif.classList.remove('activa');
+        }, 6000);
+
+        // Programamos la siguiente (entre 15 y 30 segundos después)
+        const siguienteCita = Math.floor(Math.random() * 15000) + 15000;
+        setTimeout(mostrarSiguienteVenta, siguienteCita);
+    };
+
+    // Iniciamos la primera después de 8 segundos de entrar a la web
+    setTimeout(mostrarSiguienteVenta, 8000);
+}
