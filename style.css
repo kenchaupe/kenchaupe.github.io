@@ -1797,84 +1797,25 @@ th, td {
     }
 }
 
-/* Notificación de Compra Real */
-.notificacion-compra {
-    position: fixed;
-    bottom: 20px;
-    left: -400px; /* Empieza fuera de la pantalla */
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    padding: 12px 18px;
-    z-index: 9999;
-    transition: all 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    border-left: 5px solid #2e7d32; /* Un verde suave de confianza */
-    max-width: 320px;
-}
-
-/* Notificación de Compra - ESTILO GLASS (Vidriado) */
-.notificacion-compra {
-    position: fixed;
-    bottom: 20px;
-    left: -400px; /* Empieza fuera */
-    
-    /* --- AQUÍ ESTÁ LA MAGIA DEL GLASS --- */
-    background: rgba(255, 255, 255, 0.3); /* Fondo blanco muy transparente */
-    backdrop-filter: blur(10px); /* Desenfoque del fondo (Efecto esmerilado) */
-    -webkit-backdrop-filter: blur(10px); /* Soporte para Safari */
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Borde sutil brillante */
-    /* ------------------------------------ */
-    
-    border-radius: 16px; /* Bordes más redondeados y modernos */
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); /* Sombra suave para dar profundidad */
-    display: flex;
-    align-items: center;
-    padding: 12px 18px;
-    z-index: 9999;
-    transition: all 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    border-left: 5px solid #2e7d32; /* Mantenemos la línea verde de confianza */
-    max-width: 320px;
-}
-
-/* Notificación de Compra - ESTILO MODERNO Y CONFIABLE */
-.notificacion-compra {
-    position: fixed;
-    bottom: 30px;
-    left: -450px; /* Empieza fuera */
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.12); /* Sombra elegante y profunda */
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    z-index: 9999;
-    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); /* Movimiento suave */
-    border: 1px solid #f0f0f0;
-    width: auto;
-    min-width: 280px;
-}
-
 /* Notificación de Compra - ESTILO PÍLDORA ULTRA MODERNO */
 .notificacion-compra {
     position: fixed;
-    bottom: 30px;
-    left: 30px;
+    bottom: 20px; /* Lo subimos para que quede por encima del logo de WhatsApp */
+    left: 8px; /* Más pegado al borde izquierdo de la pantalla */
+    
     background: #ffffff;
-    border-radius: 50px; /* Forma de píldora (totalmente redonda) */
-    padding: 8px 24px 8px 8px; /* Más espacio a la derecha, pegado a la izquierda */
+    border-radius: 50px; 
+    padding: 8px 24px 8px 8px; 
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0,0,0,0.04);
     display: flex;
     align-items: center;
-    gap: 14px; /* Separación exacta entre foto y texto */
+    gap: 14px; 
     z-index: 9999;
     
-    /* Animación moderna: Aparece de abajo hacia arriba rebotando */
     opacity: 0;
     transform: translateY(30px) scale(0.9);
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-    pointer-events: none; /* No molesta si el cliente pasa el mouse por ahí */
+    pointer-events: none; 
 }
 
 .notificacion-compra.activa {
@@ -1926,4 +1867,35 @@ th, td {
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(46, 125, 50, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+}
+
+/* Etiqueta de Últimas Unidades - Versión Nitidez Máxima */
+.btn-ultimas-unidades {
+    display: inline-block;
+    background-color: #ff0015; 
+    color: #ffffff !important; 
+    
+    /* MEJORAS DE NITIDEZ */
+    font-size: 11px; /* Un punto menos para que se vea más compacto y fino */
+    font-weight: 800; /* Extra negrita para que las letras no se "borren" */
+    text-transform: uppercase;
+    letter-spacing: 1.2px; /* Más espacio entre letras para que no se amontonen */
+    -webkit-font-smoothing: antialiased; /* Suavizado para Mac/iPhone */
+    -moz-osx-font-smoothing: grayscale; /* Suavizado para Firefox */
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2); /* Sombra mínima para separar la letra del fondo */
+    
+    padding: 6px 14px;
+    border-radius: 4px; /* Un poco más rectangular para estilo moderno */
+    margin-bottom: 12px;
+    box-shadow: 0 4px 8px rgba(230, 57, 70, 0.4);
+    border: none;
+    text-align: center;
+    width: fit-content;
+    animation: pulsoSuave 2s infinite;
+}
+
+@keyframes pulsoSuave {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
 }

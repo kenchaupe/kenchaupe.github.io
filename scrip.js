@@ -433,9 +433,10 @@ async function inicializarStockTienda() {
                     let idValor = String(prodBD.id).charCodeAt(0) + String(prodBD.nombre).length;
                     let ventasFijas = ((idValor * 73) % 3350) + 150;
                     let textoVentas = ventasFijas >= 1000 ? (ventasFijas / 1000).toFixed(1).replace('.0', '') + 'k' : ventasFijas;
-                    let textoUltimas = (idValor % 3) === 0 ? '<div style="color: #e63946; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⏳ Últimas unidades</div>' : '';
+                   // Antes era un <div> simple, ahora es nuestro botón rojo
+                    let textoUltimas = (idValor % 3) === 0 ? '<div class="btn-ultimas-unidades">ÚLTIMAS UNIDADES</div>' : '';
 
-                    // 2. DIBUJAMOS LA TARJETA
+                    // 2. DIBUJAMOS LA TARJETA (Versión limpia sin envío gratis)
                     nuevaTarjeta.innerHTML = `
                         ${htmlImagenes}
                         <div class="product-txt">
@@ -455,8 +456,10 @@ async function inicializarStockTienda() {
                                 <span class="precio">$${(prodBD.precio || 0).toLocaleString('es-AR')}</span>
                                 <span class="cantidad-ventas"> 🔥 +${textoVentas} ventas</span>
                             </div>
-                            
-                            ${textoUltimas}
+
+                            <div class="contenedor-urgencia" style="display: flex; justify-content: center; width: 100%; margin-top: 10px;">
+                                ${textoUltimas}
+                            </div>
                             
                             <a href="#" class="float1 pulse1 agregar-carrito btn-2" data-id="${prodBD.id}">Agregar al carrito</a>
                         </div>
@@ -865,7 +868,7 @@ function generarResenasAleatorias(idProducto) {
                     <i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i>
                     <span class="puntuacion">${puntuacion}</span>
                 </div>
-                <small>(Ver reseñas)</small>
+                <small>Calificaciones</small>
             </button>
             <div class="ventana-flotante-resenas">
                 <h4>Opiniones destacadas</h4>
@@ -1291,50 +1294,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+    let notificacionEnPantalla = false; // <-- El semáforo para evitar que se pisen
+
 function iniciarNotificacionesVenta(productos) {
     if (!productos || productos.length === 0) return;
 
-    // 1. Creamos el elemento en el HTML
+    // 1. Creamos el elemento en el HTML (solo una vez)
     const divNotif = document.createElement('div');
     divNotif.className = 'notificacion-compra';
     document.body.appendChild(divNotif);
 
-    const nombres = ["Florencia", "Matias", "Agustina", "Juan", "Romina", "Lucas", "Valeria", "Gaston", "Paula", "Diego"];
-    const ciudades = ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "Salta", "Neuquén"];
+    const nombres = [
+        "Florencia", "Matías", "Agustina", "Juan", "Romina", "Lucas", "Valeria", "Gastón", "Paula", "Diego",
+        "Camila", "Santiago", "Valentina", "Nicolás", "Sofía", "Martín", "Lucía", "Facundo", "Micaela", "Ignacio",
+        "Julieta", "Tomás", "Antonella", "Joaquín", "Martina", "Federico", "Bautista", "Carolina", "Emiliano", 
+        "Catalina", "Gonzalo", "Milagros", "Lautaro", "Guillermina", "Leandro", "Rocío", "Ezequiel", "Daniela"
+    ];
 
-    // 2. Función para mostrar una notificación
+    const ciudades = [
+        // --- BUENOS AIRES Y CABA (Mayor cantidad) ---
+        "CABA", "La Plata", "Mar del Plata", "Tandil", "Bahía Blanca", "Quilmes", "Lomas de Zamora", 
+        "Morón", "Avellaneda", "San Isidro", "Vicente López", "Lanús", "San Martín", "Pilar", "Tigre", 
+        "Zárate", "Campana", "Pergamino", "Junín", "Olavarría", "San Nicolás", "Ezeiza", "San Miguel",
+        "Ituzaingó", "Tres de Febrero", "San Justo", "Chivilcoy", "Necochea",
+        "Córdoba", "Rosario", "Mendoza", "Salta", "Neuquén", "San Miguel de Tucumán", "Santa Fe", 
+        "San Juan", "Resistencia", "Posadas", "San Salvador de Jujuy", "Corrientes", "Paraná", 
+        "Santiago del Estero", "Formosa", "Catamarca", "San Luis", "La Rioja", "Santa Rosa", 
+        "Rawson", "Viedma", "Ushuaia", "Río Gallegos", "Bariloche", "San Rafael", "Villa Carlos Paz", 
+        "Puerto Madryn", "Comodoro Rivadavia", "Concordia", "Gualeguaychú", "Trelew"
+    ];
+
     const mostrarSiguienteVenta = () => {
-        // Elegimos datos al azar
+        // --- VALIDACIÓN ANTI-CHOQUE ---
+        // Si ya hay una notificación visible, esperamos 5 segundos y volvemos a intentar
+        if (notificacionEnPantalla) {
+            setTimeout(mostrarSiguienteVenta, 5000);
+            return;
+        }
+
+        notificacionEnPantalla = true; // Bloqueamos el paso
+
         const producto = productos[Math.floor(Math.random() * productos.length)];
         const nombre = nombres[Math.floor(Math.random() * nombres.length)];
         const ciudad = ciudades[Math.floor(Math.random() * ciudades.length)];
-        const tiempo = Math.floor(Math.random() * 50) + 10; // Entre 10 y 60 min
+        
+        const minutos = Math.floor(Math.random() * 59) + 1;
+        const horas = Math.floor(Math.random() * 2) + 1;
+        const tiempoTexto = Math.random() > 0.6 ? `Hace ${horas} hora${horas > 1 ? 's' : ''}` : `Hace ${minutos} min.`;
 
-        // Armamos el contenido
-       // Armamos el contenido ultra moderno
         divNotif.innerHTML = `
             <img src="${producto.imagen.split(',')[0]}" class="img-notif">
             <div class="texto-notif">
                 <strong>${nombre}</strong> compró <strong>${producto.nombre}</strong><br>
                 <span class="tiempo-notif">
-                    <span class="punto-vivo"></span> Hace ${tiempo} min. desde ${ciudad}
+                    <span class="punto-vivo"></span> ${tiempoTexto} desde ${ciudad}
                 </span>
             </div>
         `;
 
-        // Aparece
+        // Aparece con la animación lenta que te gusta
         divNotif.classList.add('activa');
 
-        // Desaparece después de 6 segundos
+        // Se queda 7 segundos
         setTimeout(() => {
             divNotif.classList.remove('activa');
-        }, 6000);
+            
+            // Esperamos 1.5 segundos extra (después de que baje) para liberar el semáforo
+            setTimeout(() => {
+                notificacionEnPantalla = false; 
+            }, 1000);
 
-        // Programamos la siguiente (entre 15 y 30 segundos después)
-        const siguienteCita = Math.floor(Math.random() * 15000) + 15000;
+        }, 7000);
+
+        // Programamos la siguiente (entre 45s y 2min)
+        const siguienteCita = Math.floor(Math.random() * 70000) + 50000;
         setTimeout(mostrarSiguienteVenta, siguienteCita);
     };
 
-    // Iniciamos la primera después de 8 segundos de entrar a la web
-    setTimeout(mostrarSiguienteVenta, 8000);
+    setTimeout(mostrarSiguienteVenta, 25000);
 }
