@@ -414,11 +414,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>
                     <div class="carrito-info-prod">
                         <strong>${p.titulo}</strong><br>
-                        <small>${p.talla} | ${p.color}</small>
+                        <small>Color: ${p.color} | Talle: ${p.talla}</small>
                     </div>
                 </td>
                 <td>$${parseInt(p.precio).toLocaleString('es-AR')}</td>
-                <td>x${p.cantidad}</td>
+                <td> - ${p.cantidad}</td>
                 <td><a href="#" class="borrar-producto" data-id="${p.id}" data-talla="${p.talla}" data-color="${p.color}">✕</a></td>
             `;
             carrito.appendChild(row);
