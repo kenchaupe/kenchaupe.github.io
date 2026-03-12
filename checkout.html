@@ -228,7 +228,7 @@
         </form>
     </div>
 
-    <script>
+   <script>
         const supabaseUrl = 'https://pvniwivsxluujijyqqpc.supabase.co';
         const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -240,6 +240,7 @@
         const resumenDiv = document.querySelector('#resumen-final');
         let carrito = JSON.parse(localStorage.getItem('carrito_gruken')) || [];
         let total = 0;
+        let totalConDescuentoGlobal = 0; // Guardamos esto global para pasarlo a MercadoPago
 
         document.addEventListener('DOMContentLoaded', () => {
             renderizarResumen();
@@ -254,8 +255,6 @@
                 formulario.style.display = 'block';
                 flecha.innerHTML = '▲';
 
-                // --- ESTA ES LA MAGIA DEL SCROLL ---
-                // Esperamos un milisegundo a que el formulario aparezca y movemos la pantalla
                 setTimeout(() => {
                     formulario.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
@@ -287,7 +286,7 @@
             });
 
             // ==========================================
-            // CÁLCULO DE DESCUENTO PARA EL RESUMEN
+            // CÁLCULO MÁGICO DE PREMIOS EN EL CHECKOUT
             // ==========================================
             let cupon = localStorage.getItem('gruken_cupon') || "";
             let descuentoPorcentaje = 0;
@@ -297,34 +296,72 @@
             else if (cupon === "GRUKEN10") { descuentoPorcentaje = 0.10; textoCupon = "10% OFF"; }
             else if (cupon === "ENVIOFREE") { textoCupon = "Envío Gratis"; }
 
-            let montoDescuento = total * descuentoPorcentaje;
-            let totalConDescuento = total - montoDescuento;
+            // Revisamos si tiene el Envío VIP activo por tiempo
+            let promoVIPActiva = localStorage.getItem('gruken_promo_fin') && Date.now() < parseInt(localStorage.getItem('gruken_promo_fin'));
 
-            // Si hay un cupón de porcentaje, agregamos la fila de descuento
+            let montoDescuento = total * descuentoPorcentaje;
+            totalConDescuentoGlobal = total - montoDescuento;
+
+            // Inyectamos un CSS rápido y local para el latido aquí mismo
+            html += `
+            <style>
+                @keyframes latidoCheckout {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.02); }
+                    100% { transform: scale(1); }
+                }
+                .latido-premio {
+                    display: block;
+                    animation: latidoCheckout 1.5s ease-in-out infinite;
+                }
+            </style>`;
+
+            // 1. Mostrar descuento de porcentaje si tiene
             if (descuentoPorcentaje > 0) {
                 html += `
                     <li style="border-bottom: none; margin-top: 15px; color: #2e7d32; font-weight: 600; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px dashed #2e7d32;">
-                        🎁 Cupón Ruleta (${textoCupon})
+                        🎁 Cupón Aplicado (${textoCupon})
                         <span style="float:right;">-$${montoDescuento.toLocaleString('es-AR')}</span>
                     </li>
                 `;
-            } else if (textoCupon === "Envío Gratis") {
+            } 
+            // 2. Mostrar Envío Gratis de la Ruleta
+            else if (textoCupon === "Envío Gratis") {
                 html += `
                     <li style="border-bottom: none; margin-top: 15px; color: #2e7d32; font-weight: 600; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px dashed #2e7d32;">
-                        🚚 Beneficio Ruleta: Envío Gratis
+                        🚚 Premio Ruleta: Envío Gratis
                         <span style="float:right;">¡Bonificado!</span>
+                    </li>
+                `;
+            } 
+           // 3. Mostrar Envío VIP LATIENDO en VERDE si está en su segunda visita
+            else if (promoVIPActiva) {
+                html += `
+                    <li class="latido-premio" style="border-bottom: none; margin-top: 15px; color: #2e7d32; font-weight: 700; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px solid #2e7d32; box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);">
+                        👑 ¡Beneficio VIP: 🚚 Envío GRATIS Activado!
+                        <span style="float:right; color: #111;"></span>
                     </li>
                 `;
             }
 
             html += `</ul>`;
             
-            // Línea de Total Final
+            // Línea de Total Final (Si hay descuento, tachamos el original)
+            let textoTotal = "";
+            if (descuentoPorcentaje > 0) {
+                textoTotal = `
+                    <div style="text-align: right; color: #888; text-decoration: line-through; font-size: 0.9em;">Subtotal: $${total.toLocaleString('es-AR')}</div>
+                    <div style="font-size: 1.5em; font-weight: 700; color: #2e7d32;">$${totalConDescuentoGlobal.toLocaleString('es-AR')}</div>
+                `;
+            } else {
+                textoTotal = `<span style="font-size: 1.5em; font-weight: 700; color: #111;">$${totalConDescuentoGlobal.toLocaleString('es-AR')}</span>`;
+            }
+
             html += `
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #111;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 1.1em; font-weight: 500;">Total a pagar:</span>
-                        <span style="font-size: 1.5em; font-weight: 700; color: #111;">$${totalConDescuento.toLocaleString('es-AR')}</span>
+                        <div style="text-align:right;">${textoTotal}</div>
                     </div>
                 </div>
             `;
@@ -383,19 +420,20 @@
             const celular = document.querySelector('#celular').value.trim();
             const telefonoCompleto = codArea + " " + celular;
             
-            const totalCalculado = carrito.reduce((acc, p) => acc + (parseInt(p.precio) * p.cantidad), 0);
+            // Usamos el total global que ya tiene el descuento aplicado
+            const totalFinal = totalConDescuentoGlobal;
 
             const btn = document.querySelector('#boton-accion');
             btn.disabled = true;
             btn.innerHTML = "Procesando...";
 
-            // 1. GUARDAMOS LOS DATOS TEMPORALMENTE (Para usarlos cuando vuelva de MercadoPago)
+            // 1. GUARDAMOS LOS DATOS TEMPORALMENTE
             const datosVenta = {
-                nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado
+                nombre, direccionCalle, localidad, provinciaTexto, cp, telefonoCompleto, metodoTexto, totalCalculado: totalFinal
             };
             localStorage.setItem('datos_venta_gruken', JSON.stringify(datosVenta));
 
-            // 2. EJECUTAMOS MERCADO PAGO (Sin guardar en la base de datos todavía)
+            // 2. EJECUTAMOS MERCADO PAGO
             ejecutarMercadoPago();
         });
 
@@ -429,11 +467,32 @@
               apellido: nombreFull[1] || "Gruken" 
             };
 
+            // === EL TRUCO PARA MERCADO PAGO ===
+            // Como Mercado Pago calcula el total sumando el precio de cada item, 
+            // tenemos que mandarle los items "rebajados" si hay un cupón.
+            
+            let cupon = localStorage.getItem('gruken_cupon') || "";
+            let descuentoPorcentaje = 0;
+            if (cupon === "GRUKEN15") descuentoPorcentaje = 0.15;
+            else if (cupon === "GRUKEN10") descuentoPorcentaje = 0.10;
+
+            let carritoConDescuento = carrito;
+            
+            if (descuentoPorcentaje > 0) {
+                // Si hay descuento, le aplicamos la rebaja a cada producto antes de mandarlo a MP
+                carritoConDescuento = carrito.map(p => {
+                    let precioOriginal = parseInt(p.precio);
+                    let precioRebajado = precioOriginal - (precioOriginal * descuentoPorcentaje);
+                    return { ...p, precio: precioRebajado.toString() };
+                });
+            }
+
             try {
                 const response = await fetch('/api/crear-preferencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: carrito, comprador: compradorInfo })
+                    // Mandamos el carrito ya rebajado para que no cobren de más
+                    body: JSON.stringify({ items: carritoConDescuento, comprador: compradorInfo })
                 });
 
                 if (!response.ok) throw new Error("Error conectando con Mercado Pago");

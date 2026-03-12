@@ -6,6 +6,115 @@ const supabaseKey = 'sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
+
+
+
+
+
+
+
+
+    // ==========================================
+    // SISTEMA VIP: ENVÍO GRATIS 24H (2da Visita)
+    // ==========================================
+    let visitas = parseInt(localStorage.getItem('gruken_visitas')) || 0;
+    
+    // Solo sumamos una visita si es una sesión de navegación nueva
+    if (!sessionStorage.getItem('visita_contada_hoy')) {
+        visitas++;
+        localStorage.setItem('gruken_visitas', visitas);
+        sessionStorage.setItem('visita_contada_hoy', 'true');
+    }
+
+    // ¿Es su segunda visita o más?
+    window.esClienteVIP = (visitas >= 2); 
+
+    if (window.esClienteVIP) {
+        // Si no tiene fecha de fin, le damos 24 horas a partir de AHORA
+        if (!localStorage.getItem('gruken_promo_fin')) {
+            const finPromo = new Date().getTime() + (24 * 60 * 60 * 1000); 
+            localStorage.setItem('gruken_promo_fin', finPromo);
+        }
+
+        const promoActiva = Date.now() < parseInt(localStorage.getItem('gruken_promo_fin'));
+
+        if (promoActiva) {
+            // Verificamos si en ESTA sesión (hoy) ya vio el cartel sorpresa
+            const yaVioCartelSesion = sessionStorage.getItem('cartel_vip_mostrado');
+
+            if (!yaVioCartelSesion) {
+                // 1. Crear el PopUp Dorado en el HTML
+                const popUpVIP = document.createElement('div');
+                popUpVIP.className = 'popup-vip-oro';
+                popUpVIP.innerHTML = `
+                    <h2>👑 Premio VIP</h2>
+                    <p style="font-size: 14px; color: #ccc;">Por volver a visitarnos, tienes <strong>ENVÍO GRATIS</strong> en toda la tienda. ¡Aprovéchalo antes de que acabe el tiempo!</p>
+                    <div class="cronometro-grande" id="reloj-vip-grande">24:00:00</div>
+                `;
+                document.body.appendChild(popUpVIP);
+
+                // 2. Mostrarlo a los 15 segundos
+                setTimeout(() => {
+                    popUpVIP.classList.add('mostrar');
+                    
+                    // 🚀 LA MAGIA SUCEDE AQUÍ: Revelamos los botones verdes justo ahora
+                    document.body.classList.add('vip-desbloqueado');
+                    
+                    // Marcamos que ya vio el susto/sorpresa en esta sesión
+                    sessionStorage.setItem('cartel_vip_mostrado', 'true');
+                    
+                    // Hacer que suene la campanita mágica
+                    try { reproducirSonidoNotificacion(); } catch(e) {}
+
+                    // Ocultar el cartel gigante a los 13 segundos
+                    setTimeout(() => {
+                        popUpVIP.classList.remove('mostrar');
+                    }, 13000);
+                }, 20000);
+            } else {
+                // Si el cliente ya vio el cartel sorpresa y sigue navegando (o recarga), 
+                // ya no le mostramos el cartel de nuevo, pero activamos sus botones verdes al instante.
+                document.body.classList.add('vip-desbloqueado');
+            }
+
+            // 3. Motor del Cronómetro (Actualiza todo cada segundo)
+            setInterval(() => {
+                const fin = parseInt(localStorage.getItem('gruken_promo_fin'));
+                const ahora = new Date().getTime();
+                const distancia = fin - ahora;
+
+                if (distancia > 0) {
+                    const horas = Math.floor((distancia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutos = Math.floor((distancia % (1000 * 60 * 60)) / (1000 * 60));
+                    const segundos = Math.floor((distancia % (1000 * 60)) / 1000);
+
+                    const textoReloj = 
+                        (horas < 10 ? "0" + horas : horas) + ":" + 
+                        (minutos < 10 ? "0" + minutos : minutos) + ":" + 
+                        (segundos < 10 ? "0" + segundos : segundos);
+
+                    // Actualiza el reloj grande
+                    const relojGrande = document.getElementById('reloj-vip-grande');
+                    if (relojGrande) relojGrande.innerText = textoReloj;
+
+                    // Actualiza todos los relojes chiquitos de las fotos
+                    document.querySelectorAll('.timer-vip-chico').forEach(reloj => {
+                        reloj.innerText = textoReloj;
+                    });
+                } else {
+                    // Si el tiempo se acabó, borramos la promo
+                    localStorage.removeItem('gruken_promo_fin');
+                    window.esClienteVIP = false;
+                    document.body.classList.remove('vip-desbloqueado');
+                }
+            }, 1000);
+        } else {
+            // Limpiador en caso de que su tiempo se haya agotado
+            localStorage.removeItem('gruken_promo_fin');
+            window.esClienteVIP = false;
+        }
+    }
+    // ==========================================
     // --- VARIABLES DE UI ---
     const carrito = document.querySelector('#lista-carrito tbody');
     const listaProductos = document.querySelector('#lista-1');
@@ -329,6 +438,13 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (cupon === "GRUKEN10") { descuento = 0.10; textoDescuento = "10% OFF"; }
         else if (cupon === "ENVIOFREE") { textoDescuento = "Envío Gratis"; }
 
+        // --- NUEVA LÓGICA VIP ---
+        let promoActiva = window.esClienteVIP && localStorage.getItem('gruken_promo_fin') && Date.now() < parseInt(localStorage.getItem('gruken_promo_fin'));
+        if (promoActiva && textoDescuento !== "Envío Gratis") {
+            // Si tiene promo VIP y no tenía otro envío gratis previo
+            localStorage.setItem('gruken_envio_gratis', 'true');
+        }
+
         // Calculamos la resta
         let montoDescuento = total * descuento;
         let totalFinal = total - montoDescuento;
@@ -350,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalPagar.parentElement.parentElement.insertBefore(divDescuento, totalPagar.parentElement);
             }
 
-            // Mostramos los textos según el premio
+           // Mostramos los textos según el premio
             if (descuento > 0) {
                 divDescuento.innerHTML = `
                     <span style="color: #2e7d32; font-size: 15px; font-weight: bold;">🎁 Cupón aplicado (${textoDescuento}): -$${montoDescuento.toLocaleString('es-AR')}</span><br>
@@ -358,6 +474,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else if (textoDescuento === "Envío Gratis") {
                 divDescuento.innerHTML = `<span style="color: #2e7d32; font-size: 15px; font-weight: bold;">🚚 ¡Envío Gratis Activado!</span>`;
+            
+            } else if (promoActiva) {
+                // ==========================================
+                // AGREGAMOS LA CLASE DE LATIDO AQUÍ (.texto-latido-carrito-vip)
+                // ==========================================
+                divDescuento.innerHTML = `
+                    <span class="texto-latido-carrito-vip" style="color: #2e7d32; font-size: 15px; font-weight: bold;">
+                        👑 ¡Beneficio VIP: 🚚 Envío GRATIS Activado!
+                    </span>
+                `;
+            
             } else {
                 divDescuento.innerHTML = ""; // Se oculta si no tiene premios
             }
@@ -408,6 +535,9 @@ async function inicializarStockTienda() {
                     let imagenesArray = (prodBD.imagen || 'images/default.jpg').split(',');
                     let htmlImagenes = '';
 
+                    // ---> MAGIA VIP: Etiqueta de Envío sobre la imagen <---
+                    let badgeVIP = window.esClienteVIP ? `<div class="badge-envio-vip">🚚 ENVÍO GRATIS <span class="timer-vip-chico">24:00:00</span></div>` : '';
+
                     // Si hay más de una imagen, armamos el HTML del mini-slider
                     if (imagenesArray.length > 1) {
                         let slides = imagenesArray.map(img => 
@@ -415,18 +545,22 @@ async function inicializarStockTienda() {
                         ).join('');
                         
                         htmlImagenes = `
-                            <div class="swiper mini-slider-${prodBD.id}" style="border-radius: 10px; margin-bottom: 15px;">
+                            <div class="swiper mini-slider-${prodBD.id}" style="border-radius: 10px; margin-bottom: 15px; position: relative;">
                                 <div class="swiper-wrapper">
                                     ${slides}
                                 </div>
                                 <div class="swiper-pagination"></div>
                                 <div class="swiper-button-next" style="color: #fff; transform: scale(0.6);"></div>
                                 <div class="swiper-button-prev" style="color: #fff; transform: scale(0.6);"></div>
-                            </div>
+                                ${badgeVIP} </div>
                         `;
                     } else {
-                        // Si hay una sola imagen, la mostramos normal
-                        htmlImagenes = `<img src="${imagenesArray[0].trim()}" alt="${prodBD.nombre}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;">`;
+                        // Si hay una sola imagen, la mostramos normal con un contenedor relativo
+                        htmlImagenes = `
+                            <div style="position: relative; margin-bottom: 15px;">
+                                <img src="${imagenesArray[0].trim()}" alt="${prodBD.nombre}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px;">
+                                ${badgeVIP} </div>
+                        `;
                     }
 
                     // ---> MAGIA MATEMÁTICA (Congelada por producto) <---

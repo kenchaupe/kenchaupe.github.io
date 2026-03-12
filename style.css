@@ -1869,36 +1869,45 @@ th, td {
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
 }
 
-/* Etiqueta de Últimas Unidades - Versión Nitidez Máxima */
+
+/* Etiqueta de Últimas Unidades - Solo Texto Rojo */
 .btn-ultimas-unidades {
     display: inline-block;
-    background-color: #ff0015; 
-    color: #ffffff !important; 
+    background-color: transparent; /* Quitamos el fondo sólido */
+    color: #ff0015 !important; /* Pasamos el color rojo intenso directo a la letra */
     
     /* MEJORAS DE NITIDEZ */
-    font-size: 11px; /* Un punto menos para que se vea más compacto y fino */
-    font-weight: 800; /* Extra negrita para que las letras no se "borren" */
+    font-size: 13px; /* Subimos un poquito el tamaño porque al no tener caja se vería muy chico */
+    font-weight: 800; /* Extra negrita para que resalte bien */
     text-transform: uppercase;
-    letter-spacing: 1.2px; /* Más espacio entre letras para que no se amontonen */
-    -webkit-font-smoothing: antialiased; /* Suavizado para Mac/iPhone */
-    -moz-osx-font-smoothing: grayscale; /* Suavizado para Firefox */
-    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2); /* Sombra mínima para separar la letra del fondo */
+    letter-spacing: 1.2px; /* Espacio entre letras para lectura rápida */
+    -webkit-font-smoothing: antialiased; 
+    -moz-osx-font-smoothing: grayscale; 
     
-    padding: 6px 14px;
-    border-radius: 4px; /* Un poco más rectangular para estilo moderno */
-    margin-bottom: 12px;
-    box-shadow: 0 4px 8px rgba(230, 57, 70, 0.4);
+    /* Una pequeña sombra de texto roja para darle un toque de brillo/neon sutil */
+    text-shadow: 0px 1px 2px rgba(255, 0, 21, 0.2); 
+    
+    /* Quitamos los rellenos de caja y sombras cuadradas */
+    padding: 0; 
+    border-radius: 0; 
+    box-shadow: none; 
     border: none;
+    
+    margin-bottom: 12px;
     text-align: center;
     width: fit-content;
+    
+    /* Mantenemos tu efecto de latido intacto */
     animation: pulsoSuave 2s infinite;
 }
 
+/* Mantenemos el mismo fotograma clave del latido que ya tenías */
 @keyframes pulsoSuave {
     0% { transform: scale(1); }
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
 }
+
 
 /* ========================================= */
 /* MEJORAS DE ESPACIADO PARA CELULARES       */
@@ -1919,4 +1928,148 @@ th, td {
         /* Sombra un poco más suave en celular para que se distinga bien dónde empieza y termina cada caja */
         box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important; 
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* ========================================= */
+/* ESTILOS PROMO VIP (ENVÍO GRATIS 24H)      */
+/* ========================================= */
+
+/* 1. El Cartel Dorado que aparece a los 15 seg */
+.popup-vip-oro {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+    border: 2px solid #D4AF37;
+    border-radius: 15px;
+    padding: 30px;
+    z-index: 10000;
+    text-align: center;
+    color: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 40px rgba(212, 175, 55, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 90%;
+    max-width: 400px;
+}
+
+.popup-vip-oro.mostrar {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.popup-vip-oro h2 {
+    color: #D4AF37;
+    margin-top: 0;
+    font-size: 26px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.cronometro-grande {
+    font-size: 40px;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(212, 175, 55, 0.2);
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 15px 0;
+    border: 1px dashed #D4AF37;
+}
+
+/* El Botón Verde nace oculto (opacity 0 y tamaño 0) */
+.badge-envio-vip {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background-color: #ff0000;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 6px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    /* MAGIA DE ANIMACIÓN */
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+/* Cuando le damos la orden al cuerpo de la página, los botones hacen "POP" */
+body.vip-desbloqueado .badge-envio-vip {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+/* ========================================= */
+/* ANIMACIONES DE LATIDO VIP (HEARTBEAT)     */
+/* ========================================= */
+
+/* 1. Definimos la coreografía del latido (escala un poco y vuelve) */
+@keyframes latidoVipGeneral {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); } /* Agranda un 5% */
+    100% { transform: scale(1); }
+}
+
+/* 2. Definimos la coreografía especial para el Cartel Central */
+/* (Porque este ya tiene un transform para centrarse: translate(-50%, -50%)) */
+@keyframes latidoVipPopCentral {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 3. APLICAMOS EL LATIDO A LOS ELEMENTOS */
+
+/* A) Al Cartel Dorado Central (cuando se muestra) */
+.popup-vip-oro.mostrar {
+    /* Mantenemos tus estilos y agregamos la animación */
+    animation: revelarPremium 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, 
+               latidoVipPopCentral 1.5s ease-in-out infinite 0.8s; 
+               /* Empieza 0.8s después de aparecer y es infinita */
+}
+
+/* B) Al Botón Verde sobre las fotos (cuando está desbloqueado) */
+body.vip-desbloqueado .badge-envio-vip {
+    /* Mantenemos tus estilos y agregamos la animación */
+    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+               latidoVipGeneral 2s ease-in-out infinite 1s;
+    transform-origin: center; /* Latido desde el centro del botón */
+}
+
+/* C) Al Texto VIP dentro del Carrito */
+.texto-latido-carrito-vip {
+    display: inline-block; /* Necesario para que la animación funcione en texto */
+    animation: latidoVipGeneral 1.5s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Pequeño ajuste para que la animación de entrada del botón no choque */
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0); }
+    100% { opacity: 1; transform: scale(1); }
 }
