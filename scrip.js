@@ -1294,18 +1294,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-    let notificacionEnPantalla = false; // <-- El semáforo para evitar que se pisen
+    let notificacionEnPantalla = false; 
 
 function iniciarNotificacionesVenta(productos) {
     if (!productos || productos.length === 0) return;
 
-    // 1. Creamos el elemento en el HTML (solo una vez)
+    // 1. Cargamos el sonido (usamos uno elegante y corto)
+    const sonidoNotif = new Audio('images/notificacion.mp3');
+    sonidoNotif.volume = 0.4; // Volumen suave para no asustar
+
     const divNotif = document.createElement('div');
     divNotif.className = 'notificacion-compra';
     document.body.appendChild(divNotif);
 
-    const nombres = [
+     const nombres = [
         "Florencia", "Matías", "Agustina", "Juan", "Romina", "Lucas", "Valeria", "Gastón", "Paula", "Diego",
         "Camila", "Santiago", "Valentina", "Nicolás", "Sofía", "Martín", "Lucía", "Facundo", "Micaela", "Ignacio",
         "Julieta", "Tomás", "Antonella", "Joaquín", "Martina", "Federico", "Bautista", "Carolina", "Emiliano", 
@@ -1326,14 +1328,12 @@ function iniciarNotificacionesVenta(productos) {
     ];
 
     const mostrarSiguienteVenta = () => {
-        // --- VALIDACIÓN ANTI-CHOQUE ---
-        // Si ya hay una notificación visible, esperamos 5 segundos y volvemos a intentar
         if (notificacionEnPantalla) {
             setTimeout(mostrarSiguienteVenta, 5000);
             return;
         }
 
-        notificacionEnPantalla = true; // Bloqueamos el paso
+        notificacionEnPantalla = true;
 
         const producto = productos[Math.floor(Math.random() * productos.length)];
         const nombre = nombres[Math.floor(Math.random() * nombres.length)];
@@ -1353,24 +1353,20 @@ function iniciarNotificacionesVenta(productos) {
             </div>
         `;
 
-        // Aparece con la animación lenta que te gusta
+        // 2. ACTIVACIÓN: Animación + Sonido
         divNotif.classList.add('activa');
+        sonidoNotif.play().catch(e => console.log("El navegador bloqueó el audio inicial hasta que el usuario interactúe."));
 
-        // Se queda 7 segundos
         setTimeout(() => {
             divNotif.classList.remove('activa');
-            
-            // Esperamos 1.5 segundos extra (después de que baje) para liberar el semáforo
             setTimeout(() => {
                 notificacionEnPantalla = false; 
             }, 1000);
-
         }, 7000);
 
-        // Programamos la siguiente (entre 45s y 2min)
-        const siguienteCita = Math.floor(Math.random() * 70000) + 50000;
+        const siguienteCita = Math.floor(Math.random() * 70000) + 45000;
         setTimeout(mostrarSiguienteVenta, siguienteCita);
     };
 
-    setTimeout(mostrarSiguienteVenta, 25000);
+    setTimeout(mostrarSiguienteVenta, 30000);
 }
