@@ -1899,3 +1899,24 @@ th, td {
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
 }
+
+/* ========================================= */
+/* MEJORAS DE ESPACIADO PARA CELULARES       */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+    .contenedor-items {
+        /* Si tu contenedor usa Grid o Flexbox, esto separa las cajas */
+        gap: 30px !important; 
+        
+        /* Le da un respiro a los costados para que no choquen con el borde de la pantalla */
+        padding: 15px !important; 
+    }
+
+    .contenedor-items .item {
+        /* Asegura una buena separación vertical entre cada producto */
+        margin-bottom: 30px !important; 
+        
+        /* Sombra un poco más suave en celular para que se distinga bien dónde empieza y termina cada caja */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important; 
+    }
+}
