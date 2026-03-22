@@ -1563,27 +1563,29 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 // ==========================================
-// MANTENER EL CARRITO ABIERTO AL ELIMINAR
+// MANTENER EL CARRITO ABIERTO AL ELIMINAR (CORREGIDO)
 // ==========================================
 let carritoForzadoAbierto = false;
 
 document.addEventListener('click', function(e) {
-    // Si detectamos que el usuario hizo clic en el botón de borrar (la "X")
+    // Si tocamos el botón de borrar (la "X")
     if (e.target.closest('.borrar-producto')) {
         
-        // Agarramos el contenedor del carrito y lo forzamos a quedarse visible
         const carritoContenedor = document.getElementById('carrito');
-        carritoContenedor.style.display = 'block';
         
-        // Creamos un vigilante para cerrarlo solo cuando el usuario toque AFUERA del carrito
+        // En lugar de inyectar un estilo bruto, le agregamos nuestra clase transparente
+        carritoContenedor.classList.add('carrito-forzado');
+        
+        // Creamos el vigilante para cerrarlo al tocar afuera
         if (!carritoForzadoAbierto) {
             carritoForzadoAbierto = true;
             
             setTimeout(() => {
                 document.addEventListener('click', function cerrarCarrito(evento) {
-                    // Si el nuevo clic NO fue dentro del menú del carrito
-                    if (!evento.target.closest('.submenu')) {
-                        carritoContenedor.style.display = ''; // Le quitamos la traba
+                    // Si tocamos afuera del carrito Y tampoco estamos tocando otro botón de borrar
+                    if (!evento.target.closest('.submenu') && !evento.target.closest('.borrar-producto')) {
+                        // Le quitamos la clase transparente y dejamos que se esconda
+                        carritoContenedor.classList.remove('carrito-forzado'); 
                         carritoForzadoAbierto = false;
                         document.removeEventListener('click', cerrarCarrito); // Apagamos al vigilante
                     }

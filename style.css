@@ -2093,3 +2093,12 @@ body.vip-desbloqueado .badge-envio-vip {
         position: relative;
     }
 }
+
+/* ========================================== */
+/* CARRITO ABIERTO FORZADO (Fondo Transparente)*/
+/* ========================================== */
+#carrito.carrito-forzado {
+    display: block !important;
+    background-color: #4e4b5076 !important; /* Tu gris transparente */
+    backdrop-filter: blur(10px) !important; /* Tu efecto cristal */
+}
