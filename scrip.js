@@ -1528,3 +1528,67 @@ function iniciarNotificacionesVenta(productos) {
 
     setTimeout(mostrarSiguienteVenta, 25000);
 }
+
+
+// ==========================================
+// AUTO-ZOOM AL HACER SCROLL EN CELULARES
+// ==========================================
+document.addEventListener("DOMContentLoaded", function() {
+    // Solo activamos esta magia si están viéndolo desde un celular
+    if (window.innerWidth <= 768) {
+        
+        // Creamos nuestro "vigilante" de la pantalla (IntersectionObserver)
+        const observador = new IntersectionObserver((entradas) => {
+            entradas.forEach(entrada => {
+                // Si el producto entra en la "zona mágica" del centro
+                if (entrada.isIntersecting) {
+                    entrada.target.classList.add('enfocado-scroll');
+                } else {
+                    // Si el producto sale del centro (arriba o abajo), se achica de nuevo
+                    entrada.target.classList.remove('enfocado-scroll');
+                }
+            });
+        }, {
+            // Esto recorta la pantalla: el efecto solo se activa en el 50% central (ignora los bordes de arriba y abajo)
+            rootMargin: "-25% 0px -25% 0px", 
+            threshold: 0.3 // Necesita que al menos el 30% del producto sea visible para hacer el efecto
+        });
+
+        // Buscamos todas las tarjetas de los productos y le decimos al vigilante que las observe
+        const productos = document.querySelectorAll('.contenedor-items .item');
+        productos.forEach(producto => {
+            observador.observe(producto);
+        });
+    }
+});
+
+// ==========================================
+// MANTENER EL CARRITO ABIERTO AL ELIMINAR
+// ==========================================
+let carritoForzadoAbierto = false;
+
+document.addEventListener('click', function(e) {
+    // Si detectamos que el usuario hizo clic en el botón de borrar (la "X")
+    if (e.target.closest('.borrar-producto')) {
+        
+        // Agarramos el contenedor del carrito y lo forzamos a quedarse visible
+        const carritoContenedor = document.getElementById('carrito');
+        carritoContenedor.style.display = 'block';
+        
+        // Creamos un vigilante para cerrarlo solo cuando el usuario toque AFUERA del carrito
+        if (!carritoForzadoAbierto) {
+            carritoForzadoAbierto = true;
+            
+            setTimeout(() => {
+                document.addEventListener('click', function cerrarCarrito(evento) {
+                    // Si el nuevo clic NO fue dentro del menú del carrito
+                    if (!evento.target.closest('.submenu')) {
+                        carritoContenedor.style.display = ''; // Le quitamos la traba
+                        carritoForzadoAbierto = false;
+                        document.removeEventListener('click', cerrarCarrito); // Apagamos al vigilante
+                    }
+                });
+            }, 50);
+        }
+    }
+});

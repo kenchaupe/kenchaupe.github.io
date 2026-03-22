@@ -2073,3 +2073,23 @@ body.vip-desbloqueado .badge-envio-vip {
     0% { opacity: 0; transform: scale(0); }
     100% { opacity: 1; transform: scale(1); }
 }
+
+
+/* ========================================= */
+/* EFECTO ZOOM AUTOMÁTICO EN CELULARES       */
+/* ========================================= */
+@media (max-width: 768px) {
+    /* Nos aseguramos de que la transición sea suave */
+    .contenedor .contenedor-items .item {
+        transition: all 0.4s ease-out;
+    }
+
+    /* Esta clase se activará mágicamente cuando el producto pase por el centro */
+    .contenedor .contenedor-items .item.enfocado-scroll {
+        transform: scale(1.06); /* Aumenta el tamaño un 6% */
+        box-shadow: 0 12px 25px rgba(0,0,0,0.15) !important; /* Le da una sombra bonita para que parezca que flota */
+        border-color: #111 !important; /* Oscurece el borde */
+        z-index: 10;
+        position: relative;
+    }
+}
