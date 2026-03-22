@@ -55,25 +55,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 2. Mostrarlo a los 15 segundos
                 setTimeout(() => {
+                    // Primero, SOLO mostramos el cartel dorado
                     popUpVIP.classList.add('mostrar');
                     
-                    // 🚀 LA MAGIA SUCEDE AQUÍ: Revelamos los botones verdes justo ahora
-                    document.body.classList.add('vip-desbloqueado');
-                    
-                    // Marcamos que ya vio el susto/sorpresa en esta sesión
-                    sessionStorage.setItem('cartel_vip_mostrado', 'true');
-                    
-                    // Hacer que suene la campanita mágica
+                    // Hacemos que suene la campanita
                     try { reproducirSonidoNotificacion(); } catch(e) {}
 
-                    // Ocultar el cartel gigante a los 13 segundos
+                    // Ocultar el cartel a los 7 segundos y RECIÉN AHÍ activar la magia
                     setTimeout(() => {
                         popUpVIP.classList.remove('mostrar');
-                    }, 13000);
-                }, 20000);
+                        
+                        // 🚀 RECIÉN AHORA: Revelamos los botones verdes en las fotos
+                        document.body.classList.add('vip-desbloqueado');
+                        
+                        // Ponemos el candado para confirmar que el show terminó
+                        sessionStorage.setItem('cartel_vip_mostrado', 'true');
+                        
+                        // ⚡ Actualizamos el carrito para inyectar el texto verde latiendo
+                        if (typeof carritoHTML === "function") carritoHTML();
+                        
+                    }, 7000);
+                }, 15000);
             } else {
-                // Si el cliente ya vio el cartel sorpresa y sigue navegando (o recarga), 
-                // ya no le mostramos el cartel de nuevo, pero activamos sus botones verdes al instante.
+                // Si el cliente ya vio todo el show y sigue navegando (o recarga la página), 
+                // ya no mostramos el cartel de nuevo, pero mantenemos sus botones verdes encendidos.
                 document.body.classList.add('vip-desbloqueado');
             }
 
