@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
     // ==========================================
     // SISTEMA VIP: ENVÍO GRATIS 24H (2da Visita)
     // ==========================================
@@ -26,8 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('visita_contada_hoy', 'true');
     }
 
-    // ¿Es su segunda visita o más?
-    window.esClienteVIP = (visitas >= 2); 
+    // 1. REVISAMOS EL "CASTIGO" O DESCANSO DE 1 DÍA
+    let cooldownFin = parseInt(localStorage.getItem('gruken_promo_descanso')) || 0;
+    let enDescanso = Date.now() < cooldownFin;
+
+    // Si tiene 2 visitas o más y NO está en descanso, es VIP
+    window.esClienteVIP = (visitas >= 2) && !enDescanso; 
 
     if (window.esClienteVIP) {
         // Si no tiene fecha de fin, le damos 24 horas a partir de AHORA
@@ -39,50 +42,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const promoActiva = Date.now() < parseInt(localStorage.getItem('gruken_promo_fin'));
 
         if (promoActiva) {
-            // Verificamos si en ESTA sesión (hoy) ya vio el cartel sorpresa
-            const yaVioCartelSesion = sessionStorage.getItem('cartel_vip_mostrado');
+            // Usamos memoria permanente para saber si ya vio el cartel
+            const yaVioCartel = localStorage.getItem('gruken_banner_vip_mostrado');
 
-            if (!yaVioCartelSesion) {
+            if (!yaVioCartel) {
                 // 1. Crear el PopUp Dorado en el HTML
                 const popUpVIP = document.createElement('div');
                 popUpVIP.className = 'popup-vip-oro';
                 popUpVIP.innerHTML = `
                     <h2>👑 Premio VIP</h2>
-                    <p style="font-size: 14px; color: #ccc;">Por volver a visitarnos, tienes <strong>ENVÍO GRATIS</strong> en toda la tienda. ¡Aprovéchalo antes de que acabe el tiempo!</p>
+                    <p style="font-size: 14px; color: #ccc;">Por volver a visitarnos, tienes <strong style="color: red;">ENVÍO GRATIS</strong> en toda la tienda. ¡Aprovéchalo antes de que acabe el tiempo!</p>
                     <div class="cronometro-grande" id="reloj-vip-grande">24:00:00</div>
                 `;
                 document.body.appendChild(popUpVIP);
 
                 // 2. Mostrarlo a los 15 segundos
                 setTimeout(() => {
-                    // Primero, SOLO mostramos el cartel dorado
                     popUpVIP.classList.add('mostrar');
-                    
-                    // Hacemos que suene la campanita
                     try { reproducirSonidoNotificacion(); } catch(e) {}
 
-                    // Ocultar el cartel a los 7 segundos y RECIÉN AHÍ activar la magia
+                    // Ocultar a los 7 segundos y RECIÉN AHÍ activar la magia
                     setTimeout(() => {
                         popUpVIP.classList.remove('mostrar');
-                        
-                        // 🚀 RECIÉN AHORA: Revelamos los botones verdes en las fotos
                         document.body.classList.add('vip-desbloqueado');
                         
-                        // Ponemos el candado para confirmar que el show terminó
-                        sessionStorage.setItem('cartel_vip_mostrado', 'true');
+                        // Guardamos en MEMORIA que ya vio el show
+                        localStorage.setItem('gruken_banner_vip_mostrado', 'true');
                         
-                        // ⚡ Actualizamos el carrito para inyectar el texto verde latiendo
                         if (typeof carritoHTML === "function") carritoHTML();
-                        
                     }, 7000);
                 }, 15000);
             } else {
-                // Si el cliente ya vio todo el show y sigue navegando (o recarga la página), 
-                // ya no mostramos el cartel de nuevo, pero mantenemos sus botones verdes encendidos.
+                // SI YA VIO EL CARTEL, encendemos los descuentos directamente sin sorpresas
                 document.body.classList.add('vip-desbloqueado');
             }
 
-            // 3. Motor del Cronómetro (Actualiza todo cada segundo)
+            // 3. MOTOR DEL CRONÓMETRO (Ahora está AFUERA para que SIEMPRE corra)
             setInterval(() => {
                 const fin = parseInt(localStorage.getItem('gruken_promo_fin'));
                 const ahora = new Date().getTime();
@@ -98,28 +93,44 @@ document.addEventListener('DOMContentLoaded', () => {
                         (minutos < 10 ? "0" + minutos : minutos) + ":" + 
                         (segundos < 10 ? "0" + segundos : segundos);
 
-                    // Actualiza el reloj grande
+                    // Actualiza el reloj del cartel (si existe)
                     const relojGrande = document.getElementById('reloj-vip-grande');
                     if (relojGrande) relojGrande.innerText = textoReloj;
 
-                    // Actualiza todos los relojes chiquitos de las fotos
+                    // Actualiza los relojes de TODAS las fotos
                     document.querySelectorAll('.timer-vip-chico').forEach(reloj => {
                         reloj.innerText = textoReloj;
                     });
                 } else {
-                    // Si el tiempo se acabó, borramos la promo
+                    // SE ACABÓ EL TIEMPO (Pasaron las 24hs)
                     localStorage.removeItem('gruken_promo_fin');
+                    localStorage.removeItem('gruken_banner_vip_mostrado');
+                    
+                    // Activamos el descanso de 24 horas (1 día sin promos)
+                    const finDescanso = new Date().getTime() + (24 * 60 * 60 * 1000);
+                    localStorage.setItem('gruken_promo_descanso', finDescanso);
+                    
                     window.esClienteVIP = false;
                     document.body.classList.remove('vip-desbloqueado');
+                    if (typeof carritoHTML === "function") carritoHTML();
                 }
-            }, 1000);
+            }, 1000); // Se repite cada segundo
+
         } else {
-            // Limpiador en caso de que su tiempo se haya agotado
+            // Limpiador en caso de errores
             localStorage.removeItem('gruken_promo_fin');
             window.esClienteVIP = false;
         }
+    } else if (enDescanso) {
+        // Si está en su día de descanso y ya pasó ese día, lo liberamos
+        if (Date.now() >= cooldownFin) {
+            localStorage.removeItem('gruken_promo_descanso');
+            // La próxima vez que entre, ¡volverá a ser VIP!
+        }
     }
     // ==========================================
+
+   
     // --- VARIABLES DE UI ---
     const carrito = document.querySelector('#lista-carrito tbody');
     const listaProductos = document.querySelector('#lista-1');
@@ -444,7 +455,11 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (cupon === "ENVIOFREE") { textoDescuento = "Envío Gratis"; }
 
         // --- NUEVA LÓGICA VIP ---
-        let promoActiva = window.esClienteVIP && localStorage.getItem('gruken_promo_fin') && Date.now() < parseInt(localStorage.getItem('gruken_promo_fin'));
+        let promoActiva = window.esClienteVIP && 
+                          localStorage.getItem('gruken_promo_fin') && 
+                          Date.now() < parseInt(localStorage.getItem('gruken_promo_fin')) &&
+                          localStorage.getItem('gruken_banner_vip_mostrado'); // <-- ¡Este es el candado permanente!
+
         if (promoActiva && textoDescuento !== "Envío Gratis") {
             // Si tiene promo VIP y no tenía otro envío gratis previo
             localStorage.setItem('gruken_envio_gratis', 'true');

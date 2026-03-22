@@ -1,0 +1,16 @@
+name: Robot Despertador de Supabase
+
+on:
+  schedule:
+    - cron: '0 10 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  mantener-despierto:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Despertar Supabase
+        run: |
+          curl -X GET "https://pvniwivsxluujijyqqpc.supabase.co/rest/v1/productos?select=id&limit=1" \
+          -H "apikey: sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh" \
+          -H "Authorization: Bearer sb_publishable_ss0VcJwu1wR5OVrNn2aYUw_sGG4HiJh"
