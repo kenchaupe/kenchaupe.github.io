@@ -840,28 +840,20 @@ async function inicializarStockTienda() {
     }
 }
 window.compartirProducto = async function(nombre, id) {
-    const urlBase = window.location.origin + window.location.pathname;
-    const linkFinal = `${urlBase}#producto-${id}`;
+    // Reemplaza "TU_ID_PROYECTO" por el ID que sale en tu URL de Supabase
+    const linkInteligente = `https://TU_ID_PROYECTO.supabase.co/functions/v1/compartir?id=${id}`;
     
-    // Texto que irá en el mensaje
-    const textoCompartir = `🧥 ¡Mira este ingreso en Gruken!\n🔥 *${nombre}*\n\nVer producto aquí: `;
-
     try {
-        // Esta es la magia: Abre el menú nativo del celular (todas las apps)
         if (navigator.share) {
             await navigator.share({
-                title: 'Gruken - ' + nombre,
-                text: textoCompartir,
-                url: linkFinal
+                title: 'Gruken Luxury',
+                text: `¡Mira esta prenda de Gruken! 🧥\n`,
+                url: linkInteligente
             });
         } else {
-            // Si están en una PC, abrimos WhatsApp por defecto
-            const msg = encodeURIComponent(textoCompartir + linkFinal);
-            window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(nombre + " " + linkInteligente)}`, '_blank');
         }
-    } catch (err) {
-        console.log("Compartido cancelado");
-    }
+    } catch (e) { console.log("Cerrado"); }
 };
 
 window.toggleRecomendaciones = function(boton) {
