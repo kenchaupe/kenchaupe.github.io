@@ -839,16 +839,29 @@ async function inicializarStockTienda() {
         console.error("Error:", error);
     }
 }
-// FUNCIÓN DE COMPARTIR (PONLA AL FINAL DE TU SCRIPT.JS)
 window.compartirProducto = async function(nombre, id) {
-    const linkFinal = `${window.location.origin}${window.location.pathname}#producto-${id}`;
+    const urlBase = window.location.origin + window.location.pathname;
+    const linkFinal = `${urlBase}#producto-${id}`;
+    
+    // Texto que irá en el mensaje
+    const textoCompartir = `🧥 ¡Mira este ingreso en Gruken!\n🔥 *${nombre}*\n\nVer producto aquí: `;
+
     try {
+        // Esta es la magia: Abre el menú nativo del celular (todas las apps)
         if (navigator.share) {
-            await navigator.share({ title: 'Gruken', text: `Mira esto: ${nombre}`, url: linkFinal });
+            await navigator.share({
+                title: 'Gruken - ' + nombre,
+                text: textoCompartir,
+                url: linkFinal
+            });
         } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(nombre + " " + linkFinal)}`, '_blank');
+            // Si están en una PC, abrimos WhatsApp por defecto
+            const msg = encodeURIComponent(textoCompartir + linkFinal);
+            window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
         }
-    } catch (e) { console.log("Cerrado"); }
+    } catch (err) {
+        console.log("Compartido cancelado");
+    }
 };
 
 window.toggleRecomendaciones = function(boton) {
