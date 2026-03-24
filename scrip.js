@@ -839,19 +839,21 @@ async function inicializarStockTienda() {
         console.error("Error:", error);
     }
 }
-window.compartirProducto = async function(nombre, id) {
-    // Reemplaza "TU_ID_PROYECTO" por el ID que sale en tu URL de Supabase
-    const linkInteligente = `https://TU_ID_PROYECTO.supabase.co/functions/v1/compartir?id=${id}`;
+window.compartirProducto = async function(nombre, id, precio) {
+    // Usamos tu URL real de Supabase
+    const linkInteligente = `https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/dynamic-processor?id=${id}`;
     
+    const textoMensaje = `🧥 ¡Mira esta joya de Gruken!\n🔥 *${nombre}*\n💰 *Precio:* $${precio.toLocaleString('es-AR')}\n\nVer aquí: `;
+
     try {
         if (navigator.share) {
             await navigator.share({
                 title: 'Gruken Luxury',
-                text: `¡Mira esta prenda de Gruken! 🧥\n`,
+                text: textoMensaje,
                 url: linkInteligente
             });
         } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(nombre + " " + linkInteligente)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoMensaje + linkInteligente)}`, '_blank');
         }
     } catch (e) { console.log("Cerrado"); }
 };
