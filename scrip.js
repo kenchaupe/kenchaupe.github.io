@@ -550,6 +550,7 @@ async function inicializarStockTienda() {
                     const nuevaTarjeta = document.createElement('div');
                     nuevaTarjeta.className = 'item'; 
                     
+                    
                     // 1. LÓGICA DE MÚLTIPLES IMÁGENES
                     // Separamos las URLs por comas (si no hay, usamos la por defecto)
                     let imagenesArray = (prodBD.imagen || 'images/default.jpg').split(',');
@@ -589,6 +590,7 @@ async function inicializarStockTienda() {
                     let textoVentas = ventasFijas >= 1000 ? (ventasFijas / 1000).toFixed(1).replace('.0', '') + 'k' : ventasFijas;
                    // Antes era un <div> simple, ahora es nuestro botón rojo
                     let textoUltimas = (idValor % 3) === 0 ? '<div class="btn-ultimas-unidades">ÚLTIMAS UNIDADES</div>' : '';
+
 
                     // 2. DIBUJAMOS LA TARJETA (Versión limpia sin envío gratis)
                     nuevaTarjeta.innerHTML = `
@@ -1572,7 +1574,6 @@ document.addEventListener("DOMContentLoaded", function() {
 // 1. Bloquear el clic derecho para que no puedan dar a "Inspeccionar"
 document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    alert("Contenido protegido por Gruken © 2026"); // Opcional: puedes quitar el alert si prefieres que sea silencioso
 });
 
 // 2. Bloquear atajos de teclado de desarrollador (F12, Ctrl+Shift+I, U)
