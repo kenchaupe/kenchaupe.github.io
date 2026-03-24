@@ -2094,3 +2094,58 @@ body.vip-desbloqueado .badge-envio-vip {
     }
 }
 
+
+/* 1. Definimos el movimiento de "llamado a la atención" */
+@keyframes latido-suave {
+    0% { transform: scale(1); }
+    10% { transform: scale(1.08); } /* Crece un poquito rápido */
+    20% { transform: scale(1); }      /* Vuelve normal */
+    30% { transform: scale(1.05); } /* Un segundo pulso más chico */
+    40% { transform: scale(1); }      /* Se queda quieto el resto del tiempo */
+    100% { transform: scale(1); }
+}
+
+/* 2. Se lo aplicamos ÚNICAMENTE al botón de las estrellas */
+.btn-ver-recomendaciones {
+    display: inline-block;
+    transition: all 0.3s ease;
+    /* La animación dura 4 segundos para que no sea frenética */
+    animation: latido-suave 4s ease-in-out infinite;
+    cursor: pointer;
+}
+
+/* 3. Cuando el cliente pone el mouse encima, que brille un poco más */
+.btn-ver-recomendaciones:hover {
+    filter: brightness(1.2);
+    animation-play-state: paused; /* Se detiene el baile cuando lo va a tocar */
+}
+
+/* 4. Aseguramos que las estrellas se vean bien doradas */
+.btn-ver-recomendaciones .fa-star {
+    color: #ffc107;
+    text-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
+}
+
+/* Botones con fondo tipo cristal */
+.swiper-button-next, 
+.swiper-button-prev {
+    background-color: rgba(255, 255, 255, 0.7); /* Fondo blanco traslúcido */
+    backdrop-filter: blur(4px); /* Efecto borroso moderno */
+    color: #111 !important; /* Flecha negra */
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50%; /* Los hace circulares */
+}
+
+/* Ajustamos el tamaño de la flecha dentro del círculo */
+.swiper-button-next:after, 
+.swiper-button-prev:after {
+    font-size: 18px !important;
+    font-weight: bold;
+}
+
+
+
+
+
+

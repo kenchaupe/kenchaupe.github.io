@@ -1562,3 +1562,34 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+
+
+
+// ==========================================
+// ESCUDO PROTECTOR GRUKEN (Anti-Copiado)
+// ==========================================
+
+// 1. Bloquear el clic derecho para que no puedan dar a "Inspeccionar"
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    alert("Contenido protegido por Gruken © 2026"); // Opcional: puedes quitar el alert si prefieres que sea silencioso
+});
+
+// 2. Bloquear atajos de teclado de desarrollador (F12, Ctrl+Shift+I, U)
+document.onkeydown = function(e) {
+    // Bloquear F12
+    if(e.keyCode == 123) return false;
+    
+    // Bloquear Ctrl+Shift+I (Inspeccionar)
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+    
+    // Bloquear Ctrl+Shift+J (Consola)
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+    
+    // Bloquear Ctrl+U (Ver código fuente)
+    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+    
+    // Bloquear Ctrl+S (Guardar página)
+    if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)) return false;
+};
+
