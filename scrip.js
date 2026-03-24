@@ -839,11 +839,13 @@ async function inicializarStockTienda() {
         console.error("Error:", error);
     }
 }
-window.compartirProducto = async function(nombre, id, precio) {
-    // Usamos tu URL real de Supabase
-    const linkInteligente = `https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/dynamic-processor?id=${id}`;
+window.compartirProducto = async function(nombre, id) {
+    // Tu URL oficial de la función "compartir"
+    const linkInteligente = `https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/compartir?id=${id}`;
     
-    const textoMensaje = `🧥 ¡Mira esta joya de Gruken!\n🔥 *${nombre}*\n💰 *Precio:* $${precio.toLocaleString('es-AR')}\n\nVer aquí: `;
+    const textoMensaje = `🧥 *¡Mirá este ingreso increíble en Gruken!* 👑\n\n` +
+                         `🔥 *${nombre}*\n\n` +
+                         `Ver producto aquí: `;
 
     try {
         if (navigator.share) {
@@ -853,7 +855,9 @@ window.compartirProducto = async function(nombre, id, precio) {
                 url: linkInteligente
             });
         } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoMensaje + linkInteligente)}`, '_blank');
+            // Fallback para computadoras
+            const msgEncoded = encodeURIComponent(textoMensaje + linkInteligente);
+            window.open(`https://api.whatsapp.com/send?text=${msgEncoded}`, '_blank');
         }
     } catch (e) { console.log("Cerrado"); }
 };
