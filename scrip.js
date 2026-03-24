@@ -597,7 +597,14 @@ async function inicializarStockTienda() {
                         ${htmlImagenes}
                         <div class="product-txt">
                             <h3>${prodBD.nombre}</h3>
+                           <div class="contenedor-estrellas-viral">
+                        <div class="estrellas-centro">
                             ${generarResenasAleatorias(prodBD.id)}
+                        </div>
+                        <button class="btn-compartir-viral" onclick="compartirProducto('${prodBD.nombre}', '${prodBD.id}')">
+                            <i class="fa fa-share-alt"></i>
+                        </button>
+                    </div>
                             
                             <div class="selector-contenedor">
                                 <span class="label-titulo">Cantidad:</span>
@@ -832,6 +839,17 @@ async function inicializarStockTienda() {
         console.error("Error:", error);
     }
 }
+// FUNCIÓN DE COMPARTIR (PONLA AL FINAL DE TU SCRIPT.JS)
+window.compartirProducto = async function(nombre, id) {
+    const linkFinal = `${window.location.origin}${window.location.pathname}#producto-${id}`;
+    try {
+        if (navigator.share) {
+            await navigator.share({ title: 'Gruken', text: `Mira esto: ${nombre}`, url: linkFinal });
+        } else {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(nombre + " " + linkFinal)}`, '_blank');
+        }
+    } catch (e) { console.log("Cerrado"); }
+};
 
 window.toggleRecomendaciones = function(boton) {
     const contenedorReputacion = boton.closest('.reputacion');

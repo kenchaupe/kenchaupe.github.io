@@ -2146,6 +2146,43 @@ body.vip-desbloqueado .badge-envio-vip {
 
 
 
+/* Contenedor de la fila de estrellas */
+.contenedor-estrellas-viral {
+    position: relative; /* Base para el botón absoluto */
+    display: flex;
+    justify-content: center; /* Centra las estrellas al 100% */
+    align-items: center;
+    width: 100%;
+    min-height: 40px;
+    margin-bottom: 10px;
+}
 
+/* El Botón: se pega a la derecha sin ocupar espacio real */
+.btn-compartir-viral {
+    position: absolute;
+    right: 0; /* Pegado al borde derecho del contenedor */
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid #D4AF37;
+    color: #D4AF37;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.btn-compartir-viral:hover {
+    background: #D4AF37;
+    color: #000;
+}
+
+/* Forzar centrado de las estrellas */
+.reputacion {
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
 
