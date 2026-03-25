@@ -1620,7 +1620,7 @@ document.onkeydown = function(e) {
 };
 
 
-// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Final) ---
+// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Final + Borrado de URL) ---
 function darBienvenidaProducto() {
     if (window.location.hash) {
         const idBuscado = window.location.hash.substring(1); 
@@ -1648,6 +1648,9 @@ function darBienvenidaProducto() {
 
             if (productoDestacado) {
                 clearInterval(radar); // Apagamos el radar
+                
+                // 🚀 LA MAGIA ACÁ: Limpiamos la URL (borramos el #producto-X)
+                window.history.replaceState(null, null, window.location.pathname);
                 
                 setTimeout(() => {
                     // 2. Bajamos suavemente hasta la prenda
