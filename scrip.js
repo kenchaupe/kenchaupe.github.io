@@ -1621,49 +1621,53 @@ document.onkeydown = function(e) {
 };
 
 
-// --- FUNCIÓN DEL RECEPCIONISTA (Versión Rastreador) ---
+// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Final) ---
 function darBienvenidaProducto() {
-    // 1. ¿El link tiene el hashtag del producto? (ej: #producto-6)
     if (window.location.hash) {
         const idBuscado = window.location.hash.substring(1); 
-        console.log("🔍 Gruken VIP: Buscando la prenda ->", idBuscado);
-
         let intentos = 0;
         
-        // 2. Encendemos el radar: busca cada 500 milisegundos
+        // 1. Inyectamos el CSS de lujo desde acá para que NADA lo bloquee
+        if (!document.getElementById('css-vip-gruken')) {
+            const estiloVIP = document.createElement('style');
+            estiloVIP.id = 'css-vip-gruken';
+            estiloVIP.innerHTML = `
+                .efecto-lujo-vip {
+                    box-shadow: 0 0 40px #D4AF37 !important;
+                    transform: scale(1.05) !important;
+                    z-index: 999 !important;
+                    transition: all 0.8s ease !important;
+                    border: 2px solid #D4AF37 !important;
+                    border-radius: 10px !important;
+                }
+            `;
+            document.head.appendChild(estiloVIP);
+        }
+
         const radar = setInterval(() => {
             const productoDestacado = document.getElementById(idBuscado);
 
             if (productoDestacado) {
-                console.log("✅ Gruken VIP: ¡Prenda encontrada! Aplicando lujo...");
-                clearInterval(radar); // Apagamos el radar porque ya lo encontró
-
-                // Le damos 1 segundito extra para que las fotos carguen bien antes de bajar
+                clearInterval(radar); // Apagamos el radar
+                
                 setTimeout(() => {
-                    // Bajamos hasta la prenda
+                    // 2. Bajamos suavemente hasta la prenda
                     productoDestacado.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    // Efecto dorado
-                    productoDestacado.style.transition = "all 0.8s ease";
-                    productoDestacado.style.boxShadow = "0 0 30px #D4AF37";
-                    productoDestacado.style.transform = "scale(1.03)";
-                    productoDestacado.style.zIndex = "10";
+                    // 3. LA BIENVENIDA: Le clavamos la clase VIP con fuerza
+                    productoDestacado.classList.add('efecto-lujo-vip');
                     
-                    // Apagamos el efecto a los 3 segundos
+                    // 4. Apagamos el brillo a los 3.5 segundos para que pueda comprar tranquilo
                     setTimeout(() => {
-                        productoDestacado.style.boxShadow = "none";
-                        productoDestacado.style.transform = "scale(1)";
-                    }, 3000);
-                }, 1000); 
+                        productoDestacado.classList.remove('efecto-lujo-vip');
+                    }, 3500);
+                    
+                }, 800); // Le damos un poquitito más de tiempo al scroll para que empiece
 
             } else {
                 intentos++;
-                console.log(`⏳ Gruken VIP: Esperando a que el producto se dibuje... (Intento ${intentos})`);
-                
-                // Si pasaron 10 intentos (5 segundos) y no está, apagamos el radar
-                if (intentos >= 10) {
-                    clearInterval(radar);
-                    console.log("❌ Gruken VIP: El producto no apareció en la página.");
+                if (intentos >= 15) {
+                    clearInterval(radar); // Si pasaron 7.5 segundos y no cargó, nos rendimos
                 }
             }
         }, 500);
