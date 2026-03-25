@@ -836,28 +836,27 @@ async function inicializarStockTienda() {
         console.error("Error:", error);
     }
 }
-window.compartirProducto = async function(nombre, id) {
-    // Tu URL oficial de la función "compartir"
-    const linkInteligente = `https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/compartir?id=${id}`;
+// --- FUNCIÓN PARA EL BOTÓN DE COMPARTIR ---
+function compartirProducto(nombre, id) {
+    // 🚀 ACÁ ESTÁ LA MAGIA: Armamos el link profesional con tu dominio
+    const linkProfesional = `https://www.gruken.com/producto/${id}`;
     
-    const textoMensaje = `🧥 *¡Mirá este ingreso increíble en Gruken!* 👑\n\n` +
-                         `🔥 *${nombre}*\n\n` +
-                         `Ver producto aquí: `;
-
-    try {
-        if (navigator.share) {
-            await navigator.share({
-                title: 'Gruken',
-                text: textoMensaje,
-                url: linkInteligente
-            });
-        } else {
-            // Fallback para computadoras
-            const msgEncoded = encodeURIComponent(textoMensaje + linkInteligente);
-            window.open(`https://api.whatsapp.com/send?text=${msgEncoded}`, '_blank');
-        }
-    } catch (e) { console.log("Cerrado"); }
-};
+    // Armamos el mensajito de WhatsApp
+    const mensaje = `🧥 ¡Mirá este ingreso increíble en Gruken! 👑\n\n🔥 ${nombre}\n\nVer producto aquí: ${linkProfesional}`;
+    
+    // Intentamos abrir el menú de compartir del celular (Nativo)
+    if (navigator.share) {
+        navigator.share({
+            title: `Gruken - ${nombre}`,
+            text: `🧥 ¡Mirá este ingreso increíble en Gruken! 👑\n\n🔥 ${nombre}\n\nVer producto aquí: `,
+            url: linkProfesional
+        }).catch((error) => console.log('Error al compartir', error));
+    } else {
+        // Si lo abren desde una compu vieja, los manda a WhatsApp Web directo
+        const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+        window.open(urlWhatsApp, '_blank');
+    }
+}
 
 window.toggleRecomendaciones = function(boton) {
     const contenedorReputacion = boton.closest('.reputacion');
