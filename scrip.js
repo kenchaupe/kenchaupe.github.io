@@ -336,7 +336,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cantidadPedida = parseInt(productoSeleccionado.querySelector('.input-cantidad')?.value) || 1;
 
                 if (!talla || !color) {
-                    alert("Por favor selecciona talla y color");
+                    alert("Por favor selecciona talla y color para continuar.");
+                    
+                    // 🚀 AYUDA VIP: Le abrimos el menú en la cara para que elija
+                    const btnOpciones = productoSeleccionado.querySelector('.btn-abrir-opciones');
+                    if (btnOpciones) {
+                        const ventanaOpciones = btnOpciones.nextElementSibling;
+                        if (ventanaOpciones && ventanaOpciones.style.display === 'none') {
+                            toggleMenuOpciones(btnOpciones);
+                        }
+                    }
+
                     btn.textContent = originalText;
                     btn.disabled = false;
                     return;
@@ -587,35 +597,28 @@ async function inicializarStockTienda() {
                    // Antes era un <div> simple, ahora es nuestro botón rojo
                     let textoUltimas = (idValor % 3) === 0 ? '<div class="btn-ultimas-unidades">ÚLTIMAS UNIDADES</div>' : '';
 
-                    // 2. DIBUJAMOS LA TARJETA (Versión limpia sin envío gratis)
+                   // 2. DIBUJAMOS LA TARJETA (Con el botón arriba del precio)
                     nuevaTarjeta.innerHTML = `
                         ${htmlImagenes}
                         <div class="product-txt">
                             <h3>${prodBD.nombre}</h3>
-                           <div class="contenedor-estrellas-viral">
-                        <div class="estrellas-centro">
-                            ${generarResenasAleatorias(prodBD.id)}
-                        </div>
-                        <button class="btn-compartir-viral" onclick="compartirProducto('${prodBD.nombre}', '${prodBD.id}')">
-                            <i class="fa fa-share-alt"></i>
-                        </button>
-                    </div>
-                            
-                            <div class="selector-contenedor">
-                                <span class="label-titulo">Cantidad:</span>
-                                <div class="cantidad-control">
-                                    <button class="btn-cantidad minus">-</button>
-                                    <input type="number" class="input-cantidad" value="1" min="1" readonly>
-                                    <button class="btn-cantidad plus">+</button>
+                            <div class="contenedor-estrellas-viral">
+                                <div class="estrellas-centro">
+                                    ${generarResenasAleatorias(prodBD.id)}
                                 </div>
+                                <button class="btn-compartir-viral" onclick="compartirProducto('${prodBD.nombre}', '${prodBD.id}')">
+                                    <i class="fa fa-share-alt"></i>
+                                </button>
                             </div>
+                            
+                            <div class="espacio-opciones-flotantes" style="position: relative; margin-bottom: 15px; margin-top: 15px;"></div>
                             
                             <div class="precio-contenedor">
                                 <span class="precio">$${(prodBD.precio || 0).toLocaleString('es-AR')}</span>
                                 <span class="cantidad-ventas"> 🔥 +${textoVentas} ventas</span>
                             </div>
 
-                            <div class="contenedor-urgencia" style="display: flex; justify-content: center; width: 100%; margin-top: 10px;">
+                            <div class="contenedor-urgencia" style="display: flex; justify-content: center; width: 100%; margin-top: 10px; margin-bottom: 15px;">
                                 ${textoUltimas}
                             </div>
                             
@@ -672,103 +675,36 @@ async function inicializarStockTienda() {
             if (datosBD) {
                 const contenedorTexto = btn.closest('.product-txt');
                 
-                if (contenedorTexto) {
-                    // ---> 1. LIMPIEZA DE SELECTORES VIEJOS (Evita duplicados) <---
-                    let contenedorCantidad = null;
-                    const selectoresViejos = contenedorTexto.querySelectorAll('.selector-contenedor');
-                    
-                    selectoresViejos.forEach(el => {
-                        // Protegemos el selector de Cantidad para no borrarlo
-                        if (el.textContent.includes('Cantidad')) {
-                            contenedorCantidad = el; 
-                        } 
-                        // Borramos los colores y talles fijos del HTML viejo
-                        else if (el.textContent.includes('Color') || el.textContent.includes('Talle')) {
-                            el.remove(); 
-                        }
-                    });
-                    // También borramos si quedaron inyecciones dinámicas previas
-                    const duplicados = contenedorTexto.querySelectorAll('.selectores-dinamicos');
-                    duplicados.forEach(el => el.remove());
+               if (contenedorTexto) {
+                    // ---> 1. PREPARAMOS EL HUECO <---
+                    const espacioOpciones = contenedorTexto.querySelector('.espacio-opciones-flotantes');
+                    if (espacioOpciones) espacioOpciones.innerHTML = ''; // Limpiamos
 
-                    // ---> 2. ACTUALIZACIÓN DE DATOS <---
+                    // ---> 2. ACTUALIZAMOS TEXTOS <---
                     const titulo = contenedorTexto.querySelector('h3');
                     if (titulo) titulo.textContent = datosBD.nombre;
 
                     const precioSpan = contenedorTexto.querySelector('.precio');
                     if (precioSpan) precioSpan.textContent = "$" + datosBD.precio.toLocaleString('es-AR');
 
+                    // (Dejamos tu lista de coloresHex exactamente igual para no perder tus colores)
                     const coloresHex = {
-                     'canela': '#D2691E',
-                     'blanco': '#FFFFFF',
-                     'negro': '#000000',
-                     'gris': '#808080',
-                     'gris claro': '#D3D3D3',
-                     'gris oscuro': '#A9A9A9',
-                     'melange': '#B5B5B5',
-                     'plata': '#C0C0C0',
-                     'plomo': '#666666',
-                      
-                       // 🟤 Tonalidades Tierra, Nude y Cálidos
-                     'beige': '#F5F5DC',
-                     'crudo': '#F2EFE9',
-                     'arena': '#F4A460',
-                     'camel': '#C19A6B',
-                     'topo': '#8B8589',
-                     'marron': '#8B4513',
-                     'chocolate': '#D2691E',
-                     'terracota': '#E2725B',
-                     'tostado': '#D2B48C',
-                     'habano': '#593e26',
-
-                       // 🔴 Rojos y Rosados
-                     'rojo': '#FF0000',
-                     'bordo': '#800000',
-                     'granate': '#800000',
-                     'coral': '#FF7F50',
-                     'salmon': '#FA8072',
-                     'rosa': '#FFC0CB',
-                     'rosa bebe': '#F4C2C2',
-                     'rosa chicle': '#FF69B4',
-                     'rosa viejo': '#C08081',
-                     'fucsia': '#FF00FF',
-                     'magenta': '#FF00FF',
-
-                       // 🔵 Azules y Celestes
-                     'azul': '#0000FF',
-                     'azul marino': '#000080',
-                     'azul francia': '#318CE7',
-                     'celeste': '#87CEEB',
-                     'celeste bebe': '#BFEFFF',
-                     'denim': '#1560BD',
-                     'indigo': '#4B0082',
-                     'turquesa': '#40E0D0',
-                     'aqua': '#00FFFF',
-
-                      // 🟢 Verdes
-                     'verde': '#008000',
-                     'verde militar': '#4B5320',
-                     'verde oliva': '#808000',
-                     'esmeralda': '#50C878',
-                     'menta': '#98FF98',
-                     'musgo': '#8A9A5B',
-                     'lima': '#BFFF00',
-                     'pistacho': '#93C572',
-                      'cobre': '#B87333',
-                      // 🟡 Amarillos y Naranjas
-                     'amarillo': '#FFFF00',
-                     'amarillo patito': '#FFFF99',
-                     'mostaza': '#FFDB58',
-                     'naranja': '#FFA500',
-                     'ocre': '#CC7722',
-                     'dorado': '#FFD700',
-                      'durazno': '#FFDAB9',
-                     'melange oscuro': '#5A5A5A',
-                     'violeta': '#EE82EE',
-                     'purpura': '#800080',
-                     'lila': '#C8A2C8',
-                     'lavanda': '#E6E6FA',
-                     'ciruela': '#DDA0DD'
+                     'canela': '#D2691E', 'blanco': '#FFFFFF', 'negro': '#000000', 'gris': '#808080',
+                     'gris claro': '#D3D3D3', 'gris oscuro': '#A9A9A9', 'melange': '#B5B5B5',
+                     'plata': '#C0C0C0', 'plomo': '#666666', 'beige': '#F5F5DC', 'crudo': '#F2EFE9',
+                     'arena': '#F4A460', 'camel': '#C19A6B', 'topo': '#8B8589', 'marron': '#8B4513',
+                     'chocolate': '#D2691E', 'terracota': '#E2725B', 'tostado': '#D2B48C', 'habano': '#593e26',
+                     'rojo': '#FF0000', 'bordo': '#800000', 'granate': '#800000', 'coral': '#FF7F50',
+                     'salmon': '#FA8072', 'rosa': '#FFC0CB', 'rosa bebe': '#F4C2C2', 'rosa chicle': '#FF69B4',
+                     'rosa viejo': '#C08081', 'fucsia': '#FF00FF', 'magenta': '#FF00FF', 'azul': '#0000FF',
+                     'azul marino': '#000080', 'azul francia': '#318CE7', 'celeste': '#87CEEB',
+                     'celeste bebe': '#BFEFFF', 'denim': '#1560BD', 'indigo': '#4B0082', 'turquesa': '#40E0D0',
+                     'aqua': '#00FFFF', 'verde': '#008000', 'verde militar': '#4B5320', 'verde oliva': '#808000',
+                     'esmeralda': '#50C878', 'menta': '#98FF98', 'musgo': '#8A9A5B', 'lima': '#BFFF00',
+                     'pistacho': '#93C572', 'cobre': '#B87333', 'amarillo': '#FFFF00', 'amarillo patito': '#FFFF99',
+                     'mostaza': '#FFDB58', 'naranja': '#FFA500', 'ocre': '#CC7722', 'dorado': '#FFD700',
+                     'durazno': '#FFDAB9', 'melange oscuro': '#5A5A5A', 'violeta': '#EE82EE',
+                     'purpura': '#800080', 'lila': '#C8A2C8', 'lavanda': '#E6E6FA', 'ciruela': '#DDA0DD'
                     };
 
                     const tallesStr = String(datosBD.talles || "Único");
@@ -781,45 +717,65 @@ async function inicializarStockTienda() {
                         return `<div class="swatch" data-valor="${c.trim()}" style="background-color: ${fondo};" title="${c.trim()}"></div>`;
                     }).join('');
 
-                    // ---> 3. CREACIÓN CON EL DISEÑO EXACTO ORIGINAL <---
+                    // ---> 3. CREAMOS LA VENTANA FLOTANTE DE OPCIONES <---
                     const divSelectores = document.createElement('div');
                     divSelectores.className = 'selectores-dinamicos';
                     
-                    // Recreamos exactamente la estructura de tu index.html original para que respete tu style.css
-                    divSelectores.innerHTML = `
-                        <div class="selector-contenedor">
-                            <span class="label-titulo">Color:</span>
-                            <div class="color-swatches" data-tipo="color">
-                                ${htmlColores}
+                   divSelectores.innerHTML = `
+                        <button class="btn-abrir-opciones" onclick="toggleMenuOpciones(this)" style="width: 60%; margin: 0 auto; padding: 6px; background: transparent; border: 1px solid #D4AF37; color: #D4AF37; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa fa-sliders"></i> Elegir Talle y Color</span>
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
+                        
+                        <div class="ventana-flotante-opciones" style="display: none; position: absolute; bottom: 110%; left: 0; width: 100%; background: #ffffff; border: 2px solid #000000; padding: 20px; z-index: 999; border-radius: 15px; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); box-sizing: border-box;">
+                            
+                            <div class="selector-contenedor">
+                                <span class="label-titulo">Color:</span>
+                                <div class="color-swatches" data-tipo="color">
+                                    ${htmlColores}
+                                </div>
                             </div>
-                        </div>
-                        <div class="selector-contenedor">
-                            <span class="label-titulo">Talle:</span>
-                            <div class="talla-chips" data-tipo="talla">
-                                ${htmlTalles}
+                            
+                            <div class="selector-contenedor">
+                                <span class="label-titulo">Talle:</span>
+                                <div class="talla-chips" data-tipo="talla">
+                                    ${htmlTalles}
+                                </div>
                             </div>
+
+                            <div class="selector-contenedor" style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
+                                <span class="label-titulo">Cantidad:</span>
+                                <div class="cantidad-control">
+                                    <button class="btn-cantidad minus">-</button>
+                                    <input type="number" class="input-cantidad" value="1" min="1" readonly>
+                                    <button class="btn-cantidad plus">+</button>
+                                </div>
+                            </div>
+
+                            <button onclick="validarYcerrarOpciones(this)" style="width: 100%; padding: 12px; background: #D4AF37; color: #000; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; text-transform: uppercase;">
+                                Confirmar y Cerrar
+                            </button>
                         </div>
                     `;
 
-                    // ---> 4. INSERTAR EN EL LUGAR CORRECTO (Arriba de Cantidad) <---
-                    if (contenedorCantidad) {
-                        contenedorCantidad.parentNode.insertBefore(divSelectores, contenedorCantidad);
-                    } else if (precioSpan) {
-                        precioSpan.parentNode.insertBefore(divSelectores, precioSpan);
-                    }
+                    // ---> 4. INSERTAR EN EL HUECO <---
+                    if (espacioOpciones) espacioOpciones.appendChild(divSelectores);
+
+                    // Lógica para que se pinten de negro/dorado al hacer clic
                     divSelectores.querySelectorAll('.chip, .swatch').forEach(el => {
                         el.onclick = (e) => {
                             const hermanos = el.parentElement.querySelectorAll(el.classList[0] === 'chip' ? '.chip' : '.swatch');
                             hermanos.forEach(h => {
                                 h.style.border = '1px solid #ccc';
                                 h.style.transform = 'scale(1)';
+                                h.classList.remove('selected'); // Limpiamos selección previa
                             });
                             el.style.border = '2px solid #000';
+                            el.classList.add('selected'); // Marcamos como elegido
                             if(el.classList.contains('swatch')) el.style.transform = 'scale(1.2)';
                         };
                     });
                 }
-
                 const sinStock = datosBD.stockTotal <= 0;
                 btn.disabled = sinStock;
                 btn.textContent = sinStock ? "Agotado" : "Agregar al carrito";
@@ -1675,3 +1631,42 @@ function darBienvenidaProducto() {
         }, 500);
     }
 }
+
+// ==========================================
+// MAGIA DEL MENÚ FLOTANTE DE OPCIONES
+// ==========================================
+window.toggleMenuOpciones = function(boton) {
+    const ventana = boton.nextElementSibling; // La ventana está justo abajo del botón
+    
+    // Cerramos otras ventanas que puedan estar abiertas para no ensuciar la pantalla
+    document.querySelectorAll('.ventana-flotante-opciones').forEach(v => {
+        if (v !== ventana) v.style.display = 'none';
+    });
+
+    if (ventana.style.display === 'none') {
+        ventana.style.display = 'block';
+    } else {
+        ventana.style.display = 'none';
+    }
+};
+
+window.validarYcerrarOpciones = function(btnConfirmar) {
+    const ventana = btnConfirmar.closest('.ventana-flotante-opciones');
+    const botonAbrir = ventana.previousElementSibling; // El botón que dice "Elegir Talle..."
+    
+    const tieneColor = ventana.querySelector('.swatch.selected');
+    const tieneTalle = ventana.querySelector('.chip.selected');
+
+    if (!tieneColor || !tieneTalle) {
+        // Obligamos al cliente a elegir, si no, no se cierra
+        alert("¡Atención! Seleccioná tu talle y color antes de confirmar.");
+    } else {
+        // Se cierra el menú
+        ventana.style.display = 'none';
+        
+        // Magia extra: Le cambiamos el texto al botón para que vea que ya está listo
+        botonAbrir.innerHTML = `<span style="color: #00C851;"><i class="fa fa-check-circle"></i> ${tieneTalle.textContent} | Elegido</span>`;
+        botonAbrir.style.background = 'rgba(212, 175, 55, 0.1)';
+        botonAbrir.style.borderColor = '#00C851';
+    }
+};
