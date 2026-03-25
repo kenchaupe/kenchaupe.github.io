@@ -1621,24 +1621,43 @@ document.onkeydown = function(e) {
 };
 
 
-// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Final) ---
+// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Resplandor de Lujo) ---
 function darBienvenidaProducto() {
     if (window.location.hash) {
         const idBuscado = window.location.hash.substring(1); 
         let intentos = 0;
         
-        // 1. Inyectamos el CSS de lujo desde acá para que NADA lo bloquee
+        // 1. Inyectamos el CSS de súper lujo (Forzado con !important)
         if (!document.getElementById('css-vip-gruken')) {
             const estiloVIP = document.createElement('style');
             estiloVIP.id = 'css-vip-gruken';
             estiloVIP.innerHTML = `
+                /* Definimos la animación de pulsación */
+                @keyframes resplandorVipGruken {
+                    0% {
+                        box-shadow: 0 0 20px 5px rgba(212, 175, 55, 0.6);
+                    }
+                    50% {
+                        /* El resplandor se expande mucho más y se vuelve más brillante */
+                        box-shadow: 0 0 100px 30px rgba(212, 175, 55, 1);
+                    }
+                    100% {
+                        box-shadow: 0 0 20px 5px rgba(212, 175, 55, 0.6);
+                    }
+                }
+
                 .efecto-lujo-vip {
-                    box-shadow: 0 0 40px #D4AF37 !important;
-                    transform: scale(1.05) !important;
+                    /* --- EFECTO MAESTRO --- */
+                    position: relative !important;
                     z-index: 999 !important;
-                    transition: all 0.8s ease !important;
-                    border: 2px solid #D4AF37 !important;
-                    border-radius: 10px !important;
+                    transform: scale(1.08) !important; /* Un poco más de zoom */
+                    transition: all 0.6s ease !important; /* Transición más rápida al inicio */
+                    
+                    border-radius: 12px !important; /* Borde un poco más suave */
+                    background-color: #000 !important; /* Asegura fondo negro para contrastar */
+                    
+                    /* Aplicamos la pulsación del halo de oro */
+                    animation: resplandorVipGruken 2s infinite ease-in-out !important;
                 }
             `;
             document.head.appendChild(estiloVIP);
@@ -1650,24 +1669,25 @@ function darBienvenidaProducto() {
             if (productoDestacado) {
                 clearInterval(radar); // Apagamos el radar
                 
+                // Un poquitito de tiempo para que la página se acomode antes del scroll
                 setTimeout(() => {
                     // 2. Bajamos suavemente hasta la prenda
                     productoDestacado.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    // 3. LA BIENVENIDA: Le clavamos la clase VIP con fuerza
+                    // 3. LA BIENVENIDA: Le clavamos la clase de súper lujo
                     productoDestacado.classList.add('efecto-lujo-vip');
                     
-                    // 4. Apagamos el brillo a los 3.5 segundos para que pueda comprar tranquilo
+                    // 4. Apagamos el resplandor a los 4 segundos para que pueda comprar tranquilo
                     setTimeout(() => {
                         productoDestacado.classList.remove('efecto-lujo-vip');
-                    }, 3500);
+                    }, 4000);
                     
-                }, 800); // Le damos un poquitito más de tiempo al scroll para que empiece
+                }, 800); 
 
             } else {
                 intentos++;
                 if (intentos >= 15) {
-                    clearInterval(radar); // Si pasaron 7.5 segundos y no cargó, nos rendimos
+                    clearInterval(radar); // Nos rendimos a los 7.5 segundos
                 }
             }
         }, 500);
