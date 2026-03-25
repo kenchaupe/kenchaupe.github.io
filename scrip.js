@@ -1621,32 +1621,24 @@ document.onkeydown = function(e) {
 };
 
 
-// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Halo de Oro VIP Potenciado) ---
+// --- FUNCIÓN DEL RECEPCIONISTA VIP (Versión Final) ---
 function darBienvenidaProducto() {
     if (window.location.hash) {
         const idBuscado = window.location.hash.substring(1); 
-        console.log("🔍 Gruken VIP: Buscando la prenda ->", idBuscado);
-
         let intentos = 0;
         
-        // 1. Inyectamos el CSS de súper lujo (Forzado con !important)
+        // 1. Inyectamos el CSS de lujo desde acá para que NADA lo bloquee
         if (!document.getElementById('css-vip-gruken')) {
             const estiloVIP = document.createElement('style');
             estiloVIP.id = 'css-vip-gruken';
             estiloVIP.innerHTML = `
                 .efecto-lujo-vip {
-                    /* --- EFECTO MAESTRO: HALO DE ORO VIP --- */
-                    position: relative !important;
+                    box-shadow: 0 0 40px #D4AF37 !important;
+                    transform: scale(1.05) !important;
                     z-index: 999 !important;
-                    transition: all 0.6s ease !important; /* Transición más suave */
-                    border-radius: 12px !important; /* Borde un poco más suave */
-                    background-color: #000 !important; /* Asegura fondo negro para contrastar */
-                    
-                    /* Múltiples capas de box-shadow para un halo grueso y denso */
-                    box-shadow: 
-                        0 0 10px 5px rgba(212, 175, 55, 1) !important, /* Capa interna brillante */
-                        0 0 40px 15px rgba(212, 175, 55, 1) !important, /* Capa intermedia densa */
-                        0 0 80px 25px rgba(212, 175, 55, 0.8) !important; /* Capa externa expansiva */
+                    transition: all 0.8s ease !important;
+                    border: 2px solid #D4AF37 !important;
+                    border-radius: 10px !important;
                 }
             `;
             document.head.appendChild(estiloVIP);
@@ -1656,30 +1648,26 @@ function darBienvenidaProducto() {
             const productoDestacado = document.getElementById(idBuscado);
 
             if (productoDestacado) {
-                console.log("✅ Gruken VIP: ¡Prenda encontrada! Aplicando lujo...");
                 clearInterval(radar); // Apagamos el radar
-
-                // Le damos 1 segundito extra para que las fotos carguen bien antes de bajar
+                
                 setTimeout(() => {
-                    // Bajamos hasta la prenda
+                    // 2. Bajamos suavemente hasta la prenda
                     productoDestacado.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    // Aplicamos el efecto de lujo
+                    // 3. LA BIENVENIDA: Le clavamos la clase VIP con fuerza
                     productoDestacado.classList.add('efecto-lujo-vip');
                     
-                    // Apagamos el efecto a los 4 segundos para que pueda comprar tranquilo
+                    // 4. Apagamos el brillo a los 3.5 segundos para que pueda comprar tranquilo
                     setTimeout(() => {
                         productoDestacado.classList.remove('efecto-lujo-vip');
-                    }, 4000);
-                }, 1000); 
+                    }, 3500);
+                    
+                }, 800); // Le damos un poquitito más de tiempo al scroll para que empiece
 
             } else {
                 intentos++;
-                console.log(`⏳ Gruken VIP: Esperando a que el producto se dibuje... (Intento ${intentos})`);
-                
                 if (intentos >= 15) {
-                    clearInterval(radar);
-                    console.log("❌ Gruken VIP: El producto no apareció en la página.");
+                    clearInterval(radar); // Si pasaron 7.5 segundos y no cargó, nos rendimos
                 }
             }
         }, 500);
