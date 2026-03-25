@@ -553,6 +553,30 @@ async function inicializarStockTienda() {
                 if (!existeEnPagina) {
                     const nuevaTarjeta = document.createElement('div');
                     nuevaTarjeta.className = 'item'; 
+                   
+                    
+                    // --- FUNCIÓN DE ZOOM PARA CELULARES ---
+                    nuevaTarjeta.onclick = function(e) {
+                        // Solo si es celular
+                        if (window.innerWidth <= 768) {
+                            // Si toca botones o selectores, no cerramos el zoom
+                            if (e.target.closest('button') || e.target.closest('.selector-contenedor') || e.target.closest('a')) return;
+
+                            // Quitamos zoom a otros y se lo damos a este
+                            document.querySelectorAll('.item').forEach(i => {
+                                if (i !== nuevaTarjeta) i.classList.remove('zoom-activo');
+                            });
+                            nuevaTarjeta.classList.toggle('zoom-activo');
+
+                            // Si tiene slider, lo refrescamos para que no se vea gris
+                            if (imagenesArray.length > 1 && nuevaTarjeta.classList.contains('zoom-activo')) {
+                                setTimeout(() => {
+                                    const swiperEl = nuevaTarjeta.querySelector('.swiper');
+                                    if (swiperEl && swiperEl.swiper) swiperEl.swiper.update();
+                                }, 300);
+                            }
+                        }
+                    };
                     
                     // 🚀 LÍNEA 1 AGREGADA: Le ponemos el ID exacto a la tarjeta para que el link la encuentre
                     nuevaTarjeta.id = `producto-${prodBD.id}`; 
@@ -1636,9 +1660,8 @@ function darBienvenidaProducto() {
 // MAGIA DEL MENÚ FLOTANTE DE OPCIONES
 // ==========================================
 window.toggleMenuOpciones = function(boton) {
-    const ventana = boton.nextElementSibling; // La ventana está justo abajo del botón
+    const ventana = boton.nextElementSibling; 
     
-    // Cerramos otras ventanas que puedan estar abiertas para no ensuciar la pantalla
     document.querySelectorAll('.ventana-flotante-opciones').forEach(v => {
         if (v !== ventana) v.style.display = 'none';
     });
@@ -1651,22 +1674,46 @@ window.toggleMenuOpciones = function(boton) {
 };
 
 window.validarYcerrarOpciones = function(btnConfirmar) {
-    const ventana = btnConfirmar.closest('.ventana-flotante-opciones');
-    const botonAbrir = ventana.previousElementSibling; // El botón que dice "Elegir Talle..."
-    
-    const tieneColor = ventana.querySelector('.swatch.selected');
-    const tieneTalle = ventana.querySelector('.chip.selected');
+    try {
+        const ventana = btnConfirmar.closest('.ventana-flotante-opciones');
+        const botonAbrir = ventana.previousElementSibling; 
+        
+        // Buscamos qué eligió
+        const tieneColor = ventana.querySelector('.swatch.selected');
+        const tieneTalle = ventana.querySelector('.chip.selected');
+        const inputCantidad = ventana.querySelector('.input-cantidad');
 
-    if (!tieneColor || !tieneTalle) {
-        // Obligamos al cliente a elegir, si no, no se cierra
-        alert("¡Atención! Seleccioná tu talle y color antes de confirmar.");
-    } else {
-        // Se cierra el menú
+        if (!tieneColor || !tieneTalle) {
+            alert("¡Atención! Seleccioná tu talle y color antes de confirmar.");
+            return; 
+        } 
+
+        // 🚀 LECTURA SÚPER SEGURA: Extraemos los valores blindando el código
+        const valorColor = tieneColor.getAttribute('data-valor') || "color";
+        const nombreColor = String(valorColor).toLowerCase(); // Forzamos minúscula de forma segura
+        
+        const valorTalle = tieneTalle.getAttribute('data-valor') || "talle";
+        const nombreTalle = String(valorTalle).toUpperCase(); 
+        
+        const cantidad = inputCantidad ? inputCantidad.value : 1;
+
+        // Cerramos la ventana
         ventana.style.display = 'none';
         
-        // Magia extra: Le cambiamos el texto al botón para que vea que ya está listo
-        botonAbrir.innerHTML = `<span style="color: #00C851;"><i class="fa fa-check-circle"></i> ${tieneTalle.textContent} | Elegido</span>`;
-        botonAbrir.style.background = 'rgba(212, 175, 55, 0.1)';
-        botonAbrir.style.borderColor = '#00C851';
+        // Transformamos el botón
+        botonAbrir.innerHTML = `
+            <span style="color: #28a745; display: flex; align-items: center; gap: 5px; font-size: 10px;">
+                <i class="fa fa-check-circle" style="font-size: 16px;"></i> 
+                Color: ${nombreColor} | Talle: ${nombreTalle} | Cant:${cantidad}
+            </span>
+        `;
+        
+        botonAbrir.style.borderColor = '#28a745';
+        botonAbrir.style.background = 'rgba(40, 167, 69, 0.05)';
+        
+    } catch (error) {
+        console.log("Error al confirmar:", error);
+        // Si hay un micro-corte, igual cerramos la ventana para no trabar al cliente
+        btnConfirmar.closest('.ventana-flotante-opciones').style.display = 'none';
     }
 };
