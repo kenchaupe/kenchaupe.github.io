@@ -553,30 +553,6 @@ async function inicializarStockTienda() {
                 if (!existeEnPagina) {
                     const nuevaTarjeta = document.createElement('div');
                     nuevaTarjeta.className = 'item'; 
-                   
-                    
-                    // --- FUNCIÓN DE ZOOM PARA CELULARES ---
-                    nuevaTarjeta.onclick = function(e) {
-                        // Solo si es celular
-                        if (window.innerWidth <= 768) {
-                            // Si toca botones o selectores, no cerramos el zoom
-                            if (e.target.closest('button') || e.target.closest('.selector-contenedor') || e.target.closest('a')) return;
-
-                            // Quitamos zoom a otros y se lo damos a este
-                            document.querySelectorAll('.item').forEach(i => {
-                                if (i !== nuevaTarjeta) i.classList.remove('zoom-activo');
-                            });
-                            nuevaTarjeta.classList.toggle('zoom-activo');
-
-                            // Si tiene slider, lo refrescamos para que no se vea gris
-                            if (imagenesArray.length > 1 && nuevaTarjeta.classList.contains('zoom-activo')) {
-                                setTimeout(() => {
-                                    const swiperEl = nuevaTarjeta.querySelector('.swiper');
-                                    if (swiperEl && swiperEl.swiper) swiperEl.swiper.update();
-                                }, 300);
-                            }
-                        }
-                    };
                     
                     // 🚀 LÍNEA 1 AGREGADA: Le ponemos el ID exacto a la tarjeta para que el link la encuentre
                     nuevaTarjeta.id = `producto-${prodBD.id}`; 
