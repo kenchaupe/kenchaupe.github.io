@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/producto/:id",
+      "destination": "https://pvniwivsxluujijyqqpc.supabase.co/functions/v1/compartir?id=:id"
+    }
+  ]
+}
