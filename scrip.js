@@ -7,12 +7,6 @@ const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', () => {
 
-
-
-
-
-
-
     // ==========================================
     // SISTEMA VIP: ENVÍO GRATIS 24H (2da Visita)
     // ==========================================
@@ -538,7 +532,7 @@ async function inicializarStockTienda() {
         const { data, error } = await _supabase.from('productos').select('*');
         if (error) throw error;
 // ==========================================
-        // CREACIÓN AUTOMÁTICA DE PRODUCTOS NUEVOS (CON SLIDER DE IMÁGENES)
+       // CREACIÓN AUTOMÁTICA DE PRODUCTOS NUEVOS (CON SLIDER DE IMÁGENES)
         // ==========================================
         const contenedorPrincipal = document.querySelector('.contenedor-items'); 
         
@@ -550,6 +544,8 @@ async function inicializarStockTienda() {
                     const nuevaTarjeta = document.createElement('div');
                     nuevaTarjeta.className = 'item'; 
                     
+                    // 🚀 LÍNEA 1 AGREGADA: Le ponemos el ID exacto a la tarjeta para que el link la encuentre
+                    nuevaTarjeta.id = `producto-${prodBD.id}`; 
                     
                     // 1. LÓGICA DE MÚLTIPLES IMÁGENES
                     // Separamos las URLs por comas (si no hay, usamos la por defecto)
@@ -591,7 +587,6 @@ async function inicializarStockTienda() {
                    // Antes era un <div> simple, ahora es nuestro botón rojo
                     let textoUltimas = (idValor % 3) === 0 ? '<div class="btn-ultimas-unidades">ÚLTIMAS UNIDADES</div>' : '';
 
-
                     // 2. DIBUJAMOS LA TARJETA (Versión limpia sin envío gratis)
                     nuevaTarjeta.innerHTML = `
                         ${htmlImagenes}
@@ -630,7 +625,6 @@ async function inicializarStockTienda() {
                     
                     contenedorPrincipal.appendChild(nuevaTarjeta);
                     
-
                     // 3. ACTIVAMOS EL SLIDER SI HAY MÁS DE 1 IMAGEN
                     if (imagenesArray.length > 1) {
                         new Swiper(`.mini-slider-${prodBD.id}`, {
@@ -647,6 +641,9 @@ async function inicializarStockTienda() {
                     }
                 }
             });
+
+            // 🚀 LÍNEA 2 AGREGADA: Ya terminamos de dibujar todo. ¡Que pase el Recepcionista!
+            darBienvenidaProducto();
         }
         // ==========================================
 
@@ -850,7 +847,7 @@ window.compartirProducto = async function(nombre, id) {
     try {
         if (navigator.share) {
             await navigator.share({
-                title: 'Gruken Luxury',
+                title: 'Gruken',
                 text: textoMensaje,
                 url: linkInteligente
             });
@@ -1623,3 +1620,52 @@ document.onkeydown = function(e) {
     if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)) return false;
 };
 
+
+// --- FUNCIÓN DEL RECEPCIONISTA (Versión Rastreador) ---
+function darBienvenidaProducto() {
+    // 1. ¿El link tiene el hashtag del producto? (ej: #producto-6)
+    if (window.location.hash) {
+        const idBuscado = window.location.hash.substring(1); 
+        console.log("🔍 Gruken VIP: Buscando la prenda ->", idBuscado);
+
+        let intentos = 0;
+        
+        // 2. Encendemos el radar: busca cada 500 milisegundos
+        const radar = setInterval(() => {
+            const productoDestacado = document.getElementById(idBuscado);
+
+            if (productoDestacado) {
+                console.log("✅ Gruken VIP: ¡Prenda encontrada! Aplicando lujo...");
+                clearInterval(radar); // Apagamos el radar porque ya lo encontró
+
+                // Le damos 1 segundito extra para que las fotos carguen bien antes de bajar
+                setTimeout(() => {
+                    // Bajamos hasta la prenda
+                    productoDestacado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Efecto dorado
+                    productoDestacado.style.transition = "all 0.8s ease";
+                    productoDestacado.style.boxShadow = "0 0 30px #D4AF37";
+                    productoDestacado.style.transform = "scale(1.03)";
+                    productoDestacado.style.zIndex = "10";
+                    
+                    // Apagamos el efecto a los 3 segundos
+                    setTimeout(() => {
+                        productoDestacado.style.boxShadow = "none";
+                        productoDestacado.style.transform = "scale(1)";
+                    }, 3000);
+                }, 1000); 
+
+            } else {
+                intentos++;
+                console.log(`⏳ Gruken VIP: Esperando a que el producto se dibuje... (Intento ${intentos})`);
+                
+                // Si pasaron 10 intentos (5 segundos) y no está, apagamos el radar
+                if (intentos >= 10) {
+                    clearInterval(radar);
+                    console.log("❌ Gruken VIP: El producto no apareció en la página.");
+                }
+            }
+        }, 500);
+    }
+}
