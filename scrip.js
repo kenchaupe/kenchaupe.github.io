@@ -797,23 +797,25 @@ function compartirProducto(nombre, id) {
     // 🚀 ACÁ ESTÁ LA MAGIA: Armamos el link profesional con tu dominio
     const linkProfesional = `https://www.gruken.com/producto/${id}`;
     
-    // Armamos el mensajito de WhatsApp
-    const mensaje = `🧥 ¡Mirá este ingreso increíble en Gruken! 👑\n\n🔥 ${nombre}\n\nVer producto aquí: ${linkProfesional}`;
+    // 🚀 EL NUEVO MENSAJE VENDEDOR (Imán de ventas)
+    const mensajeTexto = `🛍️ ¡Mirá este ingreso exclusivo en Gruken! 🛍️\n\n🔥 ${nombre}\n\n💳 Pagá en hasta 6 CUOTAS SIN INTERÉS.\n🚚 Envíos a todo el país.\n\n¡Hacé clic, elegí tu talle y asegurá la tuya antes de que vuelen! 🇦🇷\n\n👇 Mirá el producto acá:\n`;
+    
+    // Unimos el texto persuasivo con el link para WhatsApp Web
+    const mensajeCompleto = mensajeTexto + linkProfesional;
     
     // Intentamos abrir el menú de compartir del celular (Nativo)
     if (navigator.share) {
         navigator.share({
             title: `Gruken - ${nombre}`,
-            text: `🧥 ¡Mirá este ingreso increíble en Gruken! 👑\n\n🔥 ${nombre}\n\nVer producto aquí: `,
-            url: linkProfesional
+            text: mensajeTexto, // Mandamos todo el texto vendedor
+            url: linkProfesional // El celular pega el link automáticamente al final
         }).catch((error) => console.log('Error al compartir', error));
     } else {
         // Si lo abren desde una compu vieja, los manda a WhatsApp Web directo
-        const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+        const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensajeCompleto)}`;
         window.open(urlWhatsApp, '_blank');
     }
 }
-
 window.toggleRecomendaciones = function(boton) {
     const contenedorReputacion = boton.closest('.reputacion');
     const ventana = contenedorReputacion.querySelector('.ventana-flotante-resenas');
@@ -1693,3 +1695,4 @@ window.validarYcerrarOpciones = function(btnConfirmar) {
         btnConfirmar.closest('.ventana-flotante-opciones').style.display = 'none';
     }
 };
+
