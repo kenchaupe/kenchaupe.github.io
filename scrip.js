@@ -798,7 +798,7 @@ function compartirProducto(nombre, id) {
     const linkProfesional = `https://www.gruken.com/producto/${id}`;
     
     // 🚀 EL NUEVO MENSAJE VENDEDOR (Imán de ventas)
-    const mensajeTexto = `🛍️ ¡Mirá este ingreso exclusivo en Gruken! 🛍️\n\n🔥 ${nombre}\n\n💳 Pagá en hasta 6 CUOTAS SIN INTERÉS.\n🚚 Envíos a todo el país.\n\n¡Hacé clic, elegí tu talle y asegurá la tuya antes de que vuelen! 🇦🇷\n\n👇 Mirá el producto acá:\n`;
+    const mensajeTexto = `🛍️ ¡Mirá este ingreso exclusivo en Gruken! 🛒\n\n🔥 ${nombre}\n\n💳 Pagá en hasta 6 CUOTAS SIN INTERÉS.\n🚚 Envíos a todo el país.\n\n¡Hacé clic, elegí tu talle y asegurá la tuya antes de que vuelen! 🇦🇷\n\n👇 Mirá el producto acá:\n`;
     
     // Unimos el texto persuasivo con el link para WhatsApp Web
     const mensajeCompleto = mensajeTexto + linkProfesional;
